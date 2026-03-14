@@ -1,25 +1,12 @@
-import { View, Text, Image, KeyboardAvoidingView, Platform, ScrollView, Pressable, TouchableOpacity, Alert } from "react-native";
+import { View, Text, Image, KeyboardAvoidingView, Platform, ScrollView, Pressable, TouchableOpacity } from "react-native";
 import "../../global.css";
 import { Input, InputField } from "@/components/ui/input";
-import { Link, router } from "expo-router";
-import { Eye, EyeOff, Mail, Lock } from 'lucide-react-native';
+import { Link } from "expo-router";
+import { Eye, EyeOff, Mail, Lock, MailOpen } from 'lucide-react-native';
 import { useState } from "react";
 
-export default function Login() {
+export default function ForgetPassword() {
   const [passwordVisible, setPasswordVisible] = useState(false);
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-
-  const forgetPassword = () =>{
-    if (!email) {
-      Alert.alert(
-        "Campo vazio",
-        "Digite seu email para recuperar a senha."
-      );
-      return;
-    }
-    router.replace("/forget-password")
-  }
 
   return (
     <KeyboardAvoidingView
@@ -49,39 +36,35 @@ export default function Login() {
 
           <View className="w-full mt-8">
             <Text className="font-black text-4xl text-velvet-orchid-700 mb-8">
-              Login
+              Recuperar senha
             </Text>
 
             <View className="mb-5">
-              <Text className="text-velvet-orchid-700 font-semibold mb-2 ml-1">E-mail</Text>
+              <Text className="text-velvet-orchid-700 font-semibold mb-2 ml-1">Código</Text>
               <Input
                 variant="rounded"
                 className="border-velvet-orchid-300 bg-white h-14 px-4 focus:border-velvet-orchid-700"
               >
-                <Mail size={20} color="#7b4d91" className="mr-2" />
+                <MailOpen size={20} color="#7b4d91" className="mr-2" />
                 <InputField
-                  placeholder="E-mail"
-                  keyboardType="email-address"
+                  placeholder="Confira o código enviado no seu e-mail"
+                  keyboardType="numeric"
                   className="text-velvet-orchid-900"
-                  value={email}
-                  onChangeText={setEmail}
                 />
               </Input>
             </View>
             
             <View className="mb-2">
-              <Text className="text-velvet-orchid-700 font-semibold mb-2 ml-1">Senha</Text>
+              <Text className="text-velvet-orchid-700 font-semibold mb-2 ml-1">Nova senha</Text>
               <Input
                 variant="rounded"
                 className="border-velvet-orchid-300 bg-white h-14 px-4 focus:border-velvet-orchid-700"
               >
                 <Lock size={20} color="#7b4d91" className="mr-2" />
                 <InputField
-                  placeholder="Senha "
+                  placeholder="Crie uma senha forte"
                   secureTextEntry={!passwordVisible}
                   className="text-velvet-orchid-900 flex-1"
-                  value={password}
-                  onChangeText={setPassword}
                 />
                 <TouchableOpacity onPress={() => setPasswordVisible(!passwordVisible)} className="pr-2">
                   {passwordVisible ? 
@@ -92,14 +75,14 @@ export default function Login() {
               </Input>
             </View>
 
-            <TouchableOpacity className="self-end mb-10" onPress={forgetPassword}>
-              <Text className=" text-purple-x11-700 underline">
-                Esqueceu a senha?
-              </Text>
+            <TouchableOpacity className="self-end mb-10">
+              <Link href={"/"} className=" text-purple-x11-700 underline">
+                Lembrou a senha?
+              </Link>
             </TouchableOpacity>
             
             <Pressable className="bg-velvet-orchid-700 w-full h-14 rounded-2xl flex items-center justify-center shadow-lg active:opacity-90 active:scale-[0.98] transition-all">
-              <Text className="text-white font-bold text-lg">Entrar na conta</Text>
+              <Text className="text-white font-bold text-lg">Alterar senha</Text>
             </Pressable>
           </View>
 
