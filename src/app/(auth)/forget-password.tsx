@@ -1,5 +1,5 @@
 import { View, Text, Image, KeyboardAvoidingView, Platform, ScrollView, Pressable, TouchableOpacity } from "react-native";
-import "../../../global.css";
+import "@/global.css"
 import { Input, InputField } from "@/components/ui/input";
 import { Link } from "expo-router";
 import { Eye, EyeOff, Mail, Lock, MailOpen } from 'lucide-react-native';

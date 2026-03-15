@@ -1,5 +1,5 @@
 import { View, Text, Image, KeyboardAvoidingView, Platform, ScrollView, Pressable, TouchableOpacity, Alert } from "react-native";
-import "../../../global.css";
+import "@/global.css"
 import { Input, InputField } from "@/components/ui/input";
 import { Link, router } from "expo-router";
 import { Eye, EyeOff, Mail, Lock } from 'lucide-react-native';
@@ -19,6 +19,10 @@ export default function Login() {
       return;
     }
     router.replace("/forget-password")
+  }
+
+  const login = () => {
+    router.replace("/home")
   }
 
   return (
@@ -98,7 +102,10 @@ export default function Login() {
               </Text>
             </TouchableOpacity>
             
-            <Pressable className="bg-velvet-orchid-700 w-full h-14 rounded-2xl flex items-center justify-center shadow-lg active:opacity-90 active:scale-[0.98] transition-all">
+            <Pressable 
+              className="bg-velvet-orchid-700 w-full h-14 rounded-2xl flex items-center justify-center shadow-lg active:opacity-90 active:scale-[0.98] transition-all"
+              onPress={login}
+            >
               <Text className="text-white font-bold text-lg">Entrar na conta</Text>
             </Pressable>
           </View>
