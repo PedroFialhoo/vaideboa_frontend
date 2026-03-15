@@ -1,5 +1,5 @@
 import { View, Text, Image, KeyboardAvoidingView, Platform, ScrollView, Pressable, TouchableOpacity, Alert } from "react-native";
-import "../../global.css";
+import "../../../global.css";
 import { Input, InputField } from "@/components/ui/input";
 import { Link, router } from "expo-router";
 import { Eye, EyeOff, Mail, Lock } from 'lucide-react-native';
@@ -36,7 +36,7 @@ export default function Login() {
           <View className="items-center">
             <View className="bg-white p-4 rounded-3xl shadow-sm mb-6">
               <Image
-                source={require("../assets/images/logo-vdb.png")}
+                source={require("../../assets/images/logo-vdb.png")}
                 className="w-32 h-32"
                 resizeMode="contain"
                 alt="logo"

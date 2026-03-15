@@ -1,5 +1,5 @@
 import { View, Text, Image, KeyboardAvoidingView, Platform, ScrollView, Pressable, TouchableOpacity } from "react-native";
-import "../../global.css";
+import "../../../global.css";
 import { Input, InputField } from "@/components/ui/input";
 import { Link } from "expo-router";
 import { Eye, EyeOff, User, Mail, Lock } from 'lucide-react-native';
@@ -23,7 +23,7 @@ export default function Signup() {
           <View className="items-center">
             <View className="bg-white p-3 rounded-3xl shadow-sm mb-4">
               <Image
-                source={require("../assets/images/logo-vdb.png")}
+                source={require("../../assets/images/logo-vdb.png")}
                 className="w-28 h-28"
                 resizeMode="contain"
                 alt="logo"
@@ -97,7 +97,7 @@ export default function Signup() {
           <View className="mt-8 mb-5">
             <Text className="text-center text-velvet-orchid-700 text-base">
               Já possui uma conta? {" "}
-              <Link href={"/"} className="font-bold text-purple-x11-700 underline">
+              <Link href={"/login"} className="font-bold text-purple-x11-700 underline">
                 Faça o login
               </Link>
             </Text>
