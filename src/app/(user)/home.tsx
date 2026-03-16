@@ -6,9 +6,9 @@ export default function Home(){
     return(
         <View className="flex justify-center items-center h-full">
             <Link href={"/login"}>
-            <Text className="text-3xl text-red-600">
-                Sair
-            </Text>
+                <Text className="text-3xl text-red-600">
+                    Sair
+                </Text>
             </Link>
         </View>
     )
