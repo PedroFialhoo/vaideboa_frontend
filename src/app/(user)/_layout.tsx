@@ -1,7 +1,11 @@
 import { Tabs } from "expo-router";
 import { FontAwesome } from "@expo/vector-icons"
+import { CarFront, Search } from "lucide-react-native";
+import Logo from "../../assets/images/logo-vdb.svg"
+import { useEffect } from "react";
 
 export default function UserLayout(){
+    useEffect(() => (console.log("Logo: ", Logo)), [])
     return(
         <Tabs
             screenOptions={{
@@ -26,7 +30,7 @@ export default function UserLayout(){
                 options={{
                     headerShown: false,
                     tabBarIcon: ({ color, size }) => {
-                        return <FontAwesome name="search" color={color} size={size}/>
+                        return <Search color={color} size={size}/>
                     }
                 }}  
             />
@@ -35,7 +39,7 @@ export default function UserLayout(){
                 options={{
                     headerShown: false,
                     tabBarIcon: ({ color, size }) => {
-                        return <FontAwesome name="car" color={color} size={size}/>
+                    return <Logo width={size} height={size} fill={color} />
                     }
                 }}  
             />
