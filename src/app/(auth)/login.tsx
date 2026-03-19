@@ -4,6 +4,7 @@ import { Input, InputField } from "@/components/ui/input";
 import { Link, router } from "expo-router";
 import { Eye, EyeOff, Mail, Lock } from 'lucide-react-native';
 import { useState } from "react";
+import { api } from "@/src/services/api"
 
 export default function Login() {
   const [passwordVisible, setPasswordVisible] = useState(false);
@@ -22,7 +23,15 @@ export default function Login() {
   }
 
   const login = () => {
-    router.replace("/home")
+    api.post("/authenticate",{
+      username: email,
+      password
+    })
+    .then(response => {
+      router.replace("/home")
+        })
+        .catch(err => {
+        })
   }
 
   return (

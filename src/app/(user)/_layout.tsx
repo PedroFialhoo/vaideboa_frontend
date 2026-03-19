@@ -1,6 +1,6 @@
 import { FontAwesome } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
-import { Search } from "lucide-react-native";
+import { PlusCircle, Search } from "lucide-react-native";
 import { useEffect } from "react";
 import Logo from "../../assets/images/logo-vdb.svg";
 
@@ -33,6 +33,16 @@ export default function UserLayout() {
           headerShown: false,
           tabBarIcon: ({ color, size }) => {
             return <Search color={color} size={size} />;
+          },
+        }}
+      />
+      <Tabs.Screen
+        name="offer"
+        options={{
+          title: "Oferecer",
+          headerShown: false,
+          tabBarIcon: ({ color, size }) => {
+            return <PlusCircle color={color} size={size} />;
           },
         }}
       />

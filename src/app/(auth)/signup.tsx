@@ -1,12 +1,28 @@
 import { View, Text, Image, KeyboardAvoidingView, Platform, ScrollView, Pressable, TouchableOpacity } from "react-native";
 import "@/global.css"
 import { Input, InputField } from "@/components/ui/input";
-import { Link } from "expo-router";
+import { Link, router } from "expo-router";
 import { Eye, EyeOff, User, Mail, Lock } from 'lucide-react-native';
 import { useState } from "react";
+import { api } from "@/src/services/api";
 
 export default function Signup() {
   const [passwordVisible, setPasswordVisible] = useState(false);
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [name, setName] = useState("")
+  const signup = () => {
+      api.post("/user/cadastrar",{
+        nome: name,
+        username: email,
+        password
+      })
+      .then(response => {
+        router.replace("/login")
+          })
+          .catch(err => {
+          })
+    }
 
   return (
     <KeyboardAvoidingView
@@ -49,6 +65,8 @@ export default function Signup() {
                 <InputField
                   placeholder="Como quer ser chamado?"
                   className="text-velvet-orchid-900"
+                  value={name}
+                  onChangeText={setName}
                 />
               </Input>
             </View>
@@ -64,6 +82,8 @@ export default function Signup() {
                   placeholder="Seu melhor e-mail"
                   keyboardType="email-address"
                   className="text-velvet-orchid-900"
+                  value={email}
+                  onChangeText={setEmail}
                 />
               </Input>
             </View>
@@ -79,6 +99,8 @@ export default function Signup() {
                   placeholder="Crie uma senha forte"
                   secureTextEntry={!passwordVisible}
                   className="text-velvet-orchid-900 flex-1"
+                  value={password}
+                  onChangeText={setPassword}
                 />
                 <TouchableOpacity onPress={() => setPasswordVisible(!passwordVisible)} className="pr-2">
                   {passwordVisible ? 
@@ -89,7 +111,10 @@ export default function Signup() {
               </Input>
             </View>
             
-            <Pressable className="bg-velvet-orchid-700 w-full h-14 rounded-2xl flex items-center justify-center shadow-lg active:opacity-90 active:scale-[0.98] transition-all">
+            <Pressable 
+              className="bg-velvet-orchid-700 w-full h-14 rounded-2xl flex items-center justify-center shadow-lg active:opacity-90 active:scale-[0.98] transition-all"
+              onPress={signup}
+            >
               <Text className="text-white font-bold text-lg">Criar minha conta</Text>
             </Pressable>
           </View>
