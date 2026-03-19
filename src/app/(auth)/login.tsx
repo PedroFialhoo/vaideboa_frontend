@@ -5,6 +5,7 @@ import { Link, router } from "expo-router";
 import { Eye, EyeOff, Mail, Lock } from 'lucide-react-native';
 import { useState } from "react";
 import { api } from "@/src/services/api"
+import { getToken, setToken } from "@/src/services/storage"
 
 export default function Login() {
   const [passwordVisible, setPasswordVisible] = useState(false);
@@ -23,15 +24,13 @@ export default function Login() {
   }
 
   const login = () => {
-    api.post("/authenticate",{
-      username: email,
-      password
+    api.post("/authenticate", { username: email, password })
+    .then(async response => {
+      const token = response.data;
+      await setToken(token);
+      router.replace("/home");
     })
-    .then(response => {
-      router.replace("/home")
-        })
-        .catch(err => {
-        })
+    .catch(err => console.error(err));
   }
 
   return (
