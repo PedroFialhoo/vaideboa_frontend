@@ -1,11 +1,9 @@
 import { FontAwesome } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 import { PlusCircle, Search } from "lucide-react-native";
-import { useEffect } from "react";
 import Logo from "../../assets/images/logo-vdb.svg";
 
 export default function UserLayout() {
-  useEffect(() => console.log("Logo: ", Logo), []);
   return (
     <Tabs
       screenOptions={{
