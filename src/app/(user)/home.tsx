@@ -5,11 +5,9 @@ import { Link } from "expo-router";
 export default function Home(){
     return(
         <View className="flex justify-center items-center h-full">
-            <Link href={"/login"}>
-                <Text className="text-3xl text-red-600">
-                    Sair
-                </Text>
-            </Link>
+            <Text className="text-3xl text-red-600">
+                Home
+            </Text>
         </View>
     )
 }
