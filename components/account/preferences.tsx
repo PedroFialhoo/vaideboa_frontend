@@ -51,18 +51,18 @@ export default function Preferences(){
         </TouchableOpacity>
 
         {openItem === "conversa" && (
-          <View className="pl-14 pt-1 pb-2">
+          <View className="pl-8 pt-1 pb-2">
             <RadioGroup value={preferences.conversa} onChange={(v) => handleChange("conversa", v)}>
               <Radio value="SEM_PROBLEMA" className="flex-row items-center py-1">
-                <RadioIndicator className="mr-2 scale-90"><RadioIcon as={CircleIcon}/></RadioIndicator>
+                <RadioIndicator className="mr-2 w-4 h-4"><RadioIcon as={CircleIcon} className="w-1.5 h-1.5" /></RadioIndicator>
                 <RadioLabel className="text-gray-500 text-sm">Bora trocar ideia a viagem toda</RadioLabel>
               </Radio>
               <Radio value="TALVEZ" className="flex-row items-center py-1">
-                <RadioIndicator className="mr-2 scale-90"><RadioIcon as={CircleIcon}/></RadioIndicator>
+                <RadioIndicator className="mr-2 w-4 h-4"><RadioIcon as={CircleIcon} className="w-1.5 h-1.5" /></RadioIndicator>
                 <RadioLabel className="text-gray-500 text-sm">Falo se puxar assunto</RadioLabel>
               </Radio>
               <Radio value="NUNCA" className="flex-row items-center py-1">
-                <RadioIndicator className="mr-2 scale-90"><RadioIcon as={CircleIcon}/></RadioIndicator>
+                <RadioIndicator className="mr-2 w-4 h-4"><RadioIcon as={CircleIcon} className="w-1.5 h-1.5" /></RadioIndicator>
                 <RadioLabel className="text-gray-500 text-sm">Prefiro silêncio</RadioLabel>
               </Radio>
             </RadioGroup>
@@ -84,18 +84,18 @@ export default function Preferences(){
         </TouchableOpacity>
 
         {openItem === "musica" && (
-          <View className="pl-14 pt-1 pb-2">
+          <View className="pl-8 pt-1 pb-2">
             <RadioGroup value={preferences.musica} onChange={(v) => handleChange("musica", v)}>
               <Radio value="SEM_PROBLEMA" className="flex-row items-center py-1">
-                <RadioIndicator className="mr-2 scale-90"><RadioIcon as={CircleIcon}/></RadioIndicator>
+                <RadioIndicator className="mr-2 w-4 h-4"><RadioIcon as={CircleIcon} className="w-1.5 h-1.5" /></RadioIndicator>
                 <RadioLabel className="text-gray-500 text-sm">DJ da viagem sou eu</RadioLabel>
               </Radio>
               <Radio value="TALVEZ" className="flex-row items-center py-1">
-                <RadioIndicator className="mr-2 scale-90"><RadioIcon as={CircleIcon}/></RadioIndicator>
+                <RadioIndicator className="mr-2 w-4 h-4"><RadioIcon as={CircleIcon} className="w-1.5 h-1.5" /></RadioIndicator>
                 <RadioLabel className="text-gray-500 text-sm">Depende do clima</RadioLabel>
               </Radio>
               <Radio value="NUNCA" className="flex-row items-center py-1">
-                <RadioIndicator className="mr-2 scale-90"><RadioIcon as={CircleIcon}/></RadioIndicator>
+                <RadioIndicator className="mr-2 w-4 h-4"><RadioIcon as={CircleIcon} className="w-1.5 h-1.5" /></RadioIndicator>
                 <RadioLabel className="text-gray-500 text-sm">Prefiro silêncio</RadioLabel>
               </Radio>
             </RadioGroup>
@@ -117,18 +117,18 @@ export default function Preferences(){
         </TouchableOpacity>
 
         {openItem === "cigarro" && (
-          <View className="pl-14 pt-1 pb-2">
+          <View className="pl-8 pt-1 pb-2">
             <RadioGroup value={preferences.cigarro} onChange={(v) => handleChange("cigarro", v)}>
               <Radio value="SEM_PROBLEMA" className="flex-row items-center py-1">
-                <RadioIndicator className="mr-2 scale-90"><RadioIcon as={CircleIcon}/></RadioIndicator>
+                <RadioIndicator className="mr-2 w-4 h-4"><RadioIcon as={CircleIcon} className="w-1.5 h-1.5" /></RadioIndicator>
                 <RadioLabel className="text-gray-500 text-sm">Liberado</RadioLabel>
               </Radio>
               <Radio value="TALVEZ" className="flex-row items-center py-1">
-                <RadioIndicator className="mr-2 scale-90"><RadioIcon as={CircleIcon}/></RadioIndicator>
+                <RadioIndicator className="mr-2 w-4 h-4"><RadioIcon as={CircleIcon} className="w-1.5 h-1.5" /></RadioIndicator>
                 <RadioLabel className="text-gray-500 text-sm">Só com janela aberta</RadioLabel>
               </Radio>
               <Radio value="NUNCA" className="flex-row items-center py-1">
-                <RadioIndicator className="mr-2 scale-90"><RadioIcon as={CircleIcon}/></RadioIndicator>
+                <RadioIndicator className="mr-2 w-4 h-4"><RadioIcon as={CircleIcon} className="w-1.5 h-1.5" /></RadioIndicator>
                 <RadioLabel className="text-gray-500 text-sm">Nem pensar</RadioLabel>
               </Radio>
             </RadioGroup>
@@ -150,18 +150,18 @@ export default function Preferences(){
         </TouchableOpacity>
 
         {openItem === "pet" && (
-          <View className="pl-14 pt-1 pb-2">
+          <View className="pl-8 pt-1 pb-2">
             <RadioGroup value={preferences.pet} onChange={(v) => handleChange("pet", v)}>
               <Radio value="SEM_PROBLEMA" className="flex-row items-center py-1">
-                <RadioIndicator className="mr-2 scale-90"><RadioIcon as={CircleIcon}/></RadioIndicator>
+                <RadioIndicator className="mr-2 w-4 h-4"><RadioIcon as={CircleIcon} className="w-1.5 h-1.5" /></RadioIndicator>
                 <RadioLabel className="text-gray-500 text-sm">Pet é bem-vindo</RadioLabel>
               </Radio>
               <Radio value="TALVEZ" className="flex-row items-center py-1">
-                <RadioIndicator className="mr-2 scale-90"><RadioIcon as={CircleIcon}/></RadioIndicator>
+                <RadioIndicator className="mr-2 w-4 h-4"><RadioIcon as={CircleIcon} className="w-1.5 h-1.5" /></RadioIndicator>
                 <RadioLabel className="text-gray-500 text-sm">Depende do pet</RadioLabel>
               </Radio>
               <Radio value="NUNCA" className="flex-row items-center py-1">
-                <RadioIndicator className="mr-2 scale-90"><RadioIcon as={CircleIcon}/></RadioIndicator>
+                <RadioIndicator className="mr-2 w-4 h-4"><RadioIcon as={CircleIcon} className="w-1.5 h-1.5" /></RadioIndicator>
                 <RadioLabel className="text-gray-500 text-sm">Melhor não</RadioLabel>
               </Radio>
             </RadioGroup>
