@@ -1,18 +1,13 @@
 import "@/global.css";
-import { Camera, ChevronRight, Cigarette, Music, PawPrint, Speech } from "lucide-react-native";
-import { useState } from "react";
+import { Camera } from "lucide-react-native";
+import { useEffect, useState } from "react";
 import { Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
-import {
-  Radio,
-  RadioGroup,
-  RadioIndicator,
-  RadioIcon,
-  RadioLabel,
-} from '@/components/ui/radio';
-import Preferences from "@/components/account/preferences";
+import Preferences from "@/components/account/preferences"
+import { getToken } from "@/src/services/storage"
+import { api } from "@/src/services/api"
 
 export default function Account() {
-  const [openItem, setOpenItem] = useState<string | null>(null);
+  const [name, setName] = useState<string | null>(null);
 
   const [preferences, setPreferences] = useState({
     conversa: "",
@@ -21,13 +16,25 @@ export default function Account() {
     pet: "",
   });
 
-  const toggleItem = (item: string) => {
-    setOpenItem(openItem === item ? null : item);
-  };
-
-  const handleChange = (key: string, value: string) => {
-    setPreferences({ ...preferences, [key]: value });
-  };
+  useEffect(() => {
+  getToken().then(token => {
+    api.get("/user/me", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+    .then(response => {
+      setName(response.data.nome)
+      const pref = response.data.preferenciasDto
+      setPreferences({
+        conversa: pref.conversa?.toUpperCase(),
+        musica: pref.musica?.toUpperCase(),
+        cigarro: pref.cigarro?.toUpperCase(),
+        pet: pref.animais?.toUpperCase(),
+      })
+    })
+  })
+}, [])
 
   return (
     <ScrollView className="flex-1 bg-vintage-grape-300">
@@ -46,7 +53,7 @@ export default function Account() {
         </View>
 
         <Text className="text-white font-black text-2xl mt-4">
-          Pedro Henrique
+          {name}
         </Text>
 
         <Text className="text-purple-x11-50 font-medium">
@@ -54,7 +61,7 @@ export default function Account() {
         </Text>
       </View>
 
-      <Preferences />
+      <Preferences preferences={preferences} setPreferences={setPreferences}/>
     </ScrollView>
   );
 }

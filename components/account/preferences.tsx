@@ -11,22 +11,27 @@ import { useState } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 import { CircleIcon } from '@/components/ui/icon';
 
-export default function Preferences(){
-  const [openItem, setOpenItem] = useState<string | null>(null);
+type PreferencesType = {
+  conversa: string;
+  musica: string;
+  cigarro: string;
+  pet: string;
+};
 
-  const [preferences, setPreferences] = useState({
-    conversa: "",
-    musica: "",
-    cigarro: "",
-    pet: "",
-  });
+type Props = {
+  preferences: PreferencesType;
+  setPreferences: React.Dispatch<React.SetStateAction<PreferencesType>>;
+};
+
+export default function Preferences({ preferences, setPreferences }: Props) {
+  const [openItem, setOpenItem] = useState<string | null>(null);
 
   const toggleItem = (item: string) => {
     setOpenItem(openItem === item ? null : item);
   };
 
-  const handleChange = (key: string, value: string) => {
-    setPreferences({ ...preferences, [key]: value });
+  const handleChange = (key: keyof PreferencesType, value: string) => {
+    setPreferences(prev => ({ ...prev, [key]: value }));
   };
 
   return(
@@ -36,7 +41,6 @@ export default function Preferences(){
           Preferências da Carona
         </Text>
 
-        {/* CONVERSA */}
         <TouchableOpacity onPress={() => toggleItem("conversa")} className="flex-row items-center py-4 border-b border-platinum">
           <View className="bg-purple-x11-100 p-2 rounded-xl mr-4">
             <Speech size={22} color="#7b4d91" />
@@ -69,7 +73,6 @@ export default function Preferences(){
           </View>
         )}
 
-        {/* MUSICA */}
         <TouchableOpacity onPress={() => toggleItem("musica")} className="flex-row items-center py-4 border-b border-platinum">
           <View className="bg-purple-x11-100 p-2 rounded-xl mr-4">
             <Music size={22} color="#7b4d91" />
@@ -102,7 +105,6 @@ export default function Preferences(){
           </View>
         )}
 
-        {/* CIGARRO */}
         <TouchableOpacity onPress={() => toggleItem("cigarro")} className="flex-row items-center py-4 border-b border-platinum">
           <View className="bg-purple-x11-100 p-2 rounded-xl mr-4">
             <Cigarette size={22} color="#7b4d91" />
@@ -135,7 +137,6 @@ export default function Preferences(){
           </View>
         )}
 
-        {/* PET */}
         <TouchableOpacity onPress={() => toggleItem("pet")} className="flex-row items-center py-4">
           <View className="bg-purple-x11-100 p-2 rounded-xl mr-4">
             <PawPrint size={22} color="#7b4d91" />

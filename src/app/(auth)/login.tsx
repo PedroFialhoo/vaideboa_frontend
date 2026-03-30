@@ -5,7 +5,7 @@ import { Link, router } from "expo-router";
 import { Eye, EyeOff, Mail, Lock } from 'lucide-react-native';
 import { useState } from "react";
 import { api } from "@/src/services/api"
-import { getToken, setToken } from "@/src/services/storage"
+import { setToken } from "@/src/services/storage"
 
 export default function Login() {
   const [passwordVisible, setPasswordVisible] = useState(false);
@@ -17,25 +17,25 @@ export default function Login() {
       Alert.alert(
         "Campo vazio",
         "Digite seu email para recuperar a senha."
-      );
+      ); 
       return;
     }
     router.replace("/forget-password")
   }
 
-  // const login = () => {
-  //   api.post("/authenticate", { username: email, password })
-  //   .then(async response => {
-  //     const token = response.data;
-  //     await setToken(token);
-  //     router.replace("/home");
-  //   })
-  //   .catch(err => console.error(err));
-  // }
-
   const login = () => {
+    api.post("/authenticate", { username: email, password })
+    .then(async response => {
+      const token = response.data;
+      await setToken(token);
       router.replace("/home");
+    })
+    .catch(err => console.error(err));
   }
+
+  // const login = () => {
+  //     router.replace("/home");
+  // }
 
   return (
     <KeyboardAvoidingView
