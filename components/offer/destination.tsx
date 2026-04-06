@@ -14,10 +14,26 @@ import { GOOGLE_MAPS_API_KEY } from "@env";
 import { MapPin, Navigation, Search, Map as MapIcon, X } from "lucide-react-native";
 import "@/global.css";
 import { Spinner } from "@/components/ui/spinner";
+import MapViewDirections from "react-native-maps-directions";
 
-export default function Destination({destination, setDestination, next}: {destination: {latitude: number, longitude: number} | null, setDestination: any, next: () => void}) {
+type DestinationType = {
+  latitude: number;
+  longitude: number;
+  address?: string;
+};
+
+export default function Destination({
+  origin,
+  destination,
+  setDestination,
+  next
+}: {
+  origin: DestinationType | null;
+  destination: DestinationType | null;
+  setDestination: (value: DestinationType | null) => void;
+  next: () => void;
+}) {
   const [location, setLocation] = useState<LocationObject | null>(null);
-  const [addressName, setAddressName] = useState("");
   const mapRef = useRef<MapView>(null);
   const [search, setSearch] = useState("");
 
@@ -35,26 +51,38 @@ export default function Destination({destination, setDestination, next}: {destin
 
   useEffect(() => {
     let subscription: any;
-    watchPositionAsync({
-      accuracy: LocationAccuracy.High,
-      timeInterval: 5000,
-      distanceInterval: 10
-    }, (response) => {
-      setLocation(response);
-    }).then(sub => subscription = sub);
-    
+    watchPositionAsync(
+      {
+        accuracy: LocationAccuracy.High,
+        timeInterval: 5000,
+        distanceInterval: 10,
+      },
+      (response) => {
+        setLocation(response);
+      }
+    ).then((sub) => (subscription = sub));
+
     return () => subscription?.remove();
   }, []);
 
   const handleMapPress = async (event: any) => {
     const coords = event.nativeEvent.coordinate;
-    setDestination(coords);
-    animateTo(coords.latitude, coords.longitude);
-    
+
     const reverse = await reverseGeocodeAsync(coords);
+
+    let address = "Local no mapa";
+
     if (reverse.length > 0) {
-      setAddressName(`${reverse[0].street}, ${reverse[0].name}`);
+      address = `${reverse[0].street ?? ""}, ${reverse[0].name ?? ""}`;
     }
+
+    setDestination({
+      latitude: coords.latitude,
+      longitude: coords.longitude,
+      address,
+    });
+
+    animateTo(coords.latitude, coords.longitude);
   };
 
   const animateTo = (lat: number, lng: number) => {
@@ -82,6 +110,7 @@ export default function Destination({destination, setDestination, next}: {destin
 
   return (
     <View className="flex-1 bg-platinum">
+      {/* BUSCA */}
       <View className="absolute top-12 w-[92%] self-center z-10 shadow-lg">
         <GooglePlacesAutocomplete
           textInputProps={{
@@ -94,12 +123,17 @@ export default function Destination({destination, setDestination, next}: {destin
           enablePoweredByContainer={false}
           onPress={(data, details = null) => {
             if (!details) return;
+
             const coords = {
               latitude: details.geometry.location.lat,
-              longitude: details.geometry.location.lng
+              longitude: details.geometry.location.lng,
             };
-            setDestination(coords);
-            setAddressName(data.description);
+
+            setDestination({
+              ...coords,
+              address: data.description,
+            });
+
             animateTo(coords.latitude, coords.longitude);
           }}
           query={{
@@ -107,29 +141,25 @@ export default function Destination({destination, setDestination, next}: {destin
             language: "pt-BR",
             components: "country:br",
             location: location
-            ? `${location.coords.latitude},${location.coords.longitude}`
-            : undefined,
-            radius: 50000,   
-            rankby: "distance",         
+              ? `${location.coords.latitude},${location.coords.longitude}`
+              : undefined,
+            radius: 50000,
+            rankby: "distance",
           }}
           styles={{
             container: { flex: 0 },
             textInput: {
-              height: 55, 
+              height: 55,
               paddingHorizontal: 20,
               fontSize: 16,
               backgroundColor: "#FFF",
               color: "#391f47",
-              shadowColor: "#000",
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.1,
-              shadowRadius: 4,
             },
             listView: {
               backgroundColor: "#FFF",
               borderRadius: 12,
               marginTop: 5,
-            }
+            },
           }}
           renderLeftButton={() => (
             <View className="h-[55px] w-12 -mr-3 items-center justify-center bg-white rounded-l-2xl">
@@ -137,12 +167,12 @@ export default function Destination({destination, setDestination, next}: {destin
             </View>
           )}
           renderRightButton={() => (
-            <Pressable className="h-[55px] w-12 -ml-3 items-center justify-center bg-white rounded-r-2xl" 
+            <Pressable
+              className="h-[55px] w-12 -ml-3 items-center justify-center bg-white rounded-r-2xl"
               onPress={() => {
                 setSearch("");
                 setDestination(null);
-                setAddressName("");
-              }} 
+              }}
             >
               <X size={20} color="#7b4d91" />
             </Pressable>
@@ -150,34 +180,52 @@ export default function Destination({destination, setDestination, next}: {destin
         />
       </View>
 
-      { location ? <MapView
-        ref={mapRef}
-        style={styles.map}
-        onPress={handleMapPress}
-        showsUserLocation
-        showsMyLocationButton={false}
-        initialRegion={
-          {latitude: location.coords.latitude,
-          longitude: location.coords.longitude,
-          latitudeDelta: 0.01,
-          longitudeDelta: 0.01,} 
-        } 
-      >
-        {destination && (
-          <Marker coordinate={destination}>
-            <View className="bg-velvet-orchid-700 p-2 rounded-full border-1 border-white">
-              <MapPin size={20} color="white" />
-            </View>
-          </Marker>
-        )}
-      </MapView>
-      :
+      {/* MAPA */}
+      {location ? (
+        <MapView
+          ref={mapRef}
+          style={styles.map}
+          onPress={handleMapPress}
+          showsUserLocation
+          showsMyLocationButton={false}
+          initialRegion={{
+            latitude: location.coords.latitude,
+            longitude: location.coords.longitude,
+            latitudeDelta: 0.01,
+            longitudeDelta: 0.01,
+          }}
+        >
+          {destination && (
+            <Marker coordinate={destination}>
+              <View className="bg-velvet-orchid-700 p-2 rounded-full border-1 border-white">
+                <MapPin size={20} color="white" />
+              </View>
+            </Marker>
+          )}
+          {origin && destination && (
+            <MapViewDirections
+              origin={origin}
+              destination={destination}
+              apikey={GOOGLE_MAPS_API_KEY}
+              strokeWidth={4}
+              strokeColor="#7b4d91"
+              onReady={(result) => {
+                mapRef.current?.fitToCoordinates(result.coordinates, {
+                  edgePadding: { top: 100, right: 50, bottom: 300, left: 50 },
+                  animated: true,
+                });
+              }}
+            />
+          )}
+        </MapView>
+      ) : (
         <View className="flex-1 justify-center items-center flex-row gap-5">
           <Spinner size="large" color="grey" />
-          <Text className="text-center text-lg">Carregando mapa...</Text>
+          <Text className="text-lg">Carregando mapa...</Text>
         </View>
-      }
+      )}
 
+      {/* ZOOM */}
       <View className="absolute right-4 bottom-60 bg-[#7b4d91] rounded-lg w-10 items-center justify-center">
         <Pressable onPress={zoomIn}>
           <Text className="p-2 text-white text-2xl">+</Text>
@@ -187,33 +235,48 @@ export default function Destination({destination, setDestination, next}: {destin
         </Pressable>
       </View>
 
-      <View className="absolute bottom-8 w-[92%] self-center bg-white rounded-3xl p-5 shadow-2xl border border-platinum">
+      {/* CARD INFERIOR */}
+      <View className="absolute bottom-8 w-[92%] self-center bg-white rounded-3xl p-5 shadow-2xl border">
         <View className="flex-row items-center mb-4">
-          <View className="bg-purple-x11-100 p-3 rounded-2xl mr-4">
+          <View className="p-3 rounded-2xl mr-4">
             <MapIcon size={24} color="#7b4d91" />
           </View>
           <View className="flex-1">
-            <Text className="text-gray-400 text-xs font-bold uppercase tracking-widest">Destino selecionado</Text>
-            <Text className="text-velvet-orchid-900 font-bold text-lg" numberOfLines={1}>
-              {destination ? addressName || "Local no mapa" : "Toque no mapa ou busque"}
+            <Text className="text-gray-400 text-xs uppercase">
+              Destino selecionado
+            </Text>
+            <Text className="font-bold text-lg" numberOfLines={1}>
+              {destination
+                ? destination.address || "Local no mapa"
+                : "Toque no mapa ou busque"}
             </Text>
           </View>
         </View>
 
         <View className="flex-row gap-3">
-          <Pressable 
-            onPress={() => location && animateTo(location.coords.latitude, location.coords.longitude)}
-            className="bg-platinum h-14 w-14 rounded-2xl items-center justify-center active:bg-gray-200"
+          <Pressable
+            onPress={() =>
+              location &&
+              animateTo(
+                location.coords.latitude,
+                location.coords.longitude
+              )
+            }
+            className="bg-platinum h-14 w-14 rounded-2xl items-center justify-center"
           >
             <Navigation size={24} color="#7b4d91" />
           </Pressable>
-          
-          <Pressable 
-            className={`flex-1 h-14 rounded-2xl items-center justify-center shadow-md ${destination ? 'bg-velvet-orchid-700' : 'bg-gray-300'}`}
+
+          <Pressable
+            className={`flex-1 h-14 rounded-2xl items-center justify-center ${
+              destination ? "bg-velvet-orchid-700" : "bg-gray-300"
+            }`}
             disabled={!destination}
             onPress={next}
           >
-            <Text className="text-white font-black text-lg">Oferecer Carona</Text>
+            <Text className="text-white font-black text-lg">
+              Oferecer Carona
+            </Text>
           </Pressable>
         </View>
       </View>
@@ -222,12 +285,8 @@ export default function Destination({destination, setDestination, next}: {destin
 }
 
 const styles = StyleSheet.create({
-
-  container: {
-    flex: 1,
-  },
   map: {
     width: "100%",
-    height: "100%"
+    height: "100%",
   },
 });
