@@ -23,19 +23,19 @@ export default function Login() {
     router.replace("/forget-password")
   }
 
-  const login = () => {
-    api.post("/authenticate", { username: email, password })
-    .then(async response => {
-      const token = response.data;
-      await setToken(token);
-      router.replace("/home");
-    })
-    .catch(err => console.error(err));
-  }
-
   // const login = () => {
+  //   api.post("/authenticate", { username: email, password })
+  //   .then(async response => {
+  //     const token = response.data;
+  //     await setToken(token);
   //     router.replace("/home");
+  //   })
+  //   .catch(err => console.error(err));
   // }
+
+  const login = () => {
+      router.replace("/home");
+  }
 
   return (
     <KeyboardAvoidingView
