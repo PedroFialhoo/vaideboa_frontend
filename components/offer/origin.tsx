@@ -10,7 +10,6 @@ import {
 } from "expo-location";
 import { useEffect, useRef, useState } from "react";
 import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplete";
-import { GOOGLE_MAPS_API_KEY } from "@env";
 import { MapPin, Navigation, Search, Map as MapIcon, X } from "lucide-react-native";
 import "@/global.css";
 import { Spinner } from "@/components/ui/spinner";
@@ -33,6 +32,7 @@ export default function Origin({
   const [location, setLocation] = useState<LocationObject | null>(null);
   const mapRef = useRef<MapView>(null);
   const [search, setSearch] = useState("");
+  const GOOGLE_MAPS_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
 
   async function requestLocationPermission() {
     const { granted } = await requestForegroundPermissionsAsync();

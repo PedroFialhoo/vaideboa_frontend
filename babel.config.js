@@ -9,15 +9,12 @@ module.exports = function (api) {
         'module-resolver',
         {
           root: ['./'],
-
           alias: {
             '@': './',
             'tailwind.config': './tailwind.config.js',
           },
         },
       ],
-      ["module:react-native-dotenv"],
-      'react-native-worklets/plugin',
     ],
   };
 };
