@@ -1,5 +1,5 @@
 import { View, Text, Pressable, StyleSheet } from "react-native";
-import MapView, { Marker } from "react-native-maps";
+import MapView, { Marker, Polyline } from "react-native-maps";
 import { 
   requestForegroundPermissionsAsync, 
   getCurrentPositionAsync, 
@@ -14,11 +14,18 @@ import { MapPin, Navigation, Search, Map as MapIcon, X } from "lucide-react-nati
 import "@/global.css";
 import { Spinner } from "@/components/ui/spinner";
 import MapViewDirections from "react-native-maps-directions";
+import { api } from "@/src/services/api";
+import { getToken } from "@/src/services/storage";
 
 type DestinationType = {
   latitude: number;
   longitude: number;
   address?: string;
+};
+
+type Coord = {
+  latitude: number;
+  longitude: number;
 };
 
 export default function Destination({
@@ -36,6 +43,7 @@ export default function Destination({
   const mapRef = useRef<MapView>(null);
   const [search, setSearch] = useState("");
   const GOOGLE_MAPS_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
+  const [coords, setCoords] = useState<Coord[]>([]);
 
   async function requestLocationPermission() {
     const { granted } = await requestForegroundPermissionsAsync();
@@ -64,6 +72,37 @@ export default function Destination({
 
     return () => subscription?.remove();
   }, []);
+
+  useEffect(() => {
+    if (!origin || !destination) return;
+    console.log("Buscando rota")
+    setCoords([])
+
+    getToken().then(token => {
+      api.post("/rota/buscar", {
+        latSaida: origin.latitude,
+        lonSaida: origin.longitude,
+        latDestino: destination.latitude,
+        lonDestino: destination.longitude
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    )
+      .then(response => {
+        const converted = response.data.features[0].geometry.coordinates.map(
+          ([lng, lat]: [number, number]) => ({
+            latitude: lat,
+            longitude: lng,
+          })
+        );
+
+        setCoords(converted);
+      });
+    });
+  }, [origin, destination]);
 
   const handleMapPress = async (event: any) => {
     const coords = event.nativeEvent.coordinate;
@@ -202,19 +241,11 @@ export default function Destination({
               </View>
             </Marker>
           )}
-          {origin && destination && (
-            <MapViewDirections
-              origin={origin}
-              destination={destination}
-              apikey={GOOGLE_MAPS_API_KEY}
+          {coords.length > 0 && (
+            <Polyline
+              coordinates={coords}
               strokeWidth={4}
               strokeColor="#7b4d91"
-              onReady={(result) => {
-                mapRef.current?.fitToCoordinates(result.coordinates, {
-                  edgePadding: { top: 100, right: 50, bottom: 300, left: 50 },
-                  animated: true,
-                });
-              }}
             />
           )}
         </MapView>

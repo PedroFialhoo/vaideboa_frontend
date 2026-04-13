@@ -26,7 +26,6 @@ export default function Offer() {
   const canGoNext = (step === 1 && origin) || (step === 2 && destination);
 
   const createRide = () => {
-    console.log("clicou criar ride");
 
     if (!destination || !origin || !date || !time) {
       console.log("faltando dados");
