@@ -5,23 +5,40 @@ import { Link, router } from "expo-router";
 import { Eye, EyeOff, User, Mail, Lock } from 'lucide-react-native';
 import { useState } from "react";
 import { api } from "@/src/services/api";
+import { setToken } from "@/src/services/storage";
 
 export default function Signup() {
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [name, setName] = useState("")
+  const [messageError, setMessageError] = useState("")
   const signup = () => {
+      setMessageError("")
       api.post("/user/cadastrar",{
         nome: name,
         username: email,
         password
+      },
+      {
+        headers: {
+          "Content-Type": "application/json"
+        }
       })
-      .then(response => {
-        router.replace("/login")
-          })
-          .catch(err => {
-          })
+      .then(response => {        
+       api.post("/authenticate", { username: email, password })
+       .then(async response => {
+         const token = response.data;
+         await setToken(token);
+         router.replace("/home");
+       })
+       .catch(err => console.error(err));
+      }
+      )
+      .catch(err => {
+        console.log(err.response?.data);
+        setMessageError(err.response?.data.message || "Ocorreu um erro ao criar a conta. Tente novamente.")
+      })
     }
 
   return (
@@ -110,6 +127,14 @@ export default function Signup() {
                 </TouchableOpacity>
               </Input>
             </View>
+
+            {
+              messageError ? (
+                <Text className="text-red-500 text-sm mb-4 text-center">
+                  {messageError}
+                </Text>
+              ) : null
+            }
             
             <Pressable 
               className="bg-velvet-orchid-700 w-full h-14 rounded-2xl flex items-center justify-center shadow-lg active:opacity-90 active:scale-[0.98] transition-all"
