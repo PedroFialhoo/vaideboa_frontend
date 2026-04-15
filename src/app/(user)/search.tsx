@@ -96,7 +96,7 @@ export default function Search() {
     const dataFormatada = dataObj.toISOString().split("T")[0];
     const horaFormatada = timeObj.toTimeString().split(" ")[0];
 
-    console.log("Dados para criar carona:", {
+    console.log("Dados para buscar carona:", {
       data: dataFormatada,
       hora: horaFormatada,
       saidaLat: origin?.latitude,

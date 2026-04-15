@@ -30,7 +30,14 @@ export default function Signup() {
        .then(async response => {
          const token = response.data;
          await setToken(token);
-         router.replace("/home");
+         router.push({
+          pathname: "/page-sucess",
+          params: {
+            sucess: "true",
+            message: "Conta criada com sucesso!",
+            to: "/profile"
+          }
+        })  
        })
        .catch(err => console.error(err));
       }

@@ -7,6 +7,7 @@ import RideForm from "@/components/offer/ride-form";
 import "@/global.css";
 import { api } from "@/src/services/api";
 import { getToken } from "@/src/services/storage";
+import { useRouter } from "expo-router";
 
 export default function Offer() {
   const [step, setStep] = useState(1);
@@ -16,6 +17,8 @@ export default function Offer() {
   const [time, setTime] = useState<Date | null>(null);
   const [price, setPrice] = useState<number | null>(null);
   const [seats, setSeats] = useState(1);
+  const [messageError, setMessageError] = useState("")
+  const router = useRouter()
 
   function handleNext() {
     if (step === 1 && !origin) return;
@@ -26,9 +29,11 @@ export default function Offer() {
   const canGoNext = (step === 1 && origin) || (step === 2 && destination);
 
   const createRide = () => {
-
+    setMessageError("")
+    console.log("click");
     if (!destination || !origin || !date || !time) {
       console.log("faltando dados");
+      setMessageError("Todas as informações são obrigatórias!")
       return;
     }
 
@@ -37,7 +42,7 @@ export default function Offer() {
       const timeObj = new Date(time);
 
       const dataFormatada = dataObj.toISOString().split("T")[0]; // yyyy-MM-dd
-      const horaFormatada = timeObj.toTimeString().split(" ")[0]; // HH:mm:ss
+      const horaFormatada = timeObj.toTimeString().split(" ")[0]; // HH:mm:s
 
       console.log("Dados para criar carona:", {
         qntAssentos: seats,
@@ -68,9 +73,18 @@ export default function Offer() {
       )
       .then(response => {
         console.log("Carona criada com sucesso:", response.data);
+        router.push({
+          pathname: "/page-sucess",
+          params: {
+            sucess: "true",
+            message: "Carona criada com sucesso!",
+            to: "/travels"
+          }
+        })        
       })
       .catch(error => {
         console.error("Erro ao criar carona:", error);
+        setMessageError("Erro ao criar conta!")
       });
     });
   }
@@ -148,6 +162,7 @@ export default function Offer() {
               seats={seats}
               setSeats={setSeats}
               createRide={createRide}
+              messageError={messageError}
             />
           </View>
         )}

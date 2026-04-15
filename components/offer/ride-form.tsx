@@ -30,7 +30,7 @@ type Props = {
   seats: number;
   setSeats: (seats: number) => void;
   createRide: () => void;
-
+  messageError: string
 };
 
 export default function RideForm({
@@ -42,7 +42,8 @@ export default function RideForm({
   setPrice,
   seats,
   setSeats,
-  createRide
+  createRide,
+  messageError
 }: Props) {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
@@ -177,7 +178,13 @@ export default function RideForm({
             />
           </View>
         </View>
-
+        {
+           messageError ? (
+           <Text className="text-red-500 text-sm mb-4 text-center">
+              {messageError}
+           </Text>
+           ) : null
+        }
         {/* Botão */}
         <Pressable 
           onPress={createRide}
