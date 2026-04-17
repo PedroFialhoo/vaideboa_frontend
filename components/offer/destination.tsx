@@ -306,7 +306,7 @@ export default function Destination({
             onPress={next}
           >
             <Text className="text-white font-black text-lg">
-              Oferecer Carona
+              Definir destino
             </Text>
           </Pressable>
         </View>

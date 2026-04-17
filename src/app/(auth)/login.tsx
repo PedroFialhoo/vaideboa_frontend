@@ -11,6 +11,7 @@ export default function Login() {
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [messageError, setMessageError] = useState("")
 
   const forgetPassword = () =>{
     if (!email) {
@@ -30,7 +31,10 @@ export default function Login() {
       await setToken(token);
       router.replace("/home");
     })
-    .catch(err => console.error(err));
+    .catch(err => {
+      setMessageError(err.response?.data.message || "Ocorreu um erro ao acessar a conta. Tente novamente.")
+    });    
+ 
   }
 
   // const login = () => {
@@ -113,6 +117,14 @@ export default function Login() {
                 Esqueceu a senha?
               </Text>
             </TouchableOpacity>
+
+            {
+              messageError ? (
+                <Text className="text-red-500 text-sm mb-4 text-center">
+                  {messageError}
+                </Text>
+              ) : null
+            }
             
             <Pressable 
               className="bg-velvet-orchid-700 w-full h-14 rounded-2xl flex items-center justify-center shadow-lg active:opacity-90 active:scale-[0.98] transition-all"

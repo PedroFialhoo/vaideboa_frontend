@@ -84,7 +84,7 @@ export default function Offer() {
       })
       .catch(error => {
         console.error("Erro ao criar carona:", error);
-        setMessageError("Erro ao criar conta!")
+        setMessageError("Erro ao criar carona!")
       });
     });
   }

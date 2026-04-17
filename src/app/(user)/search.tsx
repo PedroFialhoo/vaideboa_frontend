@@ -1,17 +1,27 @@
-import { View, Text, ScrollView, TouchableOpacity, Pressable, Platform } from "react-native";
-import { MapPin, Navigation, Calendar, Clock, Search as SearchIcon, ArrowDownUp, X } from "lucide-react-native";
+import { View, Text, ScrollView, TouchableOpacity, Pressable, Platform, ActivityIndicator } from "react-native";
+import { MapPin, Navigation, Calendar, Clock, Search as SearchIcon, ArrowDownUp, X, ChevronRight, User, ChevronLeft } from "lucide-react-native";
 import { useEffect, useState, useRef } from "react";
 import "@/global.css";
 import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplete";
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { getCurrentPositionAsync, LocationAccuracy, LocationObject, requestForegroundPermissionsAsync, watchPositionAsync } from "expo-location";
+import { getCurrentPositionAsync, requestForegroundPermissionsAsync, LocationObject } from "expo-location";
+import { getToken } from "@/src/services/storage";
+import { api } from "@/src/services/api";
+import { useRouter } from "expo-router";
+import Origin from "@/components/offer/origin";
+import Destination from "@/components/offer/destination";
+import SearchForm from "@/components/search/search-form";
 
 export default function Search() {
   const [destination, setDestination] = useState<{ latitude: number; longitude: number; address?: string } | null>(null);
   const [origin, setOrigin] = useState<{ latitude: number; longitude: number; address?: string } | null>(null);
+  const [rides, setRides] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [messageError, setMessageError] = useState("");
 
   const originRef = useRef<any>(null);
   const destinationRef = useRef<any>(null);
+  const router = useRouter();
 
   const [date, setDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -19,6 +29,8 @@ export default function Search() {
 
   const GOOGLE_MAPS_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
   const [location, setLocation] = useState<LocationObject | null>(null);
+  
+  const [step, setStep] = useState(1);
 
   async function requestLocationPermission() {
     const { granted } = await requestForegroundPermissionsAsync();
@@ -27,6 +39,14 @@ export default function Search() {
       setLocation(currentPosition);
     }
   }
+
+  function handleNext() {
+    if (step === 1 && !origin) return;
+    if (step === 2 && !destination) return;
+    setStep(step + 1);
+  }
+  
+  const canGoNext = (step === 1 && origin) || (step === 2 && destination);
 
   useEffect(() => {
     requestLocationPermission();
@@ -42,184 +62,111 @@ export default function Search() {
     if (selectedTime) setDate(selectedTime);
   };
 
-  const renderAutocomplete = (
-    placeholder: string,
-    icon: React.ReactNode,
-    label: string,
-    onSelect: (data: any, details: any) => void,
-    onClear: () => void,
-    value?: string,
-    ref?: any
-  ) => (
-    <View className="flex-row items-start mb-4 z-50">
-      <View className="mt-7 mr-4">{icon}</View>
-
-      <View className="flex-1 border-b border-platinum pb-2">
-        <Text className="text-gray-400 text-[10px] uppercase font-bold tracking-widest mb-1">
-          {label}
-        </Text>
-
-        <GooglePlacesAutocomplete
-          ref={ref}
-          debounce={400}
-          placeholder={placeholder}
-          fetchDetails={true}
-          enablePoweredByContainer={false}
-          onPress={onSelect}
-          query={{
-            key: GOOGLE_MAPS_API_KEY,
-            language: "pt-BR",
-            components: "country:br",
-            location: location ? `${location.coords.latitude},${location.coords.longitude}` : undefined,
-            radius: 50000,
-          }}
-          styles={{
-            textInput: { height: 40, color: "#391f47", fontWeight: '600', paddingLeft: 0 },
-            container: { flex: 0 },
-            listView: { backgroundColor: 'white', zIndex: 1000, elevation: 5 }
-          }}
-          renderRightButton={() => value ? (
-            <TouchableOpacity onPress={onClear} className="justify-center px-2">
-              <X size={16} color="#7b4d91" />
-            </TouchableOpacity>
-          ) : null}
-          keyboardShouldPersistTaps="handled"
-        />
-      </View>
-    </View>
-  );
-
   const searchTravels = () => {
-    const dataObj = new Date(date);
-    const timeObj = new Date(date);
+    console.log("Buscando caronas");
 
-    const dataFormatada = dataObj.toISOString().split("T")[0];
-    const horaFormatada = timeObj.toTimeString().split(" ")[0];
+    if (!destination || !origin) {
+      setMessageError("Informe origem e destino!");
+      return;
+    }
 
-    console.log("Dados para buscar carona:", {
-      data: dataFormatada,
-      hora: horaFormatada,
-      saidaLat: origin?.latitude,
-      saidaLng: origin?.longitude,
-      destinoLat: destination?.latitude,
-      destinoLng: destination?.longitude,
+    setLoading(true);
+    setMessageError("");
+
+    const dataFormatada = date.toISOString().split("T")[0];
+    const horaFormatada = date.toTimeString().slice(0, 5);
+
+    getToken().then((token) => {
+
+      const payload = {
+        data: dataFormatada,
+        hora: horaFormatada,
+        saidaLat: origin.latitude,
+        saidaLon: origin.longitude,
+        destinoLat: destination.latitude,
+        destinoLon: destination.longitude,
+      };
+
+      console.log("Payload enviado:", payload);
+
+      api.post("/reserva/buscar", payload, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      .then((response) => {
+        console.log("Resposta da API:", response.data);
+
+        setRides(response.data);
+
+        if (response.data.length === 0) {
+          setMessageError("Nenhuma carona encontrada para este trajeto.");
+        }
+      })
+      .catch((error) => {
+        console.error("Erro completo:", error.response?.data);
+        setMessageError("Erro ao buscar caronas.");
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+
     });
   };
 
+
   return (
     <View className="flex-1 bg-platinum">
-      <View className="bg-velvet-orchid-900 pt-16 pb-12 px-8 rounded-b-[40px] shadow-xl">
-        <Text className="text-white font-black text-3xl mb-2">Encontrar Carona</Text>
-        <Text className="text-purple-x11-200 text-base font-medium">
-          Para onde você quer ir hoje?
-        </Text>
-      </View>
-
-      <View className="px-6 -mt-8">
-        <View className="bg-white rounded-3xl p-6 shadow-lg border border-platinum">
-
-          {renderAutocomplete(
-            "De onde vamos sair?",
-            <View className="bg-purple-x11-100 p-2 rounded-full border-2 border-white shadow-sm">
-              <Navigation size={16} color="#7b4d91" />
-            </View>,
-            "Partida de",
-            (data, details) =>
-              setOrigin({
-                latitude: details!.geometry.location.lat,
-                longitude: details!.geometry.location.lng,
-                address: data.description,
-              }),
-            () => {
-              setOrigin(null);
-              originRef.current?.clear();
-            },
-            origin?.address,
-            originRef
-          )}
-
-          {renderAutocomplete(
-            "Para onde vamos?",
-            <View className="bg-velvet-orchid-700 p-2 rounded-full border-2 border-white shadow-sm">
-              <MapPin size={16} color="white" />
-            </View>,
-            "Destino para",
-            (data, details) =>
-              setDestination({
-                latitude: details!.geometry.location.lat,
-                longitude: details!.geometry.location.lng,
-                address: data.description,
-              }),
-            () => {
-              setDestination(null);
-              destinationRef.current?.clear();
-            },
-            destination?.address,
-            destinationRef
-          )}
-
-          <View className="h-[1px] bg-platinum my-4" />
-
-          <View className="flex-row gap-4 mb-8">
-            <TouchableOpacity
-              onPress={() => setShowDatePicker(true)}
-              className="flex-1 flex-row items-center bg-platinum/30 p-4 rounded-2xl border border-platinum"
-            >
-              <Calendar size={20} color="#7b4d91" />
-              <View className="ml-3">
-                <Text className="text-gray-400 text-[10px] font-bold uppercase">Data</Text>
-                <Text className="text-velvet-orchid-900 font-bold">
-                  {date.toLocaleDateString('pt-BR')}
-                </Text>
-              </View>
+      <View className="pt-12 pb-4 px-6 bg-velvet-orchid-900 flex-row items-center justify-between shadow-md z-20">
+        <View className="w-10">
+          {step > 1 && (
+            <TouchableOpacity onPress={() => setStep(step - 1)} className="p-2 -ml-2">
+              <ChevronLeft size={28} color="#cc66ff" />
             </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={() => setShowTimePicker(true)}
-              className="flex-1 flex-row items-center bg-platinum/30 p-4 rounded-2xl border border-platinum"
-            >
-              <Clock size={20} color="#7b4d91" />
-              <View className="ml-3">
-                <Text className="text-gray-400 text-[10px] font-bold uppercase">Hora</Text>
-                <Text className="text-velvet-orchid-900 font-bold">
-                  {date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                </Text>
-              </View>
-            </TouchableOpacity>
-          </View>
-
-          {showDatePicker && (
-            <DateTimePicker
-              value={date}
-              mode="date"
-              display="default"
-              onChange={onDateChange}
-              minimumDate={new Date()}
-            />
           )}
-
-          {showTimePicker && (
-            <DateTimePicker
-              value={date}
-              mode="time"
-              display="default"
-              onChange={onTimeChange}
-              is24Hour={true}
-            />
-          )}
-
-          <Pressable
-            onPress={searchTravels}
-            disabled={!origin || !destination}
-            className={`h-16 rounded-2xl flex-row items-center justify-center shadow-lg active:scale-[0.98] ${
-              origin && destination ? 'bg-velvet-orchid-700' : 'bg-gray-300'
-            }`}
-          >
-            <SearchIcon size={22} color="white" className="mr-2" />
-            <Text className="text-white font-black text-lg">Buscar Caronas</Text>
-          </Pressable>
         </View>
+
+        <Text className="font-black text-platinum-50 text-lg">Buscar Carona</Text>
+
+        <View className="w-10 items-end">
+          {step < 3 && (
+            <TouchableOpacity onPress={handleNext} disabled={!canGoNext} className={`p-2 -mr-2 ${!canGoNext ? "opacity-30" : ""}`}>
+              <ChevronRight size={28} color="#cc66ff" />
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
+      
+      <View className="flex-1 p-3">
+        
+        {step === 1 && <Origin origin={origin} setOrigin={setOrigin} next={handleNext} />}
+        {step === 2 && <Destination origin={origin} destination={destination} setDestination={setDestination} next={handleNext} />}   
+        {step === 3 && <SearchForm date={date} showDatePicker={showDatePicker} showTimePicker={showTimePicker} setShowDatePicker={setShowDatePicker} setShowTimePicker={setShowTimePicker} onDateChange={onDateChange} onTimeChange={onTimeChange} searchTravels={searchTravels} loading={loading} origin={origin} destination={destination} messageError={messageError} />}        
+        
+        {/* LISTA DE RESULTADOS */}
+        {rides.length > 0 && (
+          <View className="mt-8 mb-10">
+            <Text className="text-velvet-orchid-900 font-black text-xl mb-4 ml-2">Caronas Disponíveis</Text>
+            {rides.map((ride, index) => (
+              <TouchableOpacity 
+                key={index} 
+                className="bg-white rounded-3xl p-5 mb-4 border border-purple-x11-100 shadow-sm flex-row items-center"
+                onPress={() => router.push({ pathname: "/ride-details", params: { rideId: ride.idRota } } as any)}
+              >
+                <View className="bg-purple-x11-100 p-3 rounded-2xl mr-4">
+                  <User size={24} color="#7b4d91" />
+                </View>
+                <View className="flex-1">
+                  <Text className="text-velvet-orchid-900 font-bold text-lg">{ride.nomeMotorista}</Text>
+                  <View className="flex-row items-center mt-1">
+                    <Clock size={14} color="#7b4d91" />
+                    <Text className="text-gray-500 text-xs ml-1 font-medium">{ride.hora.substring(0,5)} • {ride.data.split('-').reverse().join('/')}</Text>
+                  </View>
+                </View>
+                <ChevronRight size={20} color="#7b4d91" opacity={0.5} />
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
       </View>
     </View>
   );
-}0
+}
