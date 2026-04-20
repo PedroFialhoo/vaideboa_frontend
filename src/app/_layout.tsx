@@ -15,6 +15,7 @@ export default function RootLayout() {
 
     configNavBar();
   }, []);
+  
 
   return (
     <SafeAreaProvider>

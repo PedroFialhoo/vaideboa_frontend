@@ -149,7 +149,7 @@ export default function Search() {
               <TouchableOpacity 
                 key={index} 
                 className="bg-white rounded-3xl p-5 mb-4 border border-purple-x11-100 shadow-sm flex-row items-center"
-                onPress={() => router.push({ pathname: "/ride-details", params: { rideId: ride.idRota } } as any)}
+                onPress={() => router.push({ pathname: "/search-details/[id]", params: { id: ride.idRota } } as any)}
               >
                 <View className="bg-purple-x11-100 p-3 rounded-2xl mr-4">
                   <User size={24} color="#7b4d91" />
