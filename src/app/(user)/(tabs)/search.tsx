@@ -142,7 +142,7 @@ export default function Search() {
         {step === 3 && <SearchForm date={date} showDatePicker={showDatePicker} showTimePicker={showTimePicker} setShowDatePicker={setShowDatePicker} setShowTimePicker={setShowTimePicker} onDateChange={onDateChange} onTimeChange={onTimeChange} searchTravels={searchTravels} loading={loading} origin={origin} destination={destination} messageError={messageError} />}        
         
         {/* LISTA DE RESULTADOS */}
-        {rides.length > 0 && (
+        {(rides.length > 0 && step === 3) && (
           <View className="mt-8 mb-10">
             <Text className="text-velvet-orchid-900 font-black text-xl mb-4 ml-2">Caronas Disponíveis</Text>
             {rides.map((ride, index) => (

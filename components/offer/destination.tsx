@@ -257,7 +257,7 @@ export default function Destination({
       )}
 
       {/* ZOOM */}
-      <View className="absolute right-4 bottom-60 bg-[#7b4d91] rounded-lg w-10 items-center justify-center">
+      <View className="absolute right-4 bottom-60 bg-velvet-orchid-800 rounded-lg w-10 items-center justify-center">
         <Pressable onPress={zoomIn}>
           <Text className="p-2 text-white text-2xl">+</Text>
         </Pressable>
