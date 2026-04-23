@@ -51,6 +51,7 @@ export default function SearchDetails() {
   const [ride, setRide] = useState<Ride | null>(null);
   const [coords, setCoords] = useState<Coord[]>([]);
   const mapRef = useRef<MapView>(null);
+  const [messageError, setMessageError] = useState("")
 
   useEffect(() => {
     if (!id) return;
@@ -103,6 +104,35 @@ export default function SearchDetails() {
         <Text>Carregando...</Text>
       </View>
     );
+  }
+
+  const requestRide = () => {
+    setMessageError("")
+    getToken().then((token) => {
+      api.post("/pedido/agendar",{
+        idCarona: id
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+    })
+      .then(response => {
+        console.log("Carona agendada com sucesso:", response.data);
+        router.push({
+          pathname: "/page-sucess",
+          params: {
+            sucess: "true",
+            message: "Carona agendada com sucesso!",
+            to: "/travels"
+          }
+        })  
+      })
+      .catch(error => {
+        console.log("Erro ao agendar carona: ", error)
+        setMessageError(error.response?.data || "Erro ao agendar carona")
+      })
+    })
   }
 
   return (
@@ -240,11 +270,21 @@ export default function SearchDetails() {
             </View>
           </View>
 
-          <Pressable className="bg-velvet-orchid-700 h-16 rounded-2xl items-center justify-center shadow-lg active:scale-[0.97] mb-8">
+          <Pressable 
+            className="bg-velvet-orchid-700 h-16 rounded-2xl items-center justify-center shadow-lg active:scale-[0.97] mb-8"
+            onPress={requestRide}
+          >
             <Text className="text-white font-black text-lg">
               Solicitar agora
             </Text>
           </Pressable>
+          {
+           messageError ? (
+           <Text className="text-red-500 text-sm mb-4 text-center">
+              {messageError}
+            </Text>
+           ) : null
+          }
         </View>
       </ScrollView>
     </View>
