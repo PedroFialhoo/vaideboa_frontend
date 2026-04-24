@@ -1,16 +1,14 @@
-import { View, Text, ScrollView, TouchableOpacity, Pressable, Platform, ActivityIndicator } from "react-native";
-import { MapPin, Navigation, Calendar, Clock, Search as SearchIcon, ArrowDownUp, X, ChevronRight, User, ChevronLeft } from "lucide-react-native";
-import { useEffect, useState, useRef } from "react";
-import "@/global.css";
-import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplete";
-import DateTimePicker from '@react-native-community/datetimepicker';
-import { getCurrentPositionAsync, requestForegroundPermissionsAsync, LocationObject } from "expo-location";
-import { getToken } from "@/src/services/storage";
-import { api } from "@/src/services/api";
-import { useRouter } from "expo-router";
-import Origin from "@/components/offer/origin";
 import Destination from "@/components/offer/destination";
+import Origin from "@/components/offer/origin";
 import SearchForm from "@/components/search/search-form";
+import "@/global.css";
+import { api } from "@/src/services/api";
+import { getToken } from "@/src/services/storage";
+import { getCurrentPositionAsync, LocationObject, requestForegroundPermissionsAsync } from "expo-location";
+import { useRouter } from "expo-router";
+import { ChevronLeft, ChevronRight, Clock, User } from "lucide-react-native";
+import { useEffect, useRef, useState } from "react";
+import { Platform, Text, TouchableOpacity, View } from "react-native";
 
 export default function Search() {
   const [destination, setDestination] = useState<{ latitude: number; longitude: number; address?: string } | null>(null);
@@ -149,7 +147,7 @@ export default function Search() {
               <TouchableOpacity 
                 key={index} 
                 className="bg-white rounded-3xl p-5 mb-4 border border-purple-x11-100 shadow-sm flex-row items-center"
-                onPress={() => router.push({ pathname: "/search-details/[id]", params: { id: ride.idRota } } as any)}
+                onPress={() => router.push({ pathname: "/ride-details/[id]", params: { id: ride.idRota } } as any)}
               >
                 <View className="bg-purple-x11-100 p-3 rounded-2xl mr-4">
                   <User size={24} color="#7b4d91" />

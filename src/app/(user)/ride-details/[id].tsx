@@ -38,6 +38,7 @@ type Ride = {
   realizado: boolean;
   saidaTexto: string;
   vagasDisponiveis: number;
+  papel: "MOTORISTA" | "PASSAGEIRO";
 };
 
 type Coord = {
@@ -52,10 +53,13 @@ export default function SearchDetails() {
   const [coords, setCoords] = useState<Coord[]>([]);
   const mapRef = useRef<MapView>(null);
   const [messageError, setMessageError] = useState("")
+  const [textBtn, setTextBtn] = useState("Carregando...")
 
   useEffect(() => {
     if (!id) return;
+
     console.log("Buscando detalhes da carona com ID:", id);
+
     getToken().then((token) => {
       api
         .get(`/carona/buscar/${id}`, {
@@ -65,13 +69,31 @@ export default function SearchDetails() {
         })
         .then((response) => {
           setRide(response.data);
+          api.get("/carona/minhas", {
+          headers: { Authorization: `Bearer ${token}` },
+          })
+          .then(response => {
+            console.log("DADOS: ", response.data)
+            const caronas = response.data
+            const minhaCarona = caronas.find((carona: any )=> carona.id === Number(id))
+            console.log("Minha carona: ", minhaCarona)
+            
+            if (minhaCarona) {
+              if (minhaCarona.papel === "MOTORISTA") {
+                setTextBtn("Marcar como realizada");
+              } else {
+                setTextBtn("Cancelar reserva");
+              }
+            } else {
+              setTextBtn("Solicitar reserva");
+            }
+          })
         })
         .catch((error) => {
           console.log("Erro ao buscar carona:", error);
         });
     });
   }, [id]);
-
   useEffect(() => {
     if (!ride?.idRota) return;
 
@@ -134,6 +156,16 @@ export default function SearchDetails() {
       })
     })
   }
+
+  const handleAction = () => {
+    if (textBtn === "Solicitar reserva") {
+      requestRide();
+    } else if (textBtn === "Cancelar reserva") {
+      console.log("Cancelar reserva");
+    } else if (textBtn === "Marcar como realizada") {
+      console.log("Marcar como realizada");
+    }
+  };
 
   return (
     <View className="flex-1 bg-platinum">
@@ -272,10 +304,10 @@ export default function SearchDetails() {
 
           <Pressable 
             className="bg-velvet-orchid-700 h-16 rounded-2xl items-center justify-center shadow-lg active:scale-[0.97] mb-8"
-            onPress={requestRide}
+            onPress={handleAction}
           >
             <Text className="text-white font-black text-lg">
-              Solicitar agora
+              {textBtn}
             </Text>
           </Pressable>
           {

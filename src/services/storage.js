@@ -13,11 +13,11 @@ export async function setToken(token) {
 export async function getToken() {
   if (Platform.OS === 'web') {
     const token = localStorage.getItem('token');
-    console.log("Pegando token");
+    console.log("Pegando token: ", token);
     return token;
   } else {
     const token = await SecureStore.getItemAsync('token');
-    console.log("Pegando token");
+    console.log("Pegando token: ", token);
     return token;
   }
 }

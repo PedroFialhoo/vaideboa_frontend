@@ -3,10 +3,12 @@ import { User, Mail, Bell, ShieldCheck, LogOut, ChevronRight, Camera } from "luc
 import { useState } from "react";
 import "@/global.css"
 import { router } from "expo-router";
+import { resetToken } from "@/src/services/storage";
 
 export default function Settings() {
   const [notifications, setNotifications] = useState(true);
-  const logout = () => {
+  const logout = async () => {
+    await resetToken()
     router.replace("/")
   }
 
