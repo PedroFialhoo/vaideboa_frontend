@@ -1,26 +1,59 @@
 import { View, Text, TouchableOpacity, Switch, TextInput, ScrollView } from "react-native";
-import { User, Bell, ShieldCheck, LogOut, ChevronRight, Save, Lock, Smartphone, Contact } from "lucide-react-native";
+import { User, Bell, ShieldCheck, LogOut, ChevronRight, Save, Lock, Smartphone, Contact, Calendar } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import "@/global.css"
 import { router } from "expo-router";
-import { resetToken } from "@/src/services/storage";
+import { getToken, resetToken } from "@/src/services/storage";
+import { api } from "@/src/services/api";
+import DateTimePicker from "@react-native-community/datetimepicker";
 
 export default function Settings() {
   const [notifications, setNotifications] = useState(true);
   const [showPersonalForm, setShowPersonalForm] = useState(false);
   const [showSecurityForm, setShowSecurityForm] = useState(false);
-  const [gender, setGender] = useState("NÃO_INFORMADO");
+  const [gender, setGender] = useState("NAO_INFORMADO");
   const [name, setName] = useState("")
   const [phone, setPhone] = useState("")
   const [oldPassword, setOldPassword] = useState("")
   const [newPassword, setNewPassword] = useState("") 
-
-  
+  const [cpf, setCpf] = useState("")
+  const [dateBirth, setDateBirth] = useState("")
+  const [showDatePicker, setShowDatePicker] = useState(false); 
+  const [cpfNull, setCpfNull] = useState(false) 
+  const [dateBirthNull, setDateBirthNull] = useState(false) 
 
   const logout = async () => {
     await resetToken();
     router.replace("/");
   };
+
+  useEffect(() => {
+    getToken().then(token => {
+      api.get("/user/me", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      .then(response => {
+        setName(response.data.nome)
+        setPhone(response.data.telefone)
+        setGender(response.data.genero)
+        setCpf(response.data.cpf)
+        setDateBirth(response.data.dataNascimento)
+        if(response.data.dataNascimento === "NAO_INFORMADO" || response.data.dataNascimento === null){
+          setDateBirthNull(true)
+          setDateBirth("")
+        } 
+        if(response.data.cpf === "NAO_INFORMADO" || response.data.cpf === null) setCpfNull(true)
+        console.log("Dados do usuário:", response.data);
+        console.log(dateBirthNull, cpfNull);
+      })
+      .catch(error => {
+        console.error("Erro ao obter dados do usuário:", error);
+      })
+    })
+  }, [])
+
 
   return (
     <View className="flex-1 bg-vintage-grape-300">
@@ -54,16 +87,65 @@ export default function Settings() {
                 <View className="space-y-4">
                   <View>
                     <Text className="text-velvet-orchid-700 font-bold text-xs mb-1 ml-1">NOME</Text>
-                    <TextInput placeholder="Seu nome" className="bg-platinum/30 rounded-xl p-3 text-velvet-orchid-900 border border-platinum" />
+                    <TextInput placeholder="Seu nome" className="bg-platinum/30 rounded-xl p-3 text-velvet-orchid-900 border border-platinum" 
+                      value={name}
+                      onChangeText={setName}
+                    />
                   </View>
                   <View className="mt-3">
                     <Text className="text-velvet-orchid-700 font-bold text-xs mb-1 ml-1">TELEFONE</Text>
-                    <TextInput placeholder="(00) 00000-0000" keyboardType="phone-pad" className="bg-platinum/30 rounded-xl p-3 text-velvet-orchid-900 border border-platinum" />
+                    <TextInput placeholder="(00) 00000-0000" keyboardType="phone-pad" className="bg-platinum/30 rounded-xl p-3 text-velvet-orchid-900 border border-platinum"
+                      value={phone}
+                      onChangeText={setPhone}
+                    />
                   </View>
+                  {cpfNull && (
+                    <View className="mt-3">
+                      <Text className="text-velvet-orchid-700 font-bold text-xs mb-1 ml-1">CPF</Text>
+                      <TextInput placeholder="000.000.000-00" keyboardType="phone-pad" className="bg-platinum/30 rounded-xl p-3 text-velvet-orchid-900 border border-platinum"
+                        value={cpf}
+                        onChangeText={setCpf}
+                      />
+                    </View>
+                  )}
+                  {dateBirthNull && (                  
+                    <View className="mt-3">
+                      <Text className="text-velvet-orchid-700 font-bold text-xs mb-1 ml-1">
+                        DATA DE NASCIMENTO
+                      </Text>
+
+                      <TouchableOpacity
+                        onPress={() => setShowDatePicker(true)}
+                        className="flex-1 flex-row items-center bg-platinum/50 rounded-2xl px-4 h-14 border border-purple-900"
+                      >
+                        <Calendar size={20} color="#7b4d91" />
+                        <Text className="ml-3 font-semibold">
+                          {dateBirth
+                            ? new Date(dateBirth).toLocaleDateString("pt-BR")
+                            : "Selecionar data"}
+                        </Text>
+                      </TouchableOpacity>
+
+                      {showDatePicker && (
+                        <DateTimePicker
+                          value={dateBirth ? new Date(dateBirth) : new Date()}
+                          mode="date"
+                          display="default"
+                          onChange={(event, selectedDate) => {
+                            setShowDatePicker(false);
+                            if (selectedDate) {
+                              setDateBirth(selectedDate.toISOString());
+                            }
+                          }}
+                        />
+                      )}
+                    </View>  
+                  )} 
+                                  
                   <View className="mt-3">
                     <Text className="text-velvet-orchid-700 font-bold text-xs mb-2 ml-1">GÊNERO</Text>
                     <View className="flex-row flex-wrap gap-2">
-                      {["MASCULINO", "FEMININO", "OUTROS", "NÃO_INFORMADO"].map((option) => {
+                      {["MASCULINO", "FEMININO", "OUTROS", "NAO_INFORMADO"].map((option) => {
                         const isSelected = gender === option;
                         return (
                           <TouchableOpacity
@@ -86,7 +168,7 @@ export default function Settings() {
                         );
                       })}
                   </View>
-                </View>
+                </View>                
                   <TouchableOpacity className="bg-velvet-orchid-700 rounded-xl p-3 flex-row items-center justify-center mt-2">
                     <Save size={18} color="white" className="mr-2" />
                     <Text className="text-white font-bold">Salvar Alterações</Text>
