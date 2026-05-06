@@ -98,6 +98,12 @@ export default function Settings() {
       return;
     }
 
+    if(newPassword !== newPasswordConfirm) {
+      setMessage("Ops, as novas senhas são diferentes. Dá uma olhadinha aí!");
+      setGoodMessage(false);
+      return;
+    }
+
     getToken().then(token => {
       api.put(
         "/user/alterarSenha",
@@ -128,25 +134,25 @@ export default function Settings() {
   const updateUser = () => {
     setMessage("")
     console.log(name, phone, dateBirth, gender, cpf)
-    if (!name.trim()) {
+    if (name === null || !name.trim()) {
       setMessage("Fala pra gente seu nome. Assim sabemos como te chamar!");
       setGoodMessage(false);
       return;
     }
 
-    if (!phone.trim()) {
+    if (phone === null || !phone.trim()) {
       setMessage("Coloca seu telefone. Vai que a gente precisa falar com você!");
       setGoodMessage(false);
       return;
     }
 
-    if (!cpf.trim()) {
+    if (cpf === null || !cpf.trim()) {
       setMessage("Precisamos do seu CPF. É importante para manter tudo certinho!");
       setGoodMessage(false);
       return;
     }
 
-    if (!dateBirth.trim()) {
+    if (dateBirth === null || !dateBirth.trim()) {
       setMessage("Conta pra gente sua data de nascimento. Prometemos lembrar do seu aniversário!");
       setGoodMessage(false);
       return;
@@ -420,9 +426,16 @@ export default function Settings() {
                       </TouchableOpacity>
                     </View>
                   </View>
+                  {
+                    message.length > 0
+                    &&
+                    <Text className={`text-center mt-3 ${goodMessage ? 'text-green-700' : 'text-red-700'}`}>
+                      {message}
+                    </Text>
+                  }
                   <TouchableOpacity
-                   className="bg-velvet-orchid-700 rounded-xl p-3 flex-row items-center justify-center mt-2"
-                    
+                    className="bg-velvet-orchid-700 rounded-xl p-3 flex-row items-center justify-center mt-3"
+                    onPress={updateUserPassword}
                   >
                     <Lock size={18} color="white" className="mr-2" />
                     <Text className="text-white font-bold">Atualizar Senha</Text>
