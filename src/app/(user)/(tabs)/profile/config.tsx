@@ -1,11 +1,14 @@
 import { View, Text, TouchableOpacity, Switch, TextInput, ScrollView } from "react-native";
-import { User, Bell, ShieldCheck, LogOut, ChevronRight, Save, Lock, Smartphone, Contact, Calendar } from "lucide-react-native";
-import { useEffect, useState } from "react";
+import { User, Bell, ShieldCheck, LogOut, ChevronRight, Save, Lock, Smartphone, Contact, Calendar, EyeOff, Eye } from "lucide-react-native";
+import { useCallback, useEffect, useState } from "react";
 import "@/global.css"
 import { router } from "expo-router";
 import { getToken, resetToken } from "@/src/services/storage";
 import { api } from "@/src/services/api";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import { MaskedTextInput } from "react-native-mask-text";
+import { useFocusEffect } from "@react-navigation/native";
+import { Input, InputField } from "@/components/ui/input";
 
 export default function Settings() {
   const [notifications, setNotifications] = useState(true);
@@ -16,18 +19,25 @@ export default function Settings() {
   const [phone, setPhone] = useState("")
   const [oldPassword, setOldPassword] = useState("")
   const [newPassword, setNewPassword] = useState("") 
+  const [newPasswordConfirm, setNewPasswordConfirm] = useState("") 
   const [cpf, setCpf] = useState("")
   const [dateBirth, setDateBirth] = useState("")
   const [showDatePicker, setShowDatePicker] = useState(false); 
   const [cpfNull, setCpfNull] = useState(false) 
   const [dateBirthNull, setDateBirthNull] = useState(false) 
+  const [message, setMessage] = useState("")
+  const [goodMessage, setGoodMessage] = useState(true)
+  const [showOldPassword, setShowOldPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showNewPasswordConfirm, setShowNewPasswordConfirm] = useState(false);
+  
 
   const logout = async () => {
     await resetToken();
     router.replace("/");
   };
 
-  useEffect(() => {
+  function getUser(){
     getToken().then(token => {
       api.get("/user/me", {
         headers: {
@@ -44,7 +54,10 @@ export default function Settings() {
           setDateBirthNull(true)
           setDateBirth("")
         } 
-        if(response.data.cpf === "NAO_INFORMADO" || response.data.cpf === null) setCpfNull(true)
+        if(response.data.cpf === "NAO_INFORMADO" || response.data.cpf === null){ 
+          setCpfNull(true)
+          setCpf("")
+        }
         console.log("Dados do usuário:", response.data);
         console.log(dateBirthNull, cpfNull);
       })
@@ -52,8 +65,121 @@ export default function Settings() {
         console.error("Erro ao obter dados do usuário:", error);
       })
     })
-  }, [])
+  }
 
+  useEffect(() => {
+      getUser()
+    }, [])
+  
+  useFocusEffect(
+    useCallback(() => {
+      getUser()
+    }, [])
+  );
+
+  const updateUserPassword = () => {
+    setMessage("")
+    console.log(oldPassword, newPassword, newPasswordConfirm)
+    if (!oldPassword.trim()) {
+      setMessage("Confirma pra gente sua senha atual!");
+      setGoodMessage(false);
+      return;
+    }
+
+    if (!newPassword.trim()) {
+      setMessage("Ué, cadê a nova senha?");
+      setGoodMessage(false);
+      return;
+    }
+
+    if (!newPasswordConfirm.trim()) {
+      setMessage("Confirma a nova senha, só pra ter certeza!");
+      setGoodMessage(false);
+      return;
+    }
+
+    getToken().then(token => {
+      api.put(
+        "/user/alterarSenha",
+        {
+          senhaAtual: oldPassword,
+          novaSenha: newPassword,
+          confirmarSenha: newPasswordConfirm
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          }
+        }
+      )
+      .then(response => {
+        console.log(response.data)
+        setMessage(response.data)
+        setGoodMessage(true)
+      })
+      .catch(err => {
+        console.log("Erro: ", err.response?.data)
+        setMessage(err.response?.data)
+        setGoodMessage(false)
+      })
+    })
+  }
+
+  const updateUser = () => {
+    setMessage("")
+    console.log(name, phone, dateBirth, gender, cpf)
+    if (!name.trim()) {
+      setMessage("Fala pra gente seu nome. Assim sabemos como te chamar!");
+      setGoodMessage(false);
+      return;
+    }
+
+    if (!phone.trim()) {
+      setMessage("Coloca seu telefone. Vai que a gente precisa falar com você!");
+      setGoodMessage(false);
+      return;
+    }
+
+    if (!cpf.trim()) {
+      setMessage("Precisamos do seu CPF. É importante para manter tudo certinho!");
+      setGoodMessage(false);
+      return;
+    }
+
+    if (!dateBirth.trim()) {
+      setMessage("Conta pra gente sua data de nascimento. Prometemos lembrar do seu aniversário!");
+      setGoodMessage(false);
+      return;
+    }
+
+    getToken().then(token => {
+      api.put(
+        "/user/editar",
+        {
+          nome: name,
+          telefone: phone,
+          dataNascimento: dateBirth,
+          genero: gender,
+          cpf: cpf
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          }
+        }
+      )
+      .then(response => {
+        console.log(response.data)
+        setMessage(response.data)
+        setGoodMessage(true)
+      })
+      .catch(err => {
+        console.log("Erro: ", err.response?.data)
+        setMessage(err.response?.data)
+        setGoodMessage(false)
+      })
+    })
+  }
 
   return (
     <View className="flex-1 bg-vintage-grape-300">
@@ -67,6 +193,7 @@ export default function Settings() {
               onPress={() => {
                 setShowPersonalForm(!showPersonalForm);
                 setShowSecurityForm(false);
+                setMessage("")
               }}
               className="flex-row items-center py-4"
             >
@@ -87,24 +214,48 @@ export default function Settings() {
                 <View className="space-y-4">
                   <View>
                     <Text className="text-velvet-orchid-700 font-bold text-xs mb-1 ml-1">NOME</Text>
-                    <TextInput placeholder="Seu nome" className="bg-platinum/30 rounded-xl p-3 text-velvet-orchid-900 border border-platinum" 
+                    <TextInput placeholder="Seu nome" className="bg-platinum/30 rounded-xl p-3 text-velvet-orchid-900 border" 
                       value={name}
                       onChangeText={setName}
                     />
                   </View>
                   <View className="mt-3">
                     <Text className="text-velvet-orchid-700 font-bold text-xs mb-1 ml-1">TELEFONE</Text>
-                    <TextInput placeholder="(00) 00000-0000" keyboardType="phone-pad" className="bg-platinum/30 rounded-xl p-3 text-velvet-orchid-900 border border-platinum"
+                    <MaskedTextInput
+                      mask="(99) 99999-9999"
+                      keyboardType="phone-pad"
                       value={phone}
-                      onChangeText={setPhone}
+                      onChangeText={(text, rawText) => {
+                        setPhone(rawText);
+                      }}
+                      placeholder="(00) 00000-0000"
+                      style={{
+                        borderRadius: 12,
+                        padding: 12,
+                        color: "#4B2E5E",
+                        borderWidth: 1,
+                        borderColor: "#271831"
+                      }}
                     />
                   </View>
                   {cpfNull && (
                     <View className="mt-3">
                       <Text className="text-velvet-orchid-700 font-bold text-xs mb-1 ml-1">CPF</Text>
-                      <TextInput placeholder="000.000.000-00" keyboardType="phone-pad" className="bg-platinum/30 rounded-xl p-3 text-velvet-orchid-900 border border-platinum"
+                      <MaskedTextInput
+                        mask="999.999.999-99"
+                        keyboardType="phone-pad"
                         value={cpf}
-                        onChangeText={setCpf}
+                        onChangeText={(text, rawText) => {
+                          setCpf(rawText);
+                        }}
+                        placeholder="000.000.000-00"
+                        style={{
+                          borderRadius: 12,
+                          padding: 12,
+                          color: "#4B2E5E", // velvet-orchid-900
+                          borderWidth: 1,
+                          borderColor: "#271831"
+                        }}
                       />
                     </View>
                   )}
@@ -168,8 +319,17 @@ export default function Settings() {
                         );
                       })}
                   </View>
+                  {
+                    message.length > 0
+                    &&
+                    <Text className={`text-center mt-2 ${goodMessage ? 'text-green-700' : 'text-red-700'}`}>
+                      {message}
+                    </Text>
+                  }
                 </View>                
-                  <TouchableOpacity className="bg-velvet-orchid-700 rounded-xl p-3 flex-row items-center justify-center mt-2">
+                  <TouchableOpacity className="bg-velvet-orchid-700 rounded-xl p-3 flex-row items-center justify-center mt-5"
+                    onPress={updateUser}
+                  >
                     <Save size={18} color="white" className="mr-2" />
                     <Text className="text-white font-bold">Salvar Alterações</Text>
                   </TouchableOpacity>
@@ -184,6 +344,7 @@ export default function Settings() {
               onPress={() => {
                 setShowSecurityForm(!showSecurityForm);
                 setShowPersonalForm(false);
+                setMessage("")
               }}
               className="flex-row items-center py-4"
             >
@@ -204,21 +365,65 @@ export default function Settings() {
                 <View className="space-y-4">
                   <View>
                     <Text className="text-velvet-orchid-700 font-bold text-xs mb-1 ml-1">SENHA ANTIGA</Text>
-                    <TextInput 
-                      secureTextEntry 
-                      placeholder="••••••••" 
-                      className="bg-platinum/30 rounded-xl p-3 text-velvet-orchid-900 border border-platinum" 
-                    />
+                    <View className="bg-platinum/30 rounded-xl border flex-row items-center px-3">
+                      <TextInput
+                        placeholder="Senha super secreta"
+                        secureTextEntry={!showOldPassword}
+                        className="flex-1 py-3 text-velvet-orchid-900"
+                        value={oldPassword}
+                        onChangeText={setOldPassword}
+                      />
+
+                      <TouchableOpacity onPress={() => setShowOldPassword(!showOldPassword)}>
+                        {showOldPassword ? 
+                          <EyeOff size={22} color="#7b4d91" /> : 
+                          <Eye size={22} color="#7b4d91" />
+                        }
+                      </TouchableOpacity>
+                    </View>
                   </View>
                   <View className="mt-3">
                     <Text className="text-velvet-orchid-700 font-bold text-xs mb-1 ml-1">NOVA SENHA</Text>
-                    <TextInput 
-                      secureTextEntry 
-                      placeholder="••••••••" 
-                      className="bg-platinum/30 rounded-xl p-3 text-velvet-orchid-900 border border-platinum" 
-                    />
+                    <View className="bg-platinum/30 rounded-xl border flex-row items-center px-3">
+                      <TextInput
+                        placeholder="Nova senha mega secreta"
+                        secureTextEntry={!showNewPassword}
+                        className="flex-1 py-3 text-velvet-orchid-900"
+                        value={newPassword}
+                        onChangeText={setNewPassword}
+                      />
+
+                      <TouchableOpacity onPress={() => setShowNewPassword(!showNewPassword)}>
+                        {showNewPassword ? 
+                          <EyeOff size={22} color="#7b4d91" /> : 
+                          <Eye size={22} color="#7b4d91" />
+                        }
+                      </TouchableOpacity>
+                    </View>
                   </View>
-                  <TouchableOpacity className="bg-velvet-orchid-700 rounded-xl p-3 flex-row items-center justify-center mt-2">
+                  <View className="mt-3">
+                    <Text className="text-velvet-orchid-700 font-bold text-xs mb-1 ml-1">CONFIRMAR NOVA SENHA</Text>
+                    <View className="bg-platinum/30 rounded-xl border flex-row items-center px-3">
+                      <TextInput
+                        placeholder="Repete a nova senha hiper secreta"
+                        secureTextEntry={!showNewPasswordConfirm}
+                        className="flex-1 py-3 text-velvet-orchid-900"
+                        value={newPasswordConfirm}
+                        onChangeText={setNewPasswordConfirm}
+                      />
+
+                      <TouchableOpacity onPress={() => setShowNewPasswordConfirm(!showNewPasswordConfirm)}>
+                        {showNewPasswordConfirm ? 
+                          <EyeOff size={22} color="#7b4d91" /> : 
+                          <Eye size={22} color="#7b4d91" />
+                        }
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                  <TouchableOpacity
+                   className="bg-velvet-orchid-700 rounded-xl p-3 flex-row items-center justify-center mt-2"
+                    
+                  >
                     <Lock size={18} color="white" className="mr-2" />
                     <Text className="text-white font-bold">Atualizar Senha</Text>
                   </TouchableOpacity>

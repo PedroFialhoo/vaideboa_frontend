@@ -1,10 +1,11 @@
 import "@/global.css";
 import { Camera } from "lucide-react-native";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import Preferences from "@/components/account/preferences"
 import { getToken } from "@/src/services/storage"
 import { api } from "@/src/services/api"
+import { useFocusEffect } from "@react-navigation/native";
 
 export default function Account() {
   const [name, setName] = useState<string | null>(null);
@@ -16,25 +17,34 @@ export default function Account() {
     pet: "",
   });
 
-  useEffect(() => {
-  getToken().then(token => {
-    api.get("/user/me", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
-    .then(response => {
-      setName(response.data.nome)
-      const pref = response.data.preferenciasDto
-      setPreferences({
-        conversa: pref.conversa?.toUpperCase(),
-        musica: pref.musica?.toUpperCase(),
-        cigarro: pref.cigarro?.toUpperCase(),
-        pet: pref.animais?.toUpperCase(),
+  function getUser(){
+    getToken().then(token => {
+      api.get("/user/me", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      .then(response => {
+        setName(response.data.nome)
+        const pref = response.data.preferenciasDto
+        setPreferences({
+          conversa: pref.conversa?.toUpperCase(),
+          musica: pref.musica?.toUpperCase(),
+          cigarro: pref.cigarro?.toUpperCase(),
+          pet: pref.animais?.toUpperCase(),
+        })
       })
     })
-  })
-}, [])
+  }
+  useEffect(() => {
+    getUser()
+  }, [])
+
+  useFocusEffect(
+    useCallback(() => {
+      getUser()
+    }, [])
+  );
 
   return (
     <ScrollView className="flex-1 bg-vintage-grape-300">
