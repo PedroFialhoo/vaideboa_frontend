@@ -9,7 +9,6 @@ import { useFocusEffect } from "@react-navigation/native";
 
 export default function Account() {
   const [name, setName] = useState<string | null>(null);
-
   const [preferences, setPreferences] = useState({
     conversa: "",
     musica: "",
@@ -71,7 +70,7 @@ export default function Account() {
         </Text>
       </View>
 
-      <Preferences preferences={preferences} setPreferences={setPreferences}/>
+      <Preferences preferences={preferences} setPreferences={setPreferences} />
     </ScrollView>
   );
 }

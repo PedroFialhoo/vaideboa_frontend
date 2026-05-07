@@ -325,13 +325,13 @@ export default function Settings() {
                         );
                       })}
                   </View>
-                  {
-                    message.length > 0
-                    &&
-                    <Text className={`text-center mt-2 ${goodMessage ? 'text-green-700' : 'text-red-700'}`}>
-                      {message}
-                    </Text>
-                  }
+                  {message.length > 0 && (
+                    <View className={`mt-4 p-3 rounded-2xl border ${goodMessage ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
+                      <Text className={`text-center font-bold text-xs ${goodMessage ? 'text-green-700' : 'text-red-700'}`}>
+                        {message}
+                      </Text>
+                    </View>
+                  )}
                 </View>                
                   <TouchableOpacity className="bg-velvet-orchid-700 rounded-xl p-3 flex-row items-center justify-center mt-5"
                     onPress={updateUser}
@@ -426,13 +426,13 @@ export default function Settings() {
                       </TouchableOpacity>
                     </View>
                   </View>
-                  {
-                    message.length > 0
-                    &&
-                    <Text className={`text-center mt-3 ${goodMessage ? 'text-green-700' : 'text-red-700'}`}>
-                      {message}
-                    </Text>
-                  }
+                  {message.length > 0 && (
+                    <View className={`mt-4 p-3 rounded-2xl border ${goodMessage ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
+                      <Text className={`text-center font-bold text-xs ${goodMessage ? 'text-green-700' : 'text-red-700'}`}>
+                        {message}
+                      </Text>
+                    </View>
+                  )}
                   <TouchableOpacity
                     className="bg-velvet-orchid-700 rounded-xl p-3 flex-row items-center justify-center mt-3"
                     onPress={updateUserPassword}
