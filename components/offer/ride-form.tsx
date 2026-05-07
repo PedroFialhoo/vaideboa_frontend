@@ -180,9 +180,11 @@ export default function RideForm({
         </View>
         {
            messageError ? (
-           <Text className="text-red-500 text-sm mb-4 text-center">
-              {messageError}
-           </Text>
+           <View className="mb-2 p-3 rounded-2xl border bg-red-50 border-red-200">
+             <Text className="text-center font-bold text-xs text-red-700}">
+               {messageError}
+             </Text>
+           </View>
            ) : null
         }
         {/* Botão */}
