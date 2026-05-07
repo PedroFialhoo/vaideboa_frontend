@@ -62,7 +62,7 @@ export default function Account() {
           </TouchableOpacity>
         </View>
 
-        <Text className="text-white font-black text-2xl mt-4">
+        <Text className="text-white font-black text-2xl mt-4 max-w-[80%] text-center">
           {name}
         </Text>
 

@@ -93,8 +93,8 @@ export default function Home() {
               <Star size={20} color="#16a34a" />
             </View>
             <View className="flex-1">
-              <Text className="text-velvet-orchid-900 font-bold">Segurança Acadêmica</Text>
-              <Text className="text-gray-500 text-xs font-medium">Apenas alunos da instituição verificados.</Text>
+              <Text className="text-velvet-orchid-900 font-bold">Segurança</Text>
+              <Text className="text-gray-500 text-xs font-medium">Modo feminino e botão de emergência.</Text>
             </View>
           </View>
 

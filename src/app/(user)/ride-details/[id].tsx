@@ -227,20 +227,27 @@ export default function SearchDetails() {
         <View className="flex-1 bg-white rounded-t-[45px] border border-velvet-orchid-400 px-8 pt-8 shadow-2xl">
           {/* Motorista e Vagas */}
           <View className="flex-row items-center justify-between mb-8">
-            <View className="flex-row items-center">
+            <View className="flex-row items-center flex-1">
               <View className="bg-purple-x11-100 p-3 rounded-2xl mr-4">
                 <User size={28} color="#7b4d91" />
               </View>
-              <View>
-                <Text className="text-velvet-orchid-900 font-black text-xl">
+
+              <View className="flex-1">
+                <Text 
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                  className="text-velvet-orchid-900 font-black text-xl"
+                >
                   {ride.nome}
                 </Text>
+
                 <Text className="text-gray-400 text-xs font-bold uppercase tracking-widest">
                   Motorista
                 </Text>
               </View>
             </View>
-            <View className="bg-purple-x11-50 px-4 py-2 rounded-2xl border border-purple-x11-100">
+
+            <View className="bg-purple-x11-50 px-4 py-2 rounded-2xl border border-purple-x11-100 ml-2">
               <Text className="text-purple-x11-700 font-black">
                 {ride.vagasDisponiveis} vagas
               </Text>
