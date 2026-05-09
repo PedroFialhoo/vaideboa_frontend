@@ -32,6 +32,7 @@ export default function Account() {
           cigarro: pref.cigarro?.toUpperCase(),
           pet: pref.animais?.toUpperCase(),
         })
+        console.log(preferences)
       })
     })
   }
@@ -46,8 +47,8 @@ export default function Account() {
   );
 
   return (
-    <ScrollView className="flex-1 bg-vintage-grape-300">
-      <View className="bg-velvet-orchid-700 pt-16 pb-24 items-center rounded-b-[1000px] shadow-xl">
+    <ScrollView className="flex-1 bg-vintage-grape-200">
+      <View className="bg-velvet-orchid-900 pt-12 pb-12 items-center rounded-b-[100px] shadow-xl">
         <View className="relative">
           <View className="w-32 h-32 rounded-full border-4 border-white overflow-hidden bg-platinum">
             <Image 

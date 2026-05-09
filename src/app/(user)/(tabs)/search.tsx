@@ -100,9 +100,20 @@ export default function Search() {
         }
       })
       .catch((error) => {
-        console.error("Erro completo:", error.response?.data);
-        setMessageError("Erro ao buscar caronas.");
-      })
+          if (error.response) {
+            // Backend respondeu com erro
+            console.error("Status:", error.response.status);
+            console.error("Data:", error.response.data);
+          } else if (error.request) {
+            // Requisição enviada mas sem resposta
+            console.error("Sem resposta do servidor:", error.request);
+          } else {
+            // Erro antes da requisição
+            console.error("Erro:", error.message);
+          }
+
+          setMessageError("Erro ao buscar caronas.");
+        })
       .finally(() => {
         setLoading(false);
       });

@@ -1,5 +1,5 @@
 import { View, Text, TouchableOpacity, Image, ScrollView } from "react-native";
-import { Car, Search, MapPin, Star, Clock } from "lucide-react-native";
+import { Car, Search, MapPin, Star, Clock, PlusCircle } from "lucide-react-native";
 import { Link, useFocusEffect, useRouter } from "expo-router";
 import "@/global.css";
 import { getToken } from "@/src/services/storage";
@@ -34,7 +34,7 @@ export default function Home() {
     );
 
   return (
-    <ScrollView className="flex-1 bg-platinum" bounces={false}>
+    <ScrollView className="flex-1 bg-vintage-grape-200" bounces={false}>
       {/* Header com Boas-vindas */}
       <View className="bg-velvet-orchid-900 pt-20 pb-12 px-8 rounded-b-[50px] shadow-2xl">
         <View className="flex-row justify-between items-center mb-6">
@@ -54,31 +54,31 @@ export default function Home() {
       </View>
 
       {/* Grid de Ações Principais */}
-      <View className="px-6 -mt-8 flex-row gap-4">
-        {/* Iniciar Carona (Motorista) */}
-        <TouchableOpacity 
-          activeOpacity={0.9}
-          onPress={() => router.push("/offer")}
-          className="flex-1 bg-white p-6 rounded-[32px] shadow-lg border border-purple-x11-50 items-center"
-        >
-          <View className="bg-velvet-orchid-700 p-4 rounded-2xl mb-4">
-            <Logo width={32} height={32} fill="white" />
-          </View>
-          <Text className="text-velvet-orchid-900 font-black text-center text-lg">Iniciar Carona</Text>
-          <Text className="text-gray-400 text-[10px] text-center mt-1 font-bold uppercase tracking-widest">Eu vou dirigir</Text>
-        </TouchableOpacity>
-
+      <View className="px-6 -mt-8 flex-row gap-4">       
         {/* Buscar Carona (Passageiro) */}
         <TouchableOpacity 
           activeOpacity={0.9}
           onPress={() => router.push("/search")}
-          className="flex-1 bg-white p-6 rounded-[32px] shadow-lg border border-purple-x11-50 items-center"
+          className="flex-1 bg-platinum-50 p-6 rounded-[32px] shadow-lg border border-purple-x11-50 items-center"
         >
           <View className="bg-purple-x11-100 p-4 rounded-2xl mb-4">
             <Search size={32} color="#7b4d91" />
           </View>
           <Text className="text-velvet-orchid-900 font-black text-center text-lg">Buscar Carona</Text>
-          <Text className="text-gray-400 text-[10px] text-center mt-1 font-bold uppercase tracking-widest">Quero uma vaga</Text>
+          <Text className="text-gray-500 text-[10px] text-center mt-1 font-bold uppercase tracking-widest">Quero uma vaga</Text>
+        </TouchableOpacity>
+
+        {/* Iniciar Carona (Motorista) */}
+        <TouchableOpacity 
+          activeOpacity={0.9}
+          onPress={() => router.push("/offer")}
+          className="flex-1 bg-platinum-50 p-6 rounded-[32px] shadow-lg border border-purple-x11-50 items-center"
+        >
+          <View className="bg-velvet-orchid-700 p-4 rounded-2xl mb-4">
+            <PlusCircle size={32} color="white" />
+          </View>
+          <Text className="text-velvet-orchid-900 font-black text-center text-lg">Iniciar Carona</Text>
+          <Text className="text-gray-500 text-[10px] text-center mt-1 font-bold uppercase tracking-widest">Eu vou dirigir</Text>
         </TouchableOpacity>
       </View>
 
@@ -88,7 +88,7 @@ export default function Home() {
         
         <View className="space-y-4">
           {/* Card 1 */}
-          <View className="flex-row items-center bg-white/50 p-4 rounded-2xl border border-white mb-3">
+          <View className="flex-row items-center bg-platinum-50 p-4 rounded-2xl border border-white mb-3">
             <View className="bg-green-100 p-2 rounded-xl mr-4">
               <Star size={20} color="#16a34a" />
             </View>
@@ -99,7 +99,7 @@ export default function Home() {
           </View>
 
           {/* Card 2 */}
-          <View className="flex-row items-center bg-white/50 p-4 rounded-2xl border border-white mb-3">
+          <View className="flex-row items-center bg-platinum-50 p-4 rounded-2xl border border-white mb-3">
             <View className="bg-blue-100 p-2 rounded-xl mr-4">
               <MapPin size={20} color="#2563eb" />
             </View>
@@ -110,7 +110,7 @@ export default function Home() {
           </View>
 
           {/* Card 3 */}
-          <View className="flex-row items-center bg-white/50 p-4 rounded-2xl border border-white mb-10">
+          <View className="flex-row items-center bg-platinum-50 p-4 rounded-2xl border border-white mb-10">
             <View className="bg-orange-100 p-2 rounded-xl mr-4">
               <Clock size={20} color="#ea580c" />
             </View>

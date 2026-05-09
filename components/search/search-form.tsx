@@ -131,7 +131,7 @@ export default function SearchForm({
       </Pressable>
 
       {messageError ? (
-        <View className="mb-2 p-3 rounded-2xl border bg-red-50 border-red-200">
+        <View className="mt-3 mb-2 p-3 rounded-2xl border bg-red-50 border-red-200">
           <Text className="text-center font-bold text-xs text-red-700}">
             {messageError}
           </Text>

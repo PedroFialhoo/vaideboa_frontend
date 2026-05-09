@@ -179,7 +179,7 @@ export default function Preferences({ preferences, setPreferences }: Props) {
             </View>
             <View className="flex-1">
               <Text className="font-bold text-velvet-orchid-900">Pets</Text>
-              <Text className="text-gray-400 text-[10px]">Animais de estimação</Text>
+              <Text className="text-gray-400 text-[10px]">Ocupando vaga e com caixa de transporte</Text>
             </View>
             <ChevronRight size={18} color="#7b4d91" style={{ transform: [{ rotate: openItem === "pet" ? "90deg" : "0deg" }] }} />
           </TouchableOpacity>

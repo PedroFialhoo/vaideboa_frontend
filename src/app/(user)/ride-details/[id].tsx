@@ -224,7 +224,7 @@ export default function SearchDetails() {
         </View>
 
         {/* Conteúdo Detalhado */}
-        <View className="flex-1 bg-white rounded-t-[45px] border border-velvet-orchid-400 px-8 pt-8 shadow-2xl">
+        <View className="flex-1 bg-white rounded-t-[45px] border border-velvet-orchid-700 px-8 pt-8 shadow-2xl">
           {/* Motorista e Vagas */}
           <View className="flex-row items-center justify-between mb-8">
             <View className="flex-row items-center flex-1">
@@ -276,33 +276,34 @@ export default function SearchDetails() {
             </View>
           </View>
 
-          {/* Endereços Resumidos */}
-          <View className="space-y-4 mb-10">
+          {/* Itinerário Estilo Timeline */}
+          <View className="mb-10 px-2">
+          {/* Ponto de Saída */}
             <View className="flex-row items-start">
-              <View className="w-2 h-2 rounded-full bg-purple-x11-400 mt-2 mr-3" />
+              <View className="items-center mr-4">
+                <View className="w-5 h-5 rounded-full bg-purple-x11-100 items-center justify-center border border-purple-x11-200">
+                  <View className="w-2 h-2 rounded-full bg-purple-x11-600" />
+                </View>
+                <View className="w-[2px] h-12 bg-purple-x11-100 my-1" />
+              </View>
               <View className="flex-1">
-                <Text className="text-gray-400 text-sm font-bold uppercase">
-                  Saída
-                </Text>
-                <Text
-                  className="text-velvet-orchid-900 font-medium"
-                  numberOfLines={2}
-                >
+                <Text className="text-purple-x11-400 text-[10px] font-black uppercase tracking-[1px] mb-1">Ponto de Partida</Text>
+                <Text className="text-velvet-orchid-900 font-bold text-base leading-5" numberOfLines={2}>
                   {ride.saidaTexto}
                 </Text>
               </View>
             </View>
-            <View className="h-6 w-[1px] bg-platinum ml-[3.5px]" />
-            <View className="flex-row items-start">
-              <View className="w-2 h-2 rounded-full bg-velvet-orchid-700 mt-2 mr-3" />
+
+            {/* Ponto de Destino */}
+            <View className="flex-row items-start mt-[-4px]">
+              <View className="items-center mr-4">
+                <View className="w-5 h-5 rounded-full bg-velvet-orchid-700 items-center justify-center shadow-sm">
+                  <MapPin size={12} color="white" />
+                </View>
+              </View>
               <View className="flex-1">
-                <Text className="text-gray-400 text-sm font-bold uppercase">
-                  Destino
-                </Text>
-                <Text
-                  className="text-velvet-orchid-900 font-medium"
-                  numberOfLines={2}
-                >
+                <Text className="text-velvet-orchid-500 text-[10px] font-black uppercase tracking-[1px] mb-1">Destino Final</Text>
+                <Text className="text-velvet-orchid-900 font-bold text-base leading-5" numberOfLines={2}>
                   {ride.destinoTexto}
                 </Text>
               </View>

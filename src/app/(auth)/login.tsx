@@ -25,6 +25,16 @@ export default function Login() {
   }
 
   const login = () => {
+
+    setMessageError("")
+
+    if(!email){
+      return setMessageError("Precisamos do seu email para fazer o login!")
+    }
+    if(!password){
+      return setMessageError("E a senha? Precisamos dela também!")
+    }
+
     api.post("/authenticate", { username: email, password })
     .then(async response => {
       const token = response.data;
@@ -116,24 +126,22 @@ export default function Login() {
               <Text className=" text-purple-x11-700 underline">
                 Esqueceu a senha?
               </Text>
-            </TouchableOpacity>
-
-            {
-              messageError ? (
-                <View className="mb-2 p-3 rounded-2xl border bg-red-50 border-red-200">
-                  <Text className="text-center font-bold text-xs text-red-700}">
-                    {messageError}
-                  </Text>
-                </View>
-              ) : null
-            }
-            
+            </TouchableOpacity>            
             <Pressable 
               className="bg-velvet-orchid-700 w-full h-14 rounded-2xl flex items-center justify-center shadow-lg active:opacity-90 active:scale-[0.98] transition-all"
               onPress={login}
             >
               <Text className="text-white font-bold text-lg">Entrar na conta</Text>
             </Pressable>
+            {
+              messageError ? (
+                <View className="mt-4 mb-5 p-3 rounded-2xl border bg-red-50 border-red-200">
+                  <Text className="text-center font-bold text-xs text-red-700}">
+                    {messageError}
+                  </Text>
+                </View>
+              ) : null
+            }
           </View>
 
           <View className="mt-auto mb-5">

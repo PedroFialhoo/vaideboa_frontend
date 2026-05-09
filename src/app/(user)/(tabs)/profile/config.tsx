@@ -188,7 +188,7 @@ export default function Settings() {
   }
 
   return (
-    <View className="flex-1 bg-vintage-grape-300">
+    <View className="flex-1 bg-vintage-grape-200">
       <ScrollView className="px-6 pt-6" showsVerticalScrollIndicator={false}>
         <View className="bg-white rounded-3xl p-6 shadow-sm mb-6">
           <Text className="text-velvet-orchid-900 font-black text-lg mb-4">Configurações da Conta</Text>

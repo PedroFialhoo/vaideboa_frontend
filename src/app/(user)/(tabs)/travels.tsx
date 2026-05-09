@@ -55,7 +55,7 @@ export default function MyTravels() {
   });
 
   return (
-    <View className="flex-1 bg-platinum">
+    <View className="flex-1 bg-vintage-grape-200">
       <View className="bg-velvet-orchid-900 pt-16 pb-12 px-8 rounded-b-[40px] shadow-xl">
         <Text className="text-white font-black text-3xl">Minhas Viagens</Text>
         <Text className="text-purple-x11-200 text-sm font-medium mt-1">Filtre e gerencie seu histórico</Text>
@@ -143,13 +143,18 @@ export default function MyTravels() {
 
               <View className="flex-row mb-4">
                 <View className="items-center mr-3">
-                  <View className="w-2 h-2 rounded-full bg-purple-x11-400" />
+                  <View className="w-5 h-5 rounded-full bg-purple-x11-100 items-center justify-center border border-purple-x11-200">
+                    <View className="w-2 h-2 rounded-full bg-purple-x11-600" />
+                  </View>
                   <View className="w-[1px] h-8 bg-purple-x11-100 my-1" />
-                  <MapPin size={12} color="#7b4d91" />
+                  <View className="w-5 h-5 rounded-full bg-velvet-orchid-700 items-center justify-center shadow-sm">
+                    <MapPin size={12} color="white" />
+                  </View>
+                  
                 </View>
                 <View className="flex-1 justify-between">
-                  <Text className="text-velvet-orchid-900 font-bold text-xs" numberOfLines={1}>{ride.origemTexto}</Text>
-                  <Text className="text-velvet-orchid-900 font-bold text-xs" numberOfLines={1}>{ride.destinoTexto}</Text>
+                  <Text className="text-velvet-orchid-900 font-bold text-sm" numberOfLines={1}>{ride.origemTexto}</Text>
+                  <Text className="text-velvet-orchid-900 font-bold text-sm" numberOfLines={1}>{ride.destinoTexto}</Text>
                 </View>
               </View>
 
