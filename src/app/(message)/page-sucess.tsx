@@ -32,16 +32,16 @@ export default function PageStatus() {
   useEffect(() => {
     // animação
     progress.value = withTiming(1, { 
-      duration: 3000, 
+      duration: 2000, 
       easing: Easing.linear 
     });
 
     // navegação (JS thread)
     const timer = setTimeout(() => {
       if (to) {
-        router.push(to as any);
+        router.replace(to as any);
       }
-    }, 3000);
+    }, 2000);
 
     return () => clearTimeout(timer);
   }, []);
