@@ -17,6 +17,7 @@ import {
   View,
   Platform,
   Pressable,
+  KeyboardAvoidingView,
 } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 
@@ -73,7 +74,14 @@ export default function RideForm({
   };
 
   return (
-    <ScrollView className="flex-1 bg-platinum px-6 pt-6">
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
+    <ScrollView className="flex-1 bg-platinum px-6 pt-6"
+      keyboardShouldPersistTaps="handled"
+      contentContainerStyle={{ flexGrow: 1 }}
+    >
       <View className="bg-white rounded-3xl p-6 border border-purple-900 mb-6">
         <Text className="text-velvet-orchid-900 font-black text-xl mb-6">
           Detalhes da Carona
@@ -198,5 +206,6 @@ export default function RideForm({
         </Pressable>
       </View>
     </ScrollView>
+    </KeyboardAvoidingView>
   );
 }

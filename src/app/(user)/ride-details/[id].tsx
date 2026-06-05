@@ -81,7 +81,8 @@ export default function SearchDetails() {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then((response) => {
-        setRide(response.data);
+        console.log(response.data)
+        setRide(response.data)
         api.get("/carona/minhas", {
           headers: { Authorization: `Bearer ${token}` },
         })
@@ -201,6 +202,61 @@ export default function SearchDetails() {
     })
   }
 
+  const darkMapStyle = [
+    {
+      elementType: "geometry",
+      stylers: [{ color: "#18171c" }],
+    },
+    {
+      elementType: "labels.text.fill",
+      stylers: [{ color: "#c9c6d2" }],
+    },
+    {
+      elementType: "labels.text.stroke",
+      stylers: [{ color: "#111014" }],
+    },
+    {
+      featureType: "road",
+      elementType: "geometry",
+      stylers: [{ color: "#302d39" }],
+    },
+    {
+      featureType: "road",
+      elementType: "labels.text.fill",
+      stylers: [{ color: "#938ea4" }],
+    },
+    {
+      featureType: "water",
+      elementType: "geometry",
+      stylers: [{ color: "#220033" }],
+    },
+    {
+      featureType: "water",
+      elementType: "labels.text.fill",
+      stylers: [{ color: "#bb99ff" }],
+    },
+    {
+      featureType: "poi",
+      elementType: "geometry",
+      stylers: [{ color: "#32293d" }],
+    },
+    {
+      featureType: "landscape",
+      elementType: "geometry",
+      stylers: [{ color: "#19141f" }],
+    },
+    {
+      featureType: "transit",
+      elementType: "geometry",
+      stylers: [{ color: "#302d39" }],
+    },
+    {
+      featureType: "administrative",
+      elementType: "geometry.stroke",
+      stylers: [{ color: "#552f6a" }],
+    },
+  ];
+
   return (
     <View className="flex-1 bg-platinum">
       
@@ -225,6 +281,7 @@ export default function SearchDetails() {
           <MapView
             ref={mapRef}
             style={{ flex: 1 }}
+            customMapStyle={darkMapStyle}
             initialRegion={{
               latitude: (ride.latSaida + ride.latDestino) / 2,
               longitude: (ride.lonSaida + ride.lonDestino) / 2,
@@ -243,13 +300,13 @@ export default function SearchDetails() {
               </View>
             </Marker>
             {coords.length > 0 && (
-              <Polyline coordinates={coords} strokeWidth={4} strokeColor="#7b4d91" />
+              <Polyline coordinates={coords} strokeWidth={4} strokeColor="#dd99ff" />
             )}
           </MapView>
         </View>
 
         {/* CARD PRINCIPAL DE DETALHES */}
-        <View className="flex-1 bg-vintage-grape-50 rounded-t-[45px] -mt-10 px-8 pt-8 shadow-2xl pb-12 border border-purple-x11-900">
+        <View className="flex-1 bg-vintage-grape-50 rounded-t-[45px] -mt-10 px-8 pt-8 shadow-2xl pb-12 border border-purple-x11-800">
           
           {/* HEADER: MOTORISTA E VAGAS */}
           <View className="flex-row items-center justify-between mb-8">

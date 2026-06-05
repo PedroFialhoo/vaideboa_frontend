@@ -27,6 +27,7 @@ export default function Login() {
   const login = () => {
 
     setMessageError("")
+    console.log('login  ')
 
     if(!email){
       return setMessageError("Precisamos do seu email para fazer o login!")
@@ -43,13 +44,10 @@ export default function Login() {
     })
     .catch(err => {
       setMessageError(err.response?.data.message || "Ocorreu um erro ao acessar a conta. Tente novamente.")
-    });    
+    });   
+    console.log('login  2') 
  
   }
-
-  // const login = () => {
-  //     router.replace("/home");
-  // }
 
   return (
     <KeyboardAvoidingView
@@ -129,7 +127,7 @@ export default function Login() {
             </TouchableOpacity>            
             <Pressable 
               className="bg-velvet-orchid-700 w-full h-14 rounded-2xl flex items-center justify-center shadow-lg active:opacity-90 active:scale-[0.98] transition-all"
-              onPress={login}
+              onPress={login} 
             >
               <Text className="text-white font-bold text-lg">Entrar na conta</Text>
             </Pressable>
