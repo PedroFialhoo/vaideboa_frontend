@@ -220,7 +220,7 @@ export default function Settings() {
                 <View className="space-y-4">
                   <View>
                     <Text className="text-velvet-orchid-700 font-bold text-xs mb-1 ml-1">NOME</Text>
-                    <TextInput placeholder="Seu nome" className="bg-platinum/30 rounded-xl p-3 text-velvet-orchid-900 border" 
+                    <TextInput placeholder="Seu nome" className="bg-platinum/30 placeholder:text-velvet-orchid-600 rounded-xl p-3 text-velvet-orchid-900 border" 
                       value={name}
                       onChangeText={setName}
                     />
@@ -375,7 +375,7 @@ export default function Settings() {
                       <TextInput
                         placeholder="Senha super secreta"
                         secureTextEntry={!showOldPassword}
-                        className="flex-1 py-3 text-velvet-orchid-900"
+                        className="flex-1 py-3 text-velvet-orchid-900 placeholder:text-velvet-orchid-600"
                         value={oldPassword}
                         onChangeText={setOldPassword}
                       />
@@ -394,7 +394,7 @@ export default function Settings() {
                       <TextInput
                         placeholder="Nova senha mega secreta"
                         secureTextEntry={!showNewPassword}
-                        className="flex-1 py-3 text-velvet-orchid-900"
+                        className="flex-1 py-3 text-velvet-orchid-900 placeholder:text-velvet-orchid-600"
                         value={newPassword}
                         onChangeText={setNewPassword}
                       />
@@ -413,7 +413,7 @@ export default function Settings() {
                       <TextInput
                         placeholder="Repete a nova senha hiper secreta"
                         secureTextEntry={!showNewPasswordConfirm}
-                        className="flex-1 py-3 text-velvet-orchid-900"
+                        className="flex-1 py-3 text-velvet-orchid-900 placeholder:text-velvet-orchid-600"
                         value={newPasswordConfirm}
                         onChangeText={setNewPasswordConfirm}
                       />

@@ -177,7 +177,7 @@ export default function RideForm({
 
             <TextInput
               placeholder="0,00"
-              className="flex-1 text-xl ml-2"
+              className="flex-1 text-xl ml-2 placeholder:text-velvet-orchid-600"
               keyboardType="decimal-pad"
               value={price ? String(price) : ""}
               onChangeText={(text) =>

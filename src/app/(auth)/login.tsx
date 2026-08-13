@@ -55,14 +55,18 @@ export default function Login() {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       <ScrollView
-        contentContainerStyle={{ flexGrow: 1 }}
+        contentContainerStyle={{
+          flexGrow: 1,
+          backgroundColor: "#ffffff", // sua cor platinum
+        }}
         keyboardShouldPersistTaps="handled"
-        className="bg-platinum"
       >
-        <View className="flex-1 px-8 pt-16 pb-10 justify-between">
-          
+        <View
+          className="flex-1 px-8 pt-16 pb-10 justify-between"
+          style={{ backgroundColor: "#ffffff" }}
+        >          
           <View className="items-center">
-            <View className="bg-white p-4 rounded-3xl shadow-sm mb-6">
+            <View className="bg-white p-4 rounded-3xl mb-6">
               <Image
                 source={require("../../assets/images/logo-vdb.png")}
                 className="w-32 h-32"
@@ -90,7 +94,7 @@ export default function Login() {
                 <InputField
                   placeholder="E-mail"
                   keyboardType="email-address"
-                  className="text-velvet-orchid-900"
+                  className="text-velvet-orchid-900 placeholder:text-velvet-orchid-600"
                   value={email}
                   onChangeText={setEmail}
                 />
@@ -107,7 +111,7 @@ export default function Login() {
                 <InputField
                   placeholder="Senha "
                   secureTextEntry={!passwordVisible}
-                  className="text-velvet-orchid-900 flex-1"
+                  className="text-velvet-orchid-900 flex-1 placeholder:text-velvet-orchid-600"
                   value={password}
                   onChangeText={setPassword}
                 />

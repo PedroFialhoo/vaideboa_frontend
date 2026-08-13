@@ -54,14 +54,18 @@ export default function Signup() {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       <ScrollView
-        contentContainerStyle={{ flexGrow: 1 }}
+        contentContainerStyle={{
+          flexGrow: 1,
+          backgroundColor: "#ffffff", // sua cor platinum
+        }}
         keyboardShouldPersistTaps="handled"
-        className="bg-platinum"
       >
-        <View className="flex-1 px-8 pt-12 pb-10 justify-between">
-          
+        <View
+          className="flex-1 px-8 pt-16 pb-10 justify-between"
+          style={{ backgroundColor: "#ffffff" }}
+        >  
           <View className="items-center">
-            <View className="bg-white p-3 rounded-3xl shadow-sm mb-4">
+            <View className="bg-white p-3 rounded-3xl mb-4">
               <Image
                 source={require("../../assets/images/logo-vdb.png")}
                 className="w-28 h-28"
@@ -88,7 +92,7 @@ export default function Signup() {
                 <User size={18} color="#7b4d91" className="mr-2" />
                 <InputField
                   placeholder="Como quer ser chamado?"
-                  className="text-velvet-orchid-900"
+                  className="text-velvet-orchid-900 placeholder:text-velvet-orchid-600"
                   value={name}
                   onChangeText={setName}
                 />
@@ -105,7 +109,7 @@ export default function Signup() {
                 <InputField
                   placeholder="Seu melhor e-mail"
                   keyboardType="email-address"
-                  className="text-velvet-orchid-900"
+                  className="text-velvet-orchid-900 placeholder:text-velvet-orchid-600"
                   value={email}
                   onChangeText={setEmail}
                 />
@@ -122,7 +126,7 @@ export default function Signup() {
                 <InputField
                   placeholder="Crie uma senha forte"
                   secureTextEntry={!passwordVisible}
-                  className="text-velvet-orchid-900 flex-1"
+                  className="text-velvet-orchid-900 placeholder:text-velvet-orchid-600 flex-1"
                   value={password}
                   onChangeText={setPassword}
                 />

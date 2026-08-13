@@ -202,6 +202,39 @@ export default function SearchDetails() {
     })
   }
 
+  function recuseRide(pedidoId: number) {
+    getToken().then(token => {
+      if (!token) return
+      
+      api.post(`/pedido/recusar/${pedidoId}`, null,
+      {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      .then(response => {
+        console.log("Pedido recusado: ", response)
+        router.replace({
+          pathname: "/page-sucess",
+          params: {
+            sucess: "true",
+            message: "Pedido recusado com sucesso!",
+            to: `/ride-details/${id}`
+          }
+        })  
+      })
+      .catch(err => {
+        console.log("Erro ao recusar carona: ", err)
+        router.replace({
+          pathname: "/page-sucess",
+          params: {
+            sucess: "false",
+            message: "Erro ao recusar pedido!",
+            to: `/ride-details/${id}`
+          }
+        })
+      })
+    })
+  }
+
   const darkMapStyle = [
     {
       elementType: "geometry",
@@ -606,6 +639,7 @@ export default function SearchDetails() {
                           <TouchableOpacity
                             activeOpacity={0.85}
                             className="flex-1 bg-red-50 border border-red-400 h-14 rounded-2xl flex-row items-center justify-center"
+                            onPress={() => recuseRide(pedido.idPedidoCarona)}
                           >
                             <X size={18} color="#ef4444" />
                             <Text className="text-red-500 font-black ml-2 text-sm">

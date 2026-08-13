@@ -49,7 +49,7 @@ export default function ForgetPassword() {
                 <InputField
                   placeholder="Confira o código enviado no seu e-mail"
                   keyboardType="numeric"
-                  className="text-velvet-orchid-900"
+                  className="text-velvet-orchid-900 placeholder:text-velvet-orchid-600"
                 />
               </Input>
             </View>
@@ -64,7 +64,7 @@ export default function ForgetPassword() {
                 <InputField
                   placeholder="Crie uma senha forte"
                   secureTextEntry={!passwordVisible}
-                  className="text-velvet-orchid-900 flex-1"
+                  className="text-velvet-orchid-900 flex-1 placeholder:text-velvet-orchid-600"
                 />
                 <TouchableOpacity onPress={() => setPasswordVisible(!passwordVisible)} className="pr-2">
                   {passwordVisible ? 

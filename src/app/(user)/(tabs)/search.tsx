@@ -144,7 +144,7 @@ export default function Search() {
         </View>
       </View>
       
-      <View className="flex-1 p-3">
+      <View className="flex-1">
         
         {step === 1 && <Origin origin={origin} setOrigin={setOrigin} next={handleNext} />}
         {step === 2 && <Destination origin={origin} destination={destination} setDestination={setDestination} next={handleNext} />}   
