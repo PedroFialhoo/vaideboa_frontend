@@ -8,11 +8,13 @@ import {
   Clock,
   MapPin,
   Navigation,
+  Play,
   User,
   Check,
   X,
   Clock3,
-  ShieldCheck
+  ShieldCheck,
+  Star
 } from "lucide-react-native";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -70,6 +72,7 @@ export default function SearchDetails() {
   const mapRef = useRef<MapView>(null);
   const [messageError, setMessageError] = useState("");
   const [textBtn, setTextBtn] = useState("Carregando...");
+  const [papel, setPapel] = useState<"MOTORISTA" | "PASSAGEIRO" | null>(null);
   const [filter, setFilter] = useState<"TODOS" | "ACEITOS" | "PENDENTES">("TODOS");
 
   useEffect(() => {
@@ -92,9 +95,10 @@ export default function SearchDetails() {
           
           if (minhaCarona) {
             if (minhaCarona.papel === "MOTORISTA") {
-              setTextBtn("Marcar como realizada");
+              setPapel("MOTORISTA");
               fetchPedidos(token);
             } else {
+              setPapel("PASSAGEIRO");
               setTextBtn("Cancelar reserva");
             }
           } else {
@@ -157,8 +161,41 @@ export default function SearchDetails() {
     });
   };
 
+  const iniciarCarona = () => {
+    setMessageError("");
+    getToken().then((token) => {
+      api.get(`/carona/iniciar/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      .then(() => {
+        router.replace({
+          pathname: "/page-sucess",
+          params: { sucess: "true", message: "Carona iniciada com sucesso!", to: `/ride-details/${id}` }
+        });
+      })
+      .catch((error) => setMessageError(error.response?.data || "Erro ao iniciar carona"));
+    });
+  };
+
+  const finalizarCarona = () => {
+    setMessageError("");
+    getToken().then((token) => {
+      api.get(`/carona/finalizar/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      .then(() => {
+        router.replace({
+          pathname: "/page-sucess",
+          params: { sucess: "true", message: "Carona finalizada com sucesso!", to: `/ride-details/${id}` }
+        });
+      })
+      .catch((error) => setMessageError(error.response?.data || "Erro ao finalizar carona"));
+    });
+  };
+
   const handleAction = () => {
     if (textBtn === "Solicitar reserva") requestRide();
+    else if (textBtn === "Cancelar reserva") setMessageError("Cancelamento de reserva não disponível no momento");
   };
 
   if (!ride) {
@@ -408,16 +445,53 @@ export default function SearchDetails() {
             </View>
           </View>
 
-          {/* BOTÃO DE AÇÃO PRINCIPAL */}
-          <Pressable 
-            className="bg-velvet-orchid-700 h-16 rounded-2xl items-center justify-center shadow-lg active:scale-[0.97] mb-8" 
-            onPress={handleAction}
-          >
-            <Text className="text-white font-black text-lg">{textBtn}</Text>
-          </Pressable>
+          {/* BOTÕES DE AÇÃO DO MOTORISTA */}
+          {papel === "MOTORISTA" && !ride.realizado && (
+            <View className="gap-3 mb-8">
+              <Pressable
+                className="bg-purple-x11-700 h-16 rounded-2xl items-center justify-center shadow-lg active:scale-[0.97] flex-row"
+                onPress={iniciarCarona}
+              >
+                <Play size={20} color="white" className="mr-2" />
+                <Text className="text-white font-black text-lg">Iniciar Carona</Text>
+              </Pressable>
+
+              <Pressable
+                className="bg-velvet-orchid-700 h-16 rounded-2xl items-center justify-center shadow-lg active:scale-[0.97] flex-row"
+                onPress={finalizarCarona}
+              >
+                <Check size={20} color="white" className="mr-2" />
+                <Text className="text-white font-black text-lg">Marcar como realizada</Text>
+              </Pressable>
+            </View>
+          )}
+
+          {/* BOTÃO DE AÇÃO DO PASSAGEIRO */}
+          {papel !== "MOTORISTA" && !ride.realizado && (
+            <Pressable
+              className="bg-velvet-orchid-700 h-16 rounded-2xl items-center justify-center shadow-lg active:scale-[0.97] mb-8"
+              onPress={handleAction}
+            >
+              <Text className="text-white font-black text-lg">{textBtn}</Text>
+            </Pressable>
+          )}
+
+          {/* BOTÃO AVALIAR (quando a carona foi realizada) */}
+          {ride.realizado && (
+            <Pressable
+              className="bg-green-600 h-16 rounded-2xl items-center justify-center shadow-lg active:scale-[0.97] mb-8 flex-row"
+              onPress={() => router.push({
+                pathname: "/review/[id]",
+                params: { id, nome: papel === "PASSAGEIRO" ? ride.nome : undefined }
+              } as any)}
+            >
+              <Star size={20} color="white" fill="white" className="mr-2" />
+              <Text className="text-white font-black text-lg">Avaliar Carona</Text>
+            </Pressable>
+          )}
 
           {/* SEÇÃO DE LISTAGEM DE PEDIDOS */}
-          {textBtn === "Marcar como realizada" && (
+          {papel === "MOTORISTA" && (
             <View className="mt-6 border-t border-platinum pt-6">
               
               {/* HEADER */}

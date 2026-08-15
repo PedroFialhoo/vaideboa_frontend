@@ -64,6 +64,7 @@ export default function Offer() {
           saidaLng: origin.longitude,
           destinoLat: destination.latitude,
           destinoLng: destination.longitude,
+          paradas: [],
         },
         {
           headers: {
