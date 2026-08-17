@@ -452,7 +452,6 @@ export default function SearchDetails() {
                 className="bg-purple-x11-700 h-16 rounded-2xl items-center justify-center shadow-lg active:scale-[0.97] flex-row"
                 onPress={iniciarCarona}
               >
-                <Play size={20} color="white" className="mr-2" />
                 <Text className="text-white font-black text-lg">Iniciar Carona</Text>
               </Pressable>
 
@@ -460,7 +459,6 @@ export default function SearchDetails() {
                 className="bg-velvet-orchid-700 h-16 rounded-2xl items-center justify-center shadow-lg active:scale-[0.97] flex-row"
                 onPress={finalizarCarona}
               >
-                <Check size={20} color="white" className="mr-2" />
                 <Text className="text-white font-black text-lg">Marcar como realizada</Text>
               </Pressable>
             </View>
@@ -485,7 +483,6 @@ export default function SearchDetails() {
                 params: { id, nome: papel === "PASSAGEIRO" ? ride.nome : undefined }
               } as any)}
             >
-              <Star size={20} color="white" fill="white" className="mr-2" />
               <Text className="text-white font-black text-lg">Avaliar Carona</Text>
             </Pressable>
           )}
