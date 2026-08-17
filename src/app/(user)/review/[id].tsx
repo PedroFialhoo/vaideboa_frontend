@@ -6,6 +6,8 @@ import { ChevronLeft, ShieldCheck, Star, User } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
   ScrollView,
   Text,
@@ -132,9 +134,14 @@ export default function Review() {
         <ChevronLeft size={24} color="#391f47" />
       </TouchableOpacity>
 
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+      >
       <ScrollView
         contentContainerStyle={{ flexGrow: 1 }}
         bounces={false}
+        keyboardShouldPersistTaps="handled"
         className="bg-platinum"
       >
         {/* HEADER */}
@@ -259,6 +266,7 @@ export default function Review() {
           </View>
         </View>
       </ScrollView>
+      </KeyboardAvoidingView>
     </View>
   );
 }

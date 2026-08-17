@@ -1,4 +1,4 @@
-import { View, Text, Image, KeyboardAvoidingView, Platform, ScrollView, Pressable, TouchableOpacity, Alert } from "react-native";
+import { View, Text, Image, KeyboardAvoidingView, ScrollView, Pressable, TouchableOpacity, Alert } from "react-native";
 import "@/global.css"
 import { Input, InputField } from "@/components/ui/input";
 import { Link, router } from "expo-router";
@@ -52,7 +52,7 @@ export default function Login() {
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      behavior="padding"
     >
       <ScrollView
         contentContainerStyle={{

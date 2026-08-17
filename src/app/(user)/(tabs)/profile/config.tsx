@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, Switch, TextInput, ScrollView } from "react-native";
+import { View, Text, TouchableOpacity, Switch, TextInput, ScrollView, KeyboardAvoidingView, Platform } from "react-native";
 import { User, Bell, ShieldCheck, LogOut, ChevronRight, Save, Lock, Smartphone, Contact, Calendar, EyeOff, Eye } from "lucide-react-native";
 import { useCallback, useEffect, useState } from "react";
 import "@/global.css"
@@ -189,7 +189,12 @@ export default function Settings() {
 
   return (
     <View className="flex-1 bg-vintage-grape-200">
-      <ScrollView className="px-6 pt-6" showsVerticalScrollIndicator={false}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
+      >
+      <ScrollView className="px-6 pt-6" showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         <View className="bg-white rounded-3xl p-6 shadow-sm mb-6">
           <Text className="text-velvet-orchid-900 font-black text-lg mb-4">Configurações da Conta</Text>
           
@@ -287,7 +292,10 @@ export default function Settings() {
                         <DateTimePicker
                           value={dateBirth ? new Date(dateBirth) : new Date()}
                           mode="date"
-                          display="default"
+                          display={Platform.OS === "ios" ? "compact" : "default"}
+                          locale="pt-BR"
+                          themeVariant="light"
+                          accentColor="#7b4d91"
                           onChange={(event, selectedDate) => {
                             setShowDatePicker(false);
                             if (selectedDate) {
@@ -471,6 +479,7 @@ export default function Settings() {
           <Text className="text-red-500 font-black text-lg">Sair da Conta</Text>
         </TouchableOpacity>
       </ScrollView>
+      </KeyboardAvoidingView>
     </View>
   );
 }

@@ -10,7 +10,7 @@ Expo (SDK 54) / React Native 0.81 app with expo-router, TypeScript, and NativeWi
 ## Setup gotchas
 
 - `.env` is gitignored. Create it from `.env.example` with `EXPO_PUBLIC_GOOGLE_MAPS_API_KEY`. Read it via `process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY` (search.tsx, components/offer/*.tsx). `env.d.ts` declares a stale `@env` module — ignore it, it's unused.
-- Backend base URL is hardcoded in `src/services/api.js:4` to a dev-machine LAN IP. The app will not reach the backend until this is changed to the running backend's IP. Endpoints require `Authorization: Bearer <token>`.
+- Backend base URL is hardcoded in `src/services/api.js:6` to a dev-machine LAN IP. The app will not reach the backend until this is changed to the running backend's IP. Endpoints require `Authorization: Bearer <token>`.
 
 ## Architecture
 

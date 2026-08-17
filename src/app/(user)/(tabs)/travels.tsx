@@ -38,7 +38,7 @@ export default function MyTravels() {
   useFocusEffect(useCallback(() => { fetchRides(); }, []));
 
   const onDateChange = (event: any, selectedDate?: Date) => {
-    setShowCalendar(Platform.OS === 'ios');
+    setShowCalendar(false);
     if (selectedDate) setFilterDate(selectedDate);
   };
 
@@ -106,7 +106,10 @@ export default function MyTravels() {
         <DateTimePicker
           value={filterDate || new Date()}
           mode="date"
-          display="default"
+          display={Platform.OS === "ios" ? "compact" : "default"}
+          locale="pt-BR"
+          themeVariant="light"
+          accentColor="#7b4d91"
           onChange={onDateChange}
         />
       )}
