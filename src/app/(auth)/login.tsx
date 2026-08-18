@@ -21,7 +21,7 @@ export default function Login() {
       ); 
       return;
     }
-    router.replace("/forget-password")
+    router.replace({ pathname: "/forget-password", params: { email } })
   }
 
   const login = () => {

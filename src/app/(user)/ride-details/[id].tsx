@@ -13,8 +13,7 @@ import {
   Check,
   X,
   Clock3,
-  ShieldCheck,
-  Star
+  ShieldCheck
 } from "lucide-react-native";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -55,6 +54,7 @@ type Pedido = {
   saidaTexto: string;
   destinoTexto: string;
   genero: string;
+  idAvaliacao?: number;
 };
 
 type Coord = {
@@ -73,6 +73,7 @@ export default function SearchDetails() {
   const [messageError, setMessageError] = useState("");
   const [textBtn, setTextBtn] = useState("Carregando...");
   const [papel, setPapel] = useState<"MOTORISTA" | "PASSAGEIRO" | null>(null);
+  const [minhaCaronaData, setMinhaCaronaData] = useState<any>(null);
   const [filter, setFilter] = useState<"TODOS" | "ACEITOS" | "PENDENTES">("TODOS");
 
   useEffect(() => {
@@ -94,6 +95,7 @@ export default function SearchDetails() {
           const minhaCarona = caronas.find((carona: any) => carona.id === Number(id));
           
           if (minhaCarona) {
+            setMinhaCaronaData(minhaCarona);
             if (minhaCarona.papel === "MOTORISTA") {
               setPapel("MOTORISTA");
               fetchPedidos(token);
@@ -475,15 +477,15 @@ export default function SearchDetails() {
           )}
 
           {/* BOTÃO AVALIAR (quando a carona foi realizada) */}
-          {ride.realizado && (
+          {ride.realizado && papel === "PASSAGEIRO" && minhaCaronaData?.idAvaliacao && (
             <Pressable
-              className="bg-green-600 h-16 rounded-2xl items-center justify-center shadow-lg active:scale-[0.97] mb-8 flex-row"
+              className="bg-purple-x11-100 border border-purple-x11-200 h-16 rounded-2xl items-center justify-center shadow-lg active:scale-[0.97] mb-8"
               onPress={() => router.push({
                 pathname: "/review/[id]",
-                params: { id, nome: papel === "PASSAGEIRO" ? ride.nome : undefined }
+                params: { id: String(minhaCaronaData.idAvaliacao), nome: ride.nome }
               } as any)}
             >
-              <Text className="text-white font-black text-lg">Avaliar Carona</Text>
+              <Text className="text-purple-x11-700 font-black text-lg">Avaliar</Text>
             </Pressable>
           )}
 
@@ -719,6 +721,17 @@ export default function SearchDetails() {
                           </TouchableOpacity>
                         </View>
                       }
+                      {pedido.statusPedido === "ACEITO" && ride.realizado && pedido.idAvaliacao && (
+                        <Pressable
+                          className="bg-purple-x11-100 border border-purple-x11-200 h-14 rounded-2xl items-center justify-center shadow-sm active:scale-[0.97]"
+                          onPress={() => router.push({
+                            pathname: "/review/[id]",
+                            params: { id: String(pedido.idAvaliacao), nome: pedido.nome }
+                          } as any)}
+                        >
+                          <Text className="text-purple-x11-700 font-black text-sm">Avaliar</Text>
+                        </Pressable>
+                      )}
                     </View>
                   ))}
                 </View>

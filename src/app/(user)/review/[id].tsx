@@ -16,32 +16,34 @@ import {
   View,
 } from "react-native";
 
-type Ride = {
+type AvaliacaoData = {
+  id: number;
+  idReserva: number;
+  idCarona: number;
+  nomeAvaliado: string;
   data: string;
-  destinoTexto: string;
   hora: string;
-  nome: string;
   saidaTexto: string;
+  destinoTexto: string;
+  nota: number | null;
+  comentario: string | null;
+  tipo: string;
 };
 
 const NOTA_LABELS = ["Péssima", "Ruim", "Razoável", "Boa", "Ótima"];
 
 export default function Review() {
-  const { id, idReserva, nome } = useLocalSearchParams<{
+  const { id, nome } = useLocalSearchParams<{
     id: string;
-    idReserva?: string;
     nome?: string;
   }>();
   const router = useRouter();
-  const [ride, setRide] = useState<Ride | null>(null);
-  const [avaliadoNome, setAvaliadoNome] = useState("");
+  const [avaliacao, setAvaliacao] = useState<AvaliacaoData | null>(null);
   const [nota, setNota] = useState(0);
   const [comentario, setComentario] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [messageError, setMessageError] = useState("");
-
-  const idReservaNum = idReserva ? Number(idReserva) : null;
 
   useEffect(() => {
     if (!id) return;
@@ -50,26 +52,24 @@ export default function Review() {
       if (!token) return;
 
       api
-        .get(`/carona/buscar/${id}`, {
+        .get(`/avaliacao/${id}`, {
           headers: { Authorization: `Bearer ${token}` },
         })
         .then((response) => {
-          console.log("Carona:", response.data);
-          setRide(response.data);
+          console.log("Avaliação:", response.data);
+          setAvaliacao(response.data);
+          if (response.data.nota) setNota(response.data.nota);
+          if (response.data.comentario) setComentario(response.data.comentario);
         })
         .catch((error) => console.log(error))
         .finally(() => setLoading(false));
     });
   }, [id]);
 
-  useEffect(() => {
-    if (nome) setAvaliadoNome(nome);
-  }, [nome]);
-
   const handleSubmit = () => {
     setMessageError("");
 
-    if (!idReservaNum) {
+    if (!avaliacao?.idReserva) {
       setMessageError(
         "Não foi possível identificar sua reserva. Tente novamente mais tarde."
       );
@@ -86,7 +86,7 @@ export default function Review() {
       api
         .post(
           "/avaliacao/cadastrar",
-          { idReserva: idReservaNum, estrela: nota, mensagem: comentario },
+          { idReserva: avaliacao.idReserva, estrela: nota, mensagem: comentario },
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -97,7 +97,7 @@ export default function Review() {
             params: {
               sucess: "true",
               message: "Avaliação enviada com sucesso!",
-              to: `/ride-details/${id}`,
+              to: `/ride-details/${avaliacao!.idCarona}`,
             },
           });
         })
@@ -111,7 +111,7 @@ export default function Review() {
     });
   };
 
-  if (loading || !ride) {
+  if (loading || !avaliacao) {
     return (
       <View className="flex-1 items-center justify-center bg-platinum">
         <ActivityIndicator size="large" color="#7b4d91" />
@@ -149,7 +149,7 @@ export default function Review() {
           <Text className="text-white font-black text-3xl">Avaliar Carona</Text>
           <Text className="text-purple-x11-200 text-sm font-medium mt-1">
             Como foi sua experiência com{" "}
-            {avaliadoNome ? avaliadoNome.split(" ")[0] : "o usuário"}?
+            {avaliacao.nomeAvaliado ? avaliacao.nomeAvaliado.split(" ")[0] : "o usuário"}?
           </Text>
         </View>
 
@@ -166,7 +166,7 @@ export default function Review() {
                   numberOfLines={1}
                   className="text-velvet-orchid-900 font-black text-xl"
                 >
-                  {avaliadoNome || "Usuário"}
+                  {avaliacao.nomeAvaliado || "Usuário"}
                 </Text>
                 <View className="flex-row items-center">
                   <ShieldCheck size={12} color="#7b4d91" />
@@ -180,27 +180,16 @@ export default function Review() {
             {/* DETALHES DA CARONA */}
             <View className="bg-platinum/40 rounded-3xl p-4 mb-8 border border-purple-x11-50">
               <Text className="text-purple-x11-400 text-[10px] font-black uppercase tracking-widest mb-1">
-                {ride.data.split("-").reverse().join("/")} •{" "}
-                {ride.hora.slice(0, 5)}
+                {avaliacao.data.split("-").reverse().join("/")} •{" "}
+                {avaliacao.hora.slice(0, 5)}
               </Text>
               <Text
                 numberOfLines={1}
                 className="text-velvet-orchid-900 font-bold text-sm"
               >
-                {ride.saidaTexto} → {ride.destinoTexto}
+                {avaliacao.saidaTexto} → {avaliacao.destinoTexto}
               </Text>
             </View>
-
-            {/* AVISO: RESERVA NÃO IDENTIFICADA */}
-            {!idReservaNum && (
-              <View className="mb-6 p-3 rounded-2xl border bg-amber-50 border-amber-200">
-                <Text className="text-center font-bold text-xs text-amber-700">
-                  Não foi possível identificar sua reserva desta carona. O envio
-                  da avaliação será liberado quando o idReserva estiver
-                  disponível (integração com o backend pendente).
-                </Text>
-              </View>
-            )}
 
             {/* NOTA 1-5 */}
             <Text className="text-velvet-orchid-900 font-black text-lg mb-3">
@@ -252,7 +241,7 @@ export default function Review() {
             {/* BOTÃO ENVIAR */}
             <Pressable
               onPress={handleSubmit}
-              disabled={saving || nota < 1 || !idReservaNum}
+              disabled={saving || nota < 1 || !avaliacao?.idReserva}
               className="bg-velvet-orchid-700 h-16 rounded-2xl items-center justify-center shadow-lg active:scale-[0.97]"
             >
               {saving ? (
