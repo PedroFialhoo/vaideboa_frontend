@@ -5,6 +5,7 @@ export default function Layout() {
     <Stack>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="ride-details/[id]" options={{ headerShown: false }} />
+      <Stack.Screen name="review/[id]" options={{ headerShown: false }} />
     </Stack>
   );
 }

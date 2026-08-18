@@ -8,7 +8,7 @@ import { getCurrentPositionAsync, LocationObject, requestForegroundPermissionsAs
 import { useRouter } from "expo-router";
 import { ChevronLeft, ChevronRight, Clock, User } from "lucide-react-native";
 import { useEffect, useRef, useState } from "react";
-import { Platform, Text, TouchableOpacity, View } from "react-native";
+import { Text, TouchableOpacity, View } from "react-native";
 
 export default function Search() {
   const [destination, setDestination] = useState<{ latitude: number; longitude: number; address?: string } | null>(null);
@@ -51,12 +51,12 @@ export default function Search() {
   }, []);
 
   const onDateChange = (event: any, selectedDate?: Date) => {
-    setShowDatePicker(Platform.OS === 'ios');
+    setShowDatePicker(false);
     if (selectedDate) setDate(selectedDate);
   };
 
   const onTimeChange = (event: any, selectedTime?: Date) => {
-    setShowTimePicker(Platform.OS === 'ios');
+    setShowTimePicker(false);
     if (selectedTime) setDate(selectedTime);
   };
 

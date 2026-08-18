@@ -1,5 +1,5 @@
 import { Calendar, Clock, Search as SearchIcon, Navigation, MapPin } from "lucide-react-native";
-import { View, Text, TouchableOpacity, Pressable, ActivityIndicator } from "react-native";
+import { View, Text, TouchableOpacity, Pressable, ActivityIndicator, Platform } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 
 type Props = {
@@ -63,52 +63,84 @@ export default function SearchForm({
       </View>
 
       {/* Seletores de Data e Hora */}
-      <View className="flex-row gap-4 mb-6">
-        <TouchableOpacity
-          onPress={() => setShowDatePicker(true)}
-          className="flex-1 flex-row items-center bg-platinum/30 p-4 rounded-2xl border border-purple-x11-100"
-        >
-          <Calendar size={20} color="#7b4d91" />
-          <View className="ml-3">
-            <Text className="text-gray-400 text-[10px] font-bold">DATA</Text>
-            <Text className="text-velvet-orchid-900 font-bold">
-              {date.toLocaleDateString("pt-BR")}
-            </Text>
+      {Platform.OS === "ios" ? (
+        <View className="flex-row gap-4 mb-6">
+          <View className="flex-1 bg-platinum/30 p-3 rounded-2xl border border-purple-x11-100 items-center">
+            <Text className="text-gray-400 text-[10px] font-bold mb-1">DATA</Text>
+            <DateTimePicker
+              value={date}
+              mode="date"
+              display="compact"
+              locale="pt-BR"
+              themeVariant="light"
+              accentColor="#7b4d91"
+              onChange={onDateChange}
+              minimumDate={new Date()}
+            />
           </View>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          onPress={() => setShowTimePicker(true)}
-          className="flex-1 flex-row items-center bg-platinum/30 p-4 rounded-2xl border border-purple-x11-100"
-        >
-          <Clock size={20} color="#7b4d91" />
-          <View className="ml-3">
-            <Text className="text-gray-400 text-[10px] font-bold">HORA</Text>
-            <Text className="text-velvet-orchid-900 font-bold">
-              {date.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
-            </Text>
+          <View className="flex-1 bg-platinum/30 p-3 rounded-2xl border border-purple-x11-100 items-center">
+            <Text className="text-gray-400 text-[10px] font-bold mb-1">HORA</Text>
+            <DateTimePicker
+              value={date}
+              mode="time"
+              display="compact"
+              locale="pt-BR"
+              themeVariant="light"
+              accentColor="#7b4d91"
+              onChange={onTimeChange}
+            />
           </View>
-        </TouchableOpacity>
-      </View>
+        </View>
+      ) : (
+        <>
+          <View className="flex-row gap-4 mb-6">
+            <TouchableOpacity
+              onPress={() => setShowDatePicker(true)}
+              className="flex-1 flex-row items-center bg-platinum/30 p-4 rounded-2xl border border-purple-x11-100"
+            >
+              <Calendar size={20} color="#7b4d91" />
+              <View className="ml-3">
+                <Text className="text-gray-400 text-[10px] font-bold">DATA</Text>
+                <Text className="text-velvet-orchid-900 font-bold">
+                  {date.toLocaleDateString("pt-BR")}
+                </Text>
+              </View>
+            </TouchableOpacity>
 
-      {showDatePicker && (
-        <DateTimePicker
-          value={date}
-          mode="date"
-          display="default"
-          onChange={onDateChange}
-          minimumDate={new Date()}
-        />
-      )}
+            <TouchableOpacity
+              onPress={() => setShowTimePicker(true)}
+              className="flex-1 flex-row items-center bg-platinum/30 p-4 rounded-2xl border border-purple-x11-100"
+            >
+              <Clock size={20} color="#7b4d91" />
+              <View className="ml-3">
+                <Text className="text-gray-400 text-[10px] font-bold">HORA</Text>
+                <Text className="text-velvet-orchid-900 font-bold">
+                  {date.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                </Text>
+              </View>
+            </TouchableOpacity>
+          </View>
 
-      {showTimePicker && (
-        <DateTimePicker
-          value={date}
-          mode="time"
-          display="default"
-          onChange={onTimeChange}
-          is24Hour
-        />
+          {showDatePicker && (
+            <DateTimePicker
+              value={date}
+              mode="date"
+              display="default"
+              onChange={onDateChange}
+              minimumDate={new Date()}
+            />
+          )}
+
+          {showTimePicker && (
+            <DateTimePicker
+              value={date}
+              mode="time"
+              display="default"
+              onChange={onTimeChange}
+              is24Hour
+            />
+          )}
+        </>
       )}
 
       <Pressable

@@ -3,7 +3,7 @@ import { api } from "@/src/services/api";
 import { getToken } from "@/src/services/storage";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useFocusEffect, useRouter } from "expo-router";
-import { Calendar as CalendarIcon, Car, ChevronRight, Clock, Filter, MapPin, Users, X } from "lucide-react-native";
+import { Calendar as CalendarIcon, ArrowUpDown, Car, ChevronRight, Clock, Filter, MapPin, Users, X } from "lucide-react-native";
 import React, { useCallback, useState } from "react";
 import { ActivityIndicator, Platform, RefreshControl, ScrollView, Text, TouchableOpacity, View } from "react-native";
 
@@ -14,6 +14,7 @@ interface Ride {
   papel: "MOTORISTA" | "PASSAGEIRO";
   origemTexto: string;
   destinoTexto: string;
+  realizada: boolean;
 }
 
 export default function MyTravels() {
@@ -22,6 +23,8 @@ export default function MyTravels() {
   const [refreshing, setRefreshing] = useState(false);
   
   const [filterRole, setFilterRole] = useState<"TODOS" | "MOTORISTA" | "PASSAGEIRO">("TODOS");
+  const [filterStatus, setFilterStatus] = useState<"TODOS" | "PENDENTES" | "REALIZADAS">("TODOS");
+  const [sortOrder, setSortOrder] = useState<"recente" | "antiga">("recente");
   const [filterDate, setFilterDate] = useState<Date | null>(null);
   const [showCalendar, setShowCalendar] = useState(false);
 
@@ -38,12 +41,15 @@ export default function MyTravels() {
   useFocusEffect(useCallback(() => { fetchRides(); }, []));
 
   const onDateChange = (event: any, selectedDate?: Date) => {
-    setShowCalendar(Platform.OS === 'ios');
+    setShowCalendar(false);
     if (selectedDate) setFilterDate(selectedDate);
   };
 
   const filteredRides = rides.filter(ride => {
     const matchesRole = filterRole === "TODOS" || ride.papel === filterRole;
+    const matchesStatus = filterStatus === "TODOS" ||
+      (filterStatus === "PENDENTES" && !ride.realizada) ||
+      (filterStatus === "REALIZADAS" && ride.realizada);
     
     let matchesDate = true;
     if (filterDate) {
@@ -51,7 +57,10 @@ export default function MyTravels() {
       matchesDate = ride.data === formattedFilterDate;
     }
     
-    return matchesRole && matchesDate;
+    return matchesRole && matchesStatus && matchesDate;
+  }).sort((a, b) => {
+    const dateCompare = b.data.localeCompare(a.data) || b.hora.localeCompare(a.hora);
+    return sortOrder === "recente" ? dateCompare : -dateCompare;
   });
 
   return (
@@ -84,7 +93,19 @@ export default function MyTravels() {
             icon={<Users size={14} color={filterRole === "PASSAGEIRO" ? "white" : "#7b4d91"} />}
           />          
         </ScrollView>
-        <View className="flex-row py-2">
+        <View className="flex-row py-2 gap-2">
+          <FilterButton 
+            label="Pendentes" 
+            active={filterStatus === "PENDENTES"} 
+            onPress={() => setFilterStatus(filterStatus === "PENDENTES" ? "TODOS" : "PENDENTES")} 
+          />
+          <FilterButton 
+            label="Realizadas" 
+            active={filterStatus === "REALIZADAS"} 
+            onPress={() => setFilterStatus(filterStatus === "REALIZADAS" ? "TODOS" : "REALIZADAS")} 
+          />
+        </View>
+        <View className="flex-row py-2 gap-2">
             <TouchableOpacity 
             onPress={() => setShowCalendar(true)}
             className={`flex-row items-center px-4 py-2 rounded-full shadow-sm ${filterDate ? 'bg-velvet-orchid-700' : 'bg-white border border-purple-x11-100'}`}
@@ -99,6 +120,18 @@ export default function MyTravels() {
               </TouchableOpacity>
             )}
           </TouchableOpacity>
+          <FilterButton 
+            label="Mais recente" 
+            active={sortOrder === "recente"} 
+            onPress={() => setSortOrder("recente")} 
+            icon={<ArrowUpDown size={14} color={sortOrder === "recente" ? "white" : "#7b4d91"} />}
+          />
+          <FilterButton 
+            label="Mais antiga" 
+            active={sortOrder === "antiga"} 
+            onPress={() => setSortOrder("antiga")} 
+            icon={<ArrowUpDown size={14} color={sortOrder === "antiga" ? "white" : "#7b4d91"} />}
+          />
         </View>
       </View>
 
@@ -106,7 +139,10 @@ export default function MyTravels() {
         <DateTimePicker
           value={filterDate || new Date()}
           mode="date"
-          display="default"
+          display={Platform.OS === "ios" ? "compact" : "default"}
+          locale="pt-BR"
+          themeVariant="light"
+          accentColor="#7b4d91"
           onChange={onDateChange}
         />
       )}

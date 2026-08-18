@@ -88,48 +88,83 @@ export default function RideForm({
         </Text>
 
         {/* Data e Hora */}
-        <View className="flex-row mb-6" style={{ gap: 16 }}>
-          <TouchableOpacity
-            onPress={() => setShowDatePicker(true)}
-            className="flex-1 flex-row items-center bg-platinum/50 rounded-2xl px-4 h-14 border border-purple-900"
-          >
-            <Calendar size={20} color="#7b4d91" />
-            <Text className="ml-3 font-semibold">
-              {formatDate(date)}
-            </Text>
-          </TouchableOpacity>
+        {Platform.OS === "ios" ? (
+          <View className="flex-row mb-6" style={{ gap: 16 }}>
+            <View className="flex-1 bg-platinum/50 rounded-2xl px-3 py-2 border border-purple-900 items-center">
+              <Text className="text-xs uppercase mb-1">Data</Text>
+              <DateTimePicker
+                value={date || new Date()}
+                mode="date"
+                display="compact"
+                locale="pt-BR"
+                themeVariant="light"
+                accentColor="#7b4d91"
+                onChange={(event, selectedDate) => {
+                  if (selectedDate) setDate(selectedDate);
+                }}
+              />
+            </View>
+            <View className="flex-1 bg-platinum/50 rounded-2xl px-3 py-2 border border-purple-900 items-center">
+              <Text className="text-xs uppercase mb-1">Hora</Text>
+              <DateTimePicker
+                value={time || new Date()}
+                mode="time"
+                display="compact"
+                locale="pt-BR"
+                themeVariant="light"
+                accentColor="#7b4d91"
+                onChange={(event, selectedTime) => {
+                  if (selectedTime) setTime(selectedTime);
+                }}
+              />
+            </View>
+          </View>
+        ) : (
+          <>
+            <View className="flex-row mb-6" style={{ gap: 16 }}>
+              <TouchableOpacity
+                onPress={() => setShowDatePicker(true)}
+                className="flex-1 flex-row items-center bg-platinum/50 rounded-2xl px-4 h-14 border border-purple-900"
+              >
+                <Calendar size={20} color="#7b4d91" />
+                <Text className="ml-3 font-semibold">
+                  {formatDate(date)}
+                </Text>
+              </TouchableOpacity>
 
-          <TouchableOpacity
-            onPress={() => setShowTimePicker(true)}
-            className="flex-1 flex-row items-center bg-platinum/50 rounded-2xl px-4 h-14 border border-purple-900"
-          >
-            <Clock size={20} color="#7b4d91" />
-            <Text className="ml-3 font-semibold">
-              {formatTime(time)}
-            </Text>
-          </TouchableOpacity>
-        </View>
+              <TouchableOpacity
+                onPress={() => setShowTimePicker(true)}
+                className="flex-1 flex-row items-center bg-platinum/50 rounded-2xl px-4 h-14 border border-purple-900"
+              >
+                <Clock size={20} color="#7b4d91" />
+                <Text className="ml-3 font-semibold">
+                  {formatTime(time)}
+                </Text>
+              </TouchableOpacity>
+            </View>
 
-        {showDatePicker && (
-          <DateTimePicker
-            value={date || new Date()}
-            mode="date"
-            onChange={(event, selectedDate) => {
-              setShowDatePicker(Platform.OS === "ios");
-              if (selectedDate) setDate(selectedDate);
-            }}
-          />
-        )}
+            {showDatePicker && (
+              <DateTimePicker
+                value={date || new Date()}
+                mode="date"
+                onChange={(event, selectedDate) => {
+                  setShowDatePicker(Platform.OS === "ios");
+                  if (selectedDate) setDate(selectedDate);
+                }}
+              />
+            )}
 
-        {showTimePicker && (
-          <DateTimePicker
-            value={time || new Date()}
-            mode="time"
-            onChange={(event, selectedTime) => {
-              setShowTimePicker(Platform.OS === "ios");
-              if (selectedTime) setTime(selectedTime);
-            }}
-          />
+            {showTimePicker && (
+              <DateTimePicker
+                value={time || new Date()}
+                mode="time"
+                onChange={(event, selectedTime) => {
+                  setShowTimePicker(Platform.OS === "ios");
+                  if (selectedTime) setTime(selectedTime);
+                }}
+              />
+            )}
+          </>
         )}
 
         {/* Assentos */}

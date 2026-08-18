@@ -8,6 +8,7 @@ import {
   Clock,
   MapPin,
   Navigation,
+  Play,
   User,
   Check,
   X,
@@ -53,6 +54,7 @@ type Pedido = {
   saidaTexto: string;
   destinoTexto: string;
   genero: string;
+  idAvaliacao?: number;
 };
 
 type Coord = {
@@ -70,6 +72,8 @@ export default function SearchDetails() {
   const mapRef = useRef<MapView>(null);
   const [messageError, setMessageError] = useState("");
   const [textBtn, setTextBtn] = useState("Carregando...");
+  const [papel, setPapel] = useState<"MOTORISTA" | "PASSAGEIRO" | null>(null);
+  const [minhaCaronaData, setMinhaCaronaData] = useState<any>(null);
   const [filter, setFilter] = useState<"TODOS" | "ACEITOS" | "PENDENTES">("TODOS");
 
   useEffect(() => {
@@ -91,10 +95,12 @@ export default function SearchDetails() {
           const minhaCarona = caronas.find((carona: any) => carona.id === Number(id));
           
           if (minhaCarona) {
+            setMinhaCaronaData(minhaCarona);
             if (minhaCarona.papel === "MOTORISTA") {
-              setTextBtn("Marcar como realizada");
+              setPapel("MOTORISTA");
               fetchPedidos(token);
             } else {
+              setPapel("PASSAGEIRO");
               setTextBtn("Cancelar reserva");
             }
           } else {
@@ -157,8 +163,41 @@ export default function SearchDetails() {
     });
   };
 
+  const iniciarCarona = () => {
+    setMessageError("");
+    getToken().then((token) => {
+      api.get(`/carona/iniciar/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      .then(() => {
+        router.replace({
+          pathname: "/page-sucess",
+          params: { sucess: "true", message: "Carona iniciada com sucesso!", to: `/ride-details/${id}` }
+        });
+      })
+      .catch((error) => setMessageError(error.response?.data || "Erro ao iniciar carona"));
+    });
+  };
+
+  const finalizarCarona = () => {
+    setMessageError("");
+    getToken().then((token) => {
+      api.get(`/carona/finalizar/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      .then(() => {
+        router.replace({
+          pathname: "/page-sucess",
+          params: { sucess: "true", message: "Carona finalizada com sucesso!", to: `/ride-details/${id}` }
+        });
+      })
+      .catch((error) => setMessageError(error.response?.data || "Erro ao finalizar carona"));
+    });
+  };
+
   const handleAction = () => {
     if (textBtn === "Solicitar reserva") requestRide();
+    else if (textBtn === "Cancelar reserva") setMessageError("Cancelamento de reserva não disponível no momento");
   };
 
   if (!ride) {
@@ -408,16 +447,50 @@ export default function SearchDetails() {
             </View>
           </View>
 
-          {/* BOTÃO DE AÇÃO PRINCIPAL */}
-          <Pressable 
-            className="bg-velvet-orchid-700 h-16 rounded-2xl items-center justify-center shadow-lg active:scale-[0.97] mb-8" 
-            onPress={handleAction}
-          >
-            <Text className="text-white font-black text-lg">{textBtn}</Text>
-          </Pressable>
+          {/* BOTÕES DE AÇÃO DO MOTORISTA */}
+          {papel === "MOTORISTA" && !ride.realizado && (
+            <View className="gap-3 mb-8">
+              <Pressable
+                className="bg-purple-x11-700 h-16 rounded-2xl items-center justify-center shadow-lg active:scale-[0.97] flex-row"
+                onPress={iniciarCarona}
+              >
+                <Text className="text-white font-black text-lg">Iniciar Carona</Text>
+              </Pressable>
+
+              <Pressable
+                className="bg-velvet-orchid-700 h-16 rounded-2xl items-center justify-center shadow-lg active:scale-[0.97] flex-row"
+                onPress={finalizarCarona}
+              >
+                <Text className="text-white font-black text-lg">Marcar como realizada</Text>
+              </Pressable>
+            </View>
+          )}
+
+          {/* BOTÃO DE AÇÃO DO PASSAGEIRO */}
+          {papel !== "MOTORISTA" && !ride.realizado && (
+            <Pressable
+              className="bg-velvet-orchid-700 h-16 rounded-2xl items-center justify-center shadow-lg active:scale-[0.97] mb-8"
+              onPress={handleAction}
+            >
+              <Text className="text-white font-black text-lg">{textBtn}</Text>
+            </Pressable>
+          )}
+
+          {/* BOTÃO AVALIAR (quando a carona foi realizada) */}
+          {ride.realizado && papel === "PASSAGEIRO" && minhaCaronaData?.idAvaliacao && (
+            <Pressable
+              className="bg-purple-x11-100 border border-purple-x11-200 h-16 rounded-2xl items-center justify-center shadow-lg active:scale-[0.97] mb-8"
+              onPress={() => router.push({
+                pathname: "/review/[id]",
+                params: { id: String(minhaCaronaData.idAvaliacao), nome: ride.nome }
+              } as any)}
+            >
+              <Text className="text-purple-x11-700 font-black text-lg">Avaliar</Text>
+            </Pressable>
+          )}
 
           {/* SEÇÃO DE LISTAGEM DE PEDIDOS */}
-          {textBtn === "Marcar como realizada" && (
+          {papel === "MOTORISTA" && (
             <View className="mt-6 border-t border-platinum pt-6">
               
               {/* HEADER */}
@@ -648,6 +721,17 @@ export default function SearchDetails() {
                           </TouchableOpacity>
                         </View>
                       }
+                      {pedido.statusPedido === "ACEITO" && ride.realizado && pedido.idAvaliacao && (
+                        <Pressable
+                          className="bg-purple-x11-100 border border-purple-x11-200 h-14 rounded-2xl items-center justify-center shadow-sm active:scale-[0.97]"
+                          onPress={() => router.push({
+                            pathname: "/review/[id]",
+                            params: { id: String(pedido.idAvaliacao), nome: pedido.nome }
+                          } as any)}
+                        >
+                          <Text className="text-purple-x11-700 font-black text-sm">Avaliar</Text>
+                        </Pressable>
+                      )}
                     </View>
                   ))}
                 </View>

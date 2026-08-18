@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, KeyboardAvoidingView, Platform } from "react-native";
+import { View, Text, TouchableOpacity, KeyboardAvoidingView } from "react-native";
 import { ChevronLeft, ChevronRight, MapPin, ArrowRight, PencilLine } from "lucide-react-native";
 import { useState } from "react";
 import Destination from "@/components/offer/destination";
@@ -64,6 +64,7 @@ export default function Offer() {
           saidaLng: origin.longitude,
           destinoLat: destination.latitude,
           destinoLng: destination.longitude,
+          paradas: [],
         },
         {
           headers: {
@@ -92,7 +93,7 @@ export default function Offer() {
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      behavior="padding"
     >
     <View className="flex-1 bg-platinum">
 
