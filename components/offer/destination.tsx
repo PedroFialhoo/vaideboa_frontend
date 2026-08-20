@@ -155,6 +155,7 @@ export default function Destination({
           textInputProps={{
             value: search,
             onChangeText: setSearch,
+            placeholderTextColor: "#7b4d91",
           }}
           placeholder="Para onde vamos?"
           fetchDetails={true}

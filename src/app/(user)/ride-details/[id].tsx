@@ -13,7 +13,8 @@ import {
   Check,
   X,
   Clock3,
-  ShieldCheck
+  ShieldCheck,
+  CircleDot
 } from "lucide-react-native";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -45,6 +46,12 @@ type Ride = {
   saidaTexto: string;
   vagasDisponiveis: number;
   papel: "MOTORISTA" | "PASSAGEIRO";
+  paradas?: Array<{
+    latPonto: number;
+    lonPonto: number;
+    indexOrder: number;
+    textoPonto?: string;
+  }>;
 };
 
 type Pedido = {
@@ -85,7 +92,7 @@ export default function SearchDetails() {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then((response) => {
-        console.log(response.data)
+        console.log("AQUI:",response.data)
         setRide(response.data)
         api.get("/carona/minhas", {
           headers: { Authorization: `Bearer ${token}` },
@@ -371,6 +378,17 @@ export default function SearchDetails() {
                 <MapPin size={18} color="white" />
               </View>
             </Marker>
+            {ride.paradas?.sort((a, b) => a.indexOrder - b.indexOrder).map((parada) => (
+              <Marker
+                key={`parada-${parada.indexOrder}`}
+                coordinate={{ latitude: parada.latPonto, longitude: parada.lonPonto }}
+              >
+                <View className="bg-purple-x11-500 px-2 py-1 rounded-full border-2 border-white flex-row items-center">
+                  <CircleDot size={12} color="white" />
+                  <Text className="text-white text-xs font-bold ml-1">{parada.indexOrder + 1}</Text>
+                </View>
+              </Marker>
+            ))}
             {coords.length > 0 && (
               <Polyline coordinates={coords} strokeWidth={4} strokeColor="#dd99ff" />
             )}
@@ -434,6 +452,24 @@ export default function SearchDetails() {
                 <Text className="text-velvet-orchid-900 font-bold text-base leading-5" numberOfLines={2}>{ride.saidaTexto}</Text>
               </View>
             </View>
+
+            {ride.paradas?.sort((a, b) => a.indexOrder - b.indexOrder).map((parada, idx) => (
+              <View key={`parada-itinerary-${idx}`} className="flex-row items-start mt-[-4px]">
+                <View className="items-center mr-4">
+                  <View className="w-5 h-5 rounded-full bg-purple-x11-500 items-center justify-center border border-purple-x11-200">
+                    <Text className="text-white text-[8px] font-bold">{parada.indexOrder + 1}</Text>
+                  </View>
+                  <View className="w-[2px] h-12 bg-purple-x11-100 my-1" />
+                </View>
+                <View className="flex-1">
+                  <Text className="text-purple-x11-400 text-[10px] font-black uppercase tracking-[1px] mb-1">Parada {parada.indexOrder + 1}</Text>
+                  <Text className="text-velvet-orchid-900 font-bold text-base leading-5" numberOfLines={2}>
+                    {parada.textoPonto || `Parada ${parada.indexOrder + 1}`}
+                  </Text>
+                </View>
+              </View>
+            ))}
+
             <View className="flex-row items-start mt-[-4px]">
               <View className="items-center mr-4">
                 <View className="w-5 h-5 rounded-full bg-velvet-orchid-700 items-center justify-center shadow-sm">

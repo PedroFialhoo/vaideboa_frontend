@@ -113,6 +113,7 @@ export default function Origin({
           textInputProps={{
             value: search,
             onChangeText: setSearch,
+            placeholderTextColor: "#7b4d91",
           }}
           placeholder="De onde vamos sair?"
           fetchDetails={true}
@@ -150,7 +151,7 @@ export default function Origin({
               paddingHorizontal: 20,
               fontSize: 16,
               backgroundColor: "#FFF",
-              color: "#391f47",
+              color: "#391f47"
             },
             listView: {
               backgroundColor: "#FFF",

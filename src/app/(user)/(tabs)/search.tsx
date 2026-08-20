@@ -6,9 +6,9 @@ import { api } from "@/src/services/api";
 import { getToken } from "@/src/services/storage";
 import { getCurrentPositionAsync, LocationObject, requestForegroundPermissionsAsync } from "expo-location";
 import { useRouter } from "expo-router";
-import { ChevronLeft, ChevronRight, Clock, User } from "lucide-react-native";
+import { ChevronLeft, ChevronRight, Clock, User, CircleDot } from "lucide-react-native";
 import { useEffect, useRef, useState } from "react";
-import { Text, TouchableOpacity, View } from "react-native";
+import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 
 export default function Search() {
   const [destination, setDestination] = useState<{ latitude: number; longitude: number; address?: string } | null>(null);
@@ -152,7 +152,7 @@ export default function Search() {
         
         {/* LISTA DE RESULTADOS */}
         {(rides.length > 0 && step === 3) && (
-          <View className="mt-8 mb-10">
+          <ScrollView className="mt-8">
             <Text className="text-velvet-orchid-900 font-black text-xl mb-4 ml-2">Caronas Disponíveis</Text>
             {rides.map((ride, index) => (
               <TouchableOpacity 
@@ -169,11 +169,17 @@ export default function Search() {
                     <Clock size={14} color="#7b4d91" />
                     <Text className="text-gray-500 text-xs ml-1 font-medium">{ride.hora.substring(0,5)} • {ride.data.split('-').reverse().join('/')}</Text>
                   </View>
+                  {ride.paradas && ride.paradas.length > 0 && (
+                    <View className="flex-row items-center mt-1">
+                      <CircleDot size={12} color="#7b4d91" />
+                      <Text className="text-purple-x11-600 text-xs ml-1 font-bold">{ride.paradas.length} parada{ride.paradas.length > 1 ? 's' : ''}</Text>
+                    </View>
+                  )}
                 </View>
                 <ChevronRight size={20} color="#7b4d91" opacity={0.5} />
               </TouchableOpacity>
             ))}
-          </View>
+          </ScrollView>
         )}
       </View>
     </View>
