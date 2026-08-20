@@ -40,7 +40,7 @@
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "O VDB usa sua localização para encontrar caronas perto de você."
+          "locationWhenInUsePermission": "O VDB usa sua localização para encontrar caronas perto de você e compartilhar em tempo real durante a carona."
         }
       ]
     ],
