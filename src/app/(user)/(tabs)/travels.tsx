@@ -3,7 +3,7 @@ import { api } from "@/src/services/api";
 import { getToken } from "@/src/services/storage";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useFocusEffect, useRouter } from "expo-router";
-import { Calendar as CalendarIcon, ArrowUpDown, Car, ChevronRight, Clock, Filter, MapPin, Users, X } from "lucide-react-native";
+import { Calendar as CalendarIcon, ArrowUpDown, Car, ChevronDown, ChevronRight, Clock, Filter, MapPin, Users, X } from "lucide-react-native";
 import React, { useCallback, useState } from "react";
 import { ActivityIndicator, Platform, RefreshControl, ScrollView, Text, TouchableOpacity, View } from "react-native";
 
@@ -27,6 +27,7 @@ export default function MyTravels() {
   const [sortOrder, setSortOrder] = useState<"recente" | "antiga">("recente");
   const [filterDate, setFilterDate] = useState<Date | null>(null);
   const [showCalendar, setShowCalendar] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(true);
 
   const router = useRouter();
 
@@ -70,68 +71,60 @@ export default function MyTravels() {
         <Text className="text-purple-x11-200 text-sm font-medium mt-1">Filtre e gerencie seu histórico</Text>
       </View>
 
-      {/* Barra de Filtros */}
+      {/* Card de Filtros */}
       <View className="px-6 -mt-6">
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row py-2">
-          
-          {/* Filtro de Papel */}
-          <FilterButton 
-            label="Todas" 
-            active={filterRole === "TODOS"} 
-            onPress={() => setFilterRole("TODOS")} 
-          />
-          <FilterButton 
-            label="Motorista" 
-            active={filterRole === "MOTORISTA"} 
-            onPress={() => setFilterRole("MOTORISTA")} 
-            icon={<Car size={14} color={filterRole === "MOTORISTA" ? "white" : "#7b4d91"} />}
-          />
-          <FilterButton 
-            label="Passageiro" 
-            active={filterRole === "PASSAGEIRO"} 
-            onPress={() => setFilterRole("PASSAGEIRO")} 
-            icon={<Users size={14} color={filterRole === "PASSAGEIRO" ? "white" : "#7b4d91"} />}
-          />          
-        </ScrollView>
-        <View className="flex-row py-2 gap-2">
-          <FilterButton 
-            label="Pendentes" 
-            active={filterStatus === "PENDENTES"} 
-            onPress={() => setFilterStatus(filterStatus === "PENDENTES" ? "TODOS" : "PENDENTES")} 
-          />
-          <FilterButton 
-            label="Realizadas" 
-            active={filterStatus === "REALIZADAS"} 
-            onPress={() => setFilterStatus(filterStatus === "REALIZADAS" ? "TODOS" : "REALIZADAS")} 
-          />
-        </View>
-        <View className="flex-row py-2 gap-2">
-            <TouchableOpacity 
-            onPress={() => setShowCalendar(true)}
-            className={`flex-row items-center px-4 py-2 rounded-full shadow-sm ${filterDate ? 'bg-velvet-orchid-700' : 'bg-white border border-purple-x11-100'}`}
+        <View className="bg-vintage-grape-50 rounded-3xl p-4 border border-purple-x11-100 shadow-md">
+          <TouchableOpacity
+            onPress={() => setFiltersOpen(!filtersOpen)}
+            className="flex-row items-center justify-between"
           >
-            <CalendarIcon size={14} color={filterDate ? "white" : "#7b4d91"} className="mr-2" />
-            <Text className={`font-bold text-xs ${filterDate ? 'text-white' : 'text-velvet-orchid-700'}`}>
-              {filterDate ? filterDate.toLocaleDateString('pt-BR') : "Escolher data"}
-            </Text>
-            {filterDate && (
-              <TouchableOpacity onPress={() => setFilterDate(null)} className="ml-2 bg-white/20 rounded-full p-0.5">
-                <X size={12} color="white" />
-              </TouchableOpacity>
-            )}
+            <View className="flex-row items-center">
+              <Filter size={14} color="#7b4d91" />
+              <Text className="text-velvet-orchid-900 font-bold text-xs ml-1.5">Filtros</Text>
+            </View>
+            <ChevronDown size={16} color="#7b4d91" style={{ transform: [{ rotate: filtersOpen ? '180deg' : '0deg' }] }} />
           </TouchableOpacity>
-          <FilterButton 
-            label="Mais recente" 
-            active={sortOrder === "recente"} 
-            onPress={() => setSortOrder("recente")} 
-            icon={<ArrowUpDown size={14} color={sortOrder === "recente" ? "white" : "#7b4d91"} />}
-          />
-          <FilterButton 
-            label="Mais antiga" 
-            active={sortOrder === "antiga"} 
-            onPress={() => setSortOrder("antiga")} 
-            icon={<ArrowUpDown size={14} color={sortOrder === "antiga" ? "white" : "#7b4d91"} />}
-          />
+
+          {filtersOpen && (
+            <View className="mt-3">
+              <Text className="text-velvet-orchid-700 font-semibold text-[10px] uppercase tracking-wider mb-2">Papel</Text>
+              <View className="flex-row gap-2 mb-3">
+                <FilterButton label="Todas" active={filterRole === "TODOS"} onPress={() => setFilterRole("TODOS")} />
+                <FilterButton label="Motorista" active={filterRole === "MOTORISTA"} onPress={() => setFilterRole("MOTORISTA")} icon={<Car size={14} color={filterRole === "MOTORISTA" ? "white" : "#7b4d91"} />} />
+                <FilterButton label="Passageiro" active={filterRole === "PASSAGEIRO"} onPress={() => setFilterRole("PASSAGEIRO")} icon={<Users size={14} color={filterRole === "PASSAGEIRO" ? "white" : "#7b4d91"} />} />
+              </View>
+
+              <Text className="text-velvet-orchid-700 font-semibold text-[10px] uppercase tracking-wider mb-2">Status</Text>
+              <View className="flex-row gap-2 mb-3">
+                <FilterButton label="Pendentes" active={filterStatus === "PENDENTES"} onPress={() => setFilterStatus(filterStatus === "PENDENTES" ? "TODOS" : "PENDENTES")} />
+                <FilterButton label="Realizadas" active={filterStatus === "REALIZADAS"} onPress={() => setFilterStatus(filterStatus === "REALIZADAS" ? "TODOS" : "REALIZADAS")} />
+              </View>
+
+              <Text className="text-velvet-orchid-700 font-semibold text-[10px] uppercase tracking-wider mb-2">Data</Text>
+              <View className="flex-row gap-2 mb-3">
+                <TouchableOpacity
+                  onPress={() => setShowCalendar(true)}
+                  className={`flex-row items-center px-4 py-2 rounded-full shadow-sm ${filterDate ? 'bg-velvet-orchid-700' : 'bg-vintage-grape-200 border border-purple-x11-100'}`}
+                >
+                  <CalendarIcon size={14} color={filterDate ? "white" : "#7b4d91"} />
+                  <Text className={`font-bold text-xs ml-1.5 ${filterDate ? 'text-white' : 'text-velvet-orchid-700'}`}>
+                    {filterDate ? filterDate.toLocaleDateString('pt-BR') : "Escolher data"}
+                  </Text>
+                  {filterDate && (
+                    <TouchableOpacity onPress={() => setFilterDate(null)} className="ml-2 bg-white/20 rounded-full p-0.5">
+                      <X size={12} color="white" />
+                    </TouchableOpacity>
+                  )}
+                </TouchableOpacity>
+              </View>
+
+              <Text className="text-velvet-orchid-700 font-semibold text-[10px] uppercase tracking-wider mb-2">Ordenar</Text>
+              <View className="flex-row gap-2">
+                <FilterButton label="Mais recente" active={sortOrder === "recente"} onPress={() => setSortOrder("recente")} icon={<ArrowUpDown size={14} color={sortOrder === "recente" ? "white" : "#7b4d91"} />} />
+                <FilterButton label="Mais antiga" active={sortOrder === "antiga"} onPress={() => setSortOrder("antiga")} icon={<ArrowUpDown size={14} color={sortOrder === "antiga" ? "white" : "#7b4d91"} />} />
+              </View>
+            </View>
+          )}
         </View>
       </View>
 
@@ -169,8 +162,13 @@ export default function MyTravels() {
               className="bg-white rounded-[32px] p-5 mb-4 border border-purple-x11-100 shadow-sm"
             >
               <View className="flex-row justify-between items-center mb-4">
-                <View className={`px-3 py-1 rounded-full ${ride.papel === "MOTORISTA" ? "bg-velvet-orchid-700" : "bg-blue-600"}`}>
-                  <Text className="font-black text-[10px] uppercase text-white">{ride.papel}</Text>
+                <View className="flex-row items-center gap-2">
+                  <View className={`px-3 py-1 rounded-full ${ride.papel === "MOTORISTA" ? "bg-velvet-orchid-700" : "bg-blue-600"}`}>
+                    <Text className="font-black text-[10px] uppercase text-white">{ride.papel}</Text>
+                  </View>
+                  <View className={`px-3 py-1 rounded-full ${ride.realizada ? "bg-emerald-500" : "bg-amber-400"}`}>
+                    <Text className="font-black text-[10px] uppercase text-white">{ride.realizada ? "Realizada" : "Pendente"}</Text>
+                  </View>
                 </View>
                 <Text className="text-velvet-orchid-900 font-bold text-[10px] bg-platinum/50 px-3 py-1 rounded-full">
                   {ride.data.split('-').reverse().join('/')}
@@ -214,9 +212,9 @@ function FilterButton({ label, active, onPress, icon }: any) {
   return (
     <TouchableOpacity 
       onPress={onPress}
-      className={`flex-row items-center px-4 py-2 rounded-full mr-2 shadow-sm ${active ? 'bg-velvet-orchid-700' : 'bg-white border border-purple-x11-100'}`}
+      className={`flex-row items-center px-4 py-2 rounded-full shadow-sm ${active ? 'bg-velvet-orchid-700' : 'bg-vintage-grape-200 border border-purple-x11-100'}`}
     >
-      {icon && <View className="mr-2">{icon}</View>}
+      {icon && <View className="mr-1.5">{icon}</View>}
       <Text className={`font-bold text-xs ${active ? 'text-white' : 'text-velvet-orchid-700'}`}>{label}</Text>
     </TouchableOpacity>
   );
