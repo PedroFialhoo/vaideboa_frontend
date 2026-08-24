@@ -114,7 +114,7 @@ export default function Offer() {
 
       <View className="flex-1">
         {step === 1 && <Origin origin={origin} setOrigin={setOrigin} next={handleNext} />}
-        {step === 2 && <Destination origin={origin} destination={destination} setDestination={setDestination} next={handleNext} />}
+        {step === 2 && <Destination origin={origin} destination={destination} setDestination={setDestination} next={handleNext} showRouteInfo />}
         {step === 3 && <Stops origin={origin!} destination={destination!} stops={stops} setStops={setStops} next={handleNext} />}
         {step === 4 && (
           <ScrollView className="flex-1" contentContainerStyle={{ flexGrow: 1 }}>

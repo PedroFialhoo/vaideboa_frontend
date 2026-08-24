@@ -92,7 +92,7 @@ export default function SearchDetails() {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then((response) => {
-        console.log("AQUI:",response.data)
+        console.log(response.data)
         setRide(response.data)
         api.get("/carona/minhas", {
           headers: { Authorization: `Bearer ${token}` },

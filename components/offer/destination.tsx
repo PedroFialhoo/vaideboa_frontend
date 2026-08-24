@@ -13,9 +13,12 @@ import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplet
 import { MapPin, Navigation, Search, Map as MapIcon, X } from "lucide-react-native";
 import "@/global.css";
 import { Spinner } from "@/components/ui/spinner";
-import MapViewDirections from "react-native-maps-directions";
 import { api } from "@/src/services/api";
 import { getToken } from "@/src/services/storage";
+import RouteInfoBadge, {
+  RouteInfo,
+  extrairInfoRota,
+} from "@/components/offer/route-info-badge";
 
 type DestinationType = {
   latitude: number;
@@ -32,18 +35,21 @@ export default function Destination({
   origin,
   destination,
   setDestination,
-  next
+  next,
+  showRouteInfo = false
 }: {
   origin: DestinationType | null;
   destination: DestinationType | null;
   setDestination: (value: DestinationType | null) => void;
   next: () => void;
+  showRouteInfo?: boolean;
 }) {
   const [location, setLocation] = useState<LocationObject | null>(null);
   const mapRef = useRef<MapView>(null);
   const [search, setSearch] = useState("");
   const GOOGLE_MAPS_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
   const [coords, setCoords] = useState<Coord[]>([]);
+  const [rotaInfo, setRotaInfo] = useState<RouteInfo | null>(null);
 
   async function requestLocationPermission() {
     const { granted } = await requestForegroundPermissionsAsync();
@@ -77,6 +83,7 @@ export default function Destination({
     if (!origin || !destination) return;
     console.log("Buscando rota")
     setCoords([])
+    setRotaInfo(null)
 
     getToken().then(token => {
       api.post("/rota/buscar", {
@@ -92,7 +99,8 @@ export default function Destination({
       }
     )
       .then(response => {
-        const converted = response.data.features[0].geometry.coordinates.map(
+        const feature = response.data.features[0];
+        const converted = feature.geometry.coordinates.map(
           ([lng, lat]: [number, number]) => ({
             latitude: lat,
             longitude: lng,
@@ -100,7 +108,9 @@ export default function Destination({
         );
 
         setCoords(converted);
-      });
+        setRotaInfo(extrairInfoRota(feature));
+      })
+      .catch(() => {});
     });
   }, [origin, destination]);
 
@@ -283,6 +293,11 @@ export default function Destination({
                 : "Toque no mapa ou busque"}
             </Text>
           </View>
+          {showRouteInfo && rotaInfo && (
+            <View className="ml-2">
+              <RouteInfoBadge {...rotaInfo} />
+            </View>
+          )}
         </View>
 
         <View className="flex-row gap-3">

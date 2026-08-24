@@ -22,6 +22,10 @@ import "@/global.css";
 import { Spinner } from "@/components/ui/spinner";
 import { api } from "@/src/services/api";
 import { getToken } from "@/src/services/storage";
+import RouteInfoBadge, {
+  RouteInfo,
+  extrairInfoRota,
+} from "@/components/offer/route-info-badge";
 
 export type StopType = {
   latitude: number;
@@ -54,6 +58,7 @@ export default function Stops({
   const [search, setSearch] = useState("");
   const GOOGLE_MAPS_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
   const [coords, setCoords] = useState<Coord[]>([]);
+  const [rotaInfo, setRotaInfo] = useState<RouteInfo | null>(null);
   const [pendingStop, setPendingStop] = useState<StopType | null>(null);
   const pendingStopRef = useRef<StopType | null>(null);
 
@@ -88,6 +93,7 @@ export default function Stops({
   useEffect(() => {
     if (!origin || !destination) return;
     setCoords([]);
+    setRotaInfo(null);
 
     getToken().then((token) => {
       api
@@ -98,6 +104,11 @@ export default function Stops({
             lonSaida: origin.longitude,
             latDestino: destination.latitude,
             lonDestino: destination.longitude,
+            paradas: stops.map((stop, index) => ({
+              indexOrder: index,
+              latitude: stop.latitude,
+              longitude: stop.longitude,
+            })),
           },
           {
             headers: {
@@ -106,16 +117,19 @@ export default function Stops({
           }
         )
         .then((response) => {
-          const converted = response.data.features[0].geometry.coordinates.map(
+          const feature = response.data.features[0];
+          const converted = feature.geometry.coordinates.map(
             ([lng, lat]: [number, number]) => ({
               latitude: lat,
               longitude: lng,
             })
           );
           setCoords(converted);
-        });
+          setRotaInfo(extrairInfoRota(feature));
+        })
+        .catch(() => {});
     });
-  }, [origin, destination]);
+  }, [origin, destination, stops]);
 
   const handleMapPress = (event: any) => {
     try {
@@ -350,9 +364,12 @@ export default function Stops({
               Paradas
             </Text>
           </View>
-          <Text className="text-gray-400 text-xs font-bold">
-            {stops.length}/{MAX_STOPS}
-          </Text>
+          <View className="flex-row items-center gap-2">
+            {rotaInfo && <RouteInfoBadge {...rotaInfo} />}
+            <Text className="text-gray-400 text-xs font-bold">
+              {stops.length}/{MAX_STOPS}
+            </Text>
+          </View>
         </View>
 
         {/* LISTA DE PARADAS */}
