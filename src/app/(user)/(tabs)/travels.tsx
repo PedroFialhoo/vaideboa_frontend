@@ -3,7 +3,7 @@ import { api } from "@/src/services/api";
 import { getToken } from "@/src/services/storage";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useFocusEffect, useRouter } from "expo-router";
-import { Calendar as CalendarIcon, ArrowUpDown, Car, ChevronDown, ChevronRight, Clock, Filter, MapPin, Users, X } from "lucide-react-native";
+import { Calendar as CalendarIcon, ArrowUpDown, Car, ChevronDown, ChevronRight, Clock, Filter, MapPin, Users, X, CircleDot } from "lucide-react-native";
 import React, { useCallback, useState } from "react";
 import { ActivityIndicator, Platform, RefreshControl, ScrollView, Text, TouchableOpacity, View } from "react-native";
 
@@ -15,6 +15,12 @@ interface Ride {
   origemTexto: string;
   destinoTexto: string;
   realizada: boolean;
+  paradas?: Array<{
+    latPonto: number;
+    lonPonto: number;
+    indexOrder: number;
+    textoPonto?: string;
+  }>;
 }
 
 export default function MyTravels() {
@@ -27,7 +33,7 @@ export default function MyTravels() {
   const [sortOrder, setSortOrder] = useState<"recente" | "antiga">("recente");
   const [filterDate, setFilterDate] = useState<Date | null>(null);
   const [showCalendar, setShowCalendar] = useState(false);
-  const [filtersOpen, setFiltersOpen] = useState(true);
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const router = useRouter();
 
@@ -180,14 +186,28 @@ export default function MyTravels() {
                   <View className="w-5 h-5 rounded-full bg-purple-x11-100 items-center justify-center border border-purple-x11-200">
                     <View className="w-2 h-2 rounded-full bg-purple-x11-600" />
                   </View>
-                  <View className="w-[1px] h-8 bg-purple-x11-100 my-1" />
+                  <View className="w-[1px] h-2 bg-purple-x11-100 my-1" />
+
+                  {ride.paradas && ride.paradas.length > 0 && (
+                    <>
+                      <View className="w-5 h-5 rounded-full bg-purple-x11-500 items-center justify-center border border-purple-x11-200">
+                        <CircleDot size={10} color="white" />
+                      </View>
+                      <View className="w-[1px] h-2 bg-purple-x11-100 my-1" />
+                    </>
+                  )}
+
                   <View className="w-5 h-5 rounded-full bg-velvet-orchid-700 items-center justify-center shadow-sm">
                     <MapPin size={12} color="white" />
                   </View>
-                  
                 </View>
                 <View className="flex-1 justify-between">
                   <Text className="text-velvet-orchid-900 font-bold text-sm" numberOfLines={1}>{ride.origemTexto}</Text>
+                  {ride.paradas && ride.paradas.length > 0 && (
+                    <View className="flex-row items-center my-1">
+                      <Text className="text-purple-x11-500 text-[11px] font-bold">{ride.paradas.length} parada{ride.paradas.length > 1 ? 's' : ''}</Text>
+                    </View>
+                  )}
                   <Text className="text-velvet-orchid-900 font-bold text-sm" numberOfLines={1}>{ride.destinoTexto}</Text>
                 </View>
               </View>
