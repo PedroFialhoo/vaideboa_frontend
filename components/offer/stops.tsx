@@ -203,7 +203,7 @@ export default function Stops({
   return (
     <View className="flex-1 bg-platinum">
       {/* BUSCA */}
-      <View className="absolute top-12 w-[92%] self-center z-10 shadow-lg">
+      <View className="absolute top-3 w-[92%] self-center z-10 shadow-lg">
         <GooglePlacesAutocomplete
           textInputProps={{
             value: search,

@@ -118,11 +118,11 @@ export default function Preferences({ preferences, setPreferences }: Props) {
         <View className="border-b border-platinum/50">
           <TouchableOpacity onPress={() => {toggleItem("conversa"), setMessage("")}} className="flex-row items-center py-4">
             <View className="bg-purple-x11-100 p-2.5 rounded-2xl mr-4">
-              <Speech size={22} color="#7b4d91" />
+              <Speech size={24} color="#7b4d91" />
             </View>
             <View className="flex-1">
-              <Text className="font-bold text-velvet-orchid-900">Conversa</Text>
-              <Text className="text-gray-400 text-[10px]">Interação social no carro</Text>
+              <Text className="font-bold text-velvet-orchid-900 text-[15px]">Conversa</Text>
+              <Text className="text-gray-600 text-[13px]">Interação social no carro</Text>
             </View>
             <ChevronRight size={18} color="#7b4d91" style={{ transform: [{ rotate: openItem === "conversa" ? "90deg" : "0deg" }] }} />
           </TouchableOpacity>
@@ -137,11 +137,11 @@ export default function Preferences({ preferences, setPreferences }: Props) {
         <View className="border-b border-platinum/50">
           <TouchableOpacity onPress={() => {toggleItem("musica"), setMessage("")}} className="flex-row items-center py-4">
             <View className="bg-purple-x11-100 p-2.5 rounded-2xl mr-4">
-              <Music size={22} color="#7b4d91" />
+              <Music size={24} color="#7b4d91" />
             </View>
             <View className="flex-1">
-              <Text className="font-bold text-velvet-orchid-900">Música</Text>
-              <Text className="text-gray-400 text-[10px]">Som durante o trajeto</Text>
+              <Text className="font-bold text-velvet-orchid-900 text-[15px]">Música</Text>
+              <Text className="text-gray-600 text-[13px]">Som durante o trajeto</Text>
             </View>
             <ChevronRight size={18} color="#7b4d91" style={{ transform: [{ rotate: openItem === "musica" ? "90deg" : "0deg" }] }} />
           </TouchableOpacity>
@@ -156,11 +156,11 @@ export default function Preferences({ preferences, setPreferences }: Props) {
         <View className="border-b border-platinum/50">
           <TouchableOpacity onPress={() => {toggleItem("cigarro"), setMessage("")}} className="flex-row items-center py-4">
             <View className="bg-purple-x11-100 p-2.5 rounded-2xl mr-4">
-              <Cigarette size={22} color="#7b4d91" />
+              <Cigarette size={24} color="#7b4d91" />
             </View>
             <View className="flex-1">
-              <Text className="font-bold text-velvet-orchid-900">Fumo</Text>
-              <Text className="text-gray-400 text-[10px]">Uso de tabaco/vape</Text>
+              <Text className="font-bold text-velvet-orchid-900 text-[15px]">Fumo</Text>
+              <Text className="text-gray-600 text-[13px]">Uso de tabaco/vape</Text>
             </View>
             <ChevronRight size={18} color="#7b4d91" style={{ transform: [{ rotate: openItem === "cigarro" ? "90deg" : "0deg" }] }} />
           </TouchableOpacity>
@@ -175,11 +175,11 @@ export default function Preferences({ preferences, setPreferences }: Props) {
         <View>
           <TouchableOpacity onPress={() => {toggleItem("pet"), setMessage("")}} className="flex-row items-center py-4">
             <View className="bg-purple-x11-100 p-2.5 rounded-2xl mr-4">
-              <PawPrint size={22} color="#7b4d91" />
+              <PawPrint size={24} color="#7b4d91" />
             </View>
             <View className="flex-1">
-              <Text className="font-bold text-velvet-orchid-900">Pets</Text>
-              <Text className="text-gray-400 text-[10px]">Ocupando vaga e com caixa de transporte</Text>
+              <Text className="font-bold text-velvet-orchid-900 text-[15px]">Pets</Text>
+              <Text className="text-gray-600 text-[13px]">Ocupando vaga e com caixa de transporte</Text>
             </View>
             <ChevronRight size={18} color="#7b4d91" style={{ transform: [{ rotate: openItem === "pet" ? "90deg" : "0deg" }] }} />
           </TouchableOpacity>

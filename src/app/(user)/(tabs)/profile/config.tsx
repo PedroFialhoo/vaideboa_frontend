@@ -378,10 +378,10 @@ export default function Settings() {
               <View className="pb-6 px-2">
                 <View className="space-y-4">
                   <View>
-                    <Text className="text-velvet-orchid-700 font-bold text-xs mb-1 ml-1">SENHA ANTIGA</Text>
+                    <Text className="text-velvet-orchid-700 font-bold text-xs mb-1 ml-1">SENHA ATUAL</Text>
                     <View className="bg-platinum/30 rounded-xl border flex-row items-center px-3">
                       <TextInput
-                        placeholder="Senha super secreta"
+                        placeholder="Digite a senha atual"
                         secureTextEntry={!showOldPassword}
                         className="flex-1 py-3 text-velvet-orchid-900 placeholder:text-velvet-orchid-600"
                         value={oldPassword}
@@ -400,7 +400,7 @@ export default function Settings() {
                     <Text className="text-velvet-orchid-700 font-bold text-xs mb-1 ml-1">NOVA SENHA</Text>
                     <View className="bg-platinum/30 rounded-xl border flex-row items-center px-3">
                       <TextInput
-                        placeholder="Nova senha mega secreta"
+                        placeholder="Digite a nova senha"
                         secureTextEntry={!showNewPassword}
                         className="flex-1 py-3 text-velvet-orchid-900 placeholder:text-velvet-orchid-600"
                         value={newPassword}
@@ -419,7 +419,7 @@ export default function Settings() {
                     <Text className="text-velvet-orchid-700 font-bold text-xs mb-1 ml-1">CONFIRMAR NOVA SENHA</Text>
                     <View className="bg-platinum/30 rounded-xl border flex-row items-center px-3">
                       <TextInput
-                        placeholder="Repete a nova senha hiper secreta"
+                        placeholder="Confirme a nova senha"
                         secureTextEntry={!showNewPasswordConfirm}
                         className="flex-1 py-3 text-velvet-orchid-900 placeholder:text-velvet-orchid-600"
                         value={newPasswordConfirm}

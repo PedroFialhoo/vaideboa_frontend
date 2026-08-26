@@ -53,7 +53,7 @@ export default function PageStatus() {
   });
 
   return (
-    <View className="flex-1 bg-platinum items-center justify-center px-10">
+    <View className="flex-1 bg-platinum items-center justify-center px-10 bg-vintage-grape-100">
       <View className="items-center justify-center relative">
         <Svg width={size} height={size} className="rotate-[-90deg]">
           <Circle

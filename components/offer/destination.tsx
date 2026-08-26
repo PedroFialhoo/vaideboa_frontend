@@ -160,7 +160,7 @@ export default function Destination({
   return (
     <View className="flex-1 bg-platinum">
       {/* BUSCA */}
-      <View className="absolute top-12 w-[92%] self-center z-10 shadow-lg">
+      <View className="absolute top-3 w-[92%] self-center z-10 shadow-lg">
         <GooglePlacesAutocomplete
           textInputProps={{
             value: search,
@@ -245,6 +245,14 @@ export default function Destination({
             longitudeDelta: 0.01,
           }}
         >
+          {origin && (
+            <Marker coordinate={origin}>
+              <View className="bg-velvet-orchid-500 p-2 rounded-full border-1 border-white">
+                <MapPin size={20} color="white" />
+              </View>
+            </Marker>
+          )}
+
           {destination && (
             <Marker coordinate={destination}>
               <View className="bg-velvet-orchid-700 p-2 rounded-full border-1 border-white">
@@ -252,6 +260,7 @@ export default function Destination({
               </View>
             </Marker>
           )}
+
           {coords.length > 0 && (
             <Polyline
               coordinates={coords}

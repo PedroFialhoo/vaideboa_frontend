@@ -92,7 +92,7 @@ export default function Offer() {
     >
     <View className="flex-1 bg-platinum">
 
-      <View className="pt-12 pb-4 px-6 bg-velvet-orchid-900 flex-row items-center justify-between shadow-md z-20">
+      <View className="pt-8 pb-4 px-6 bg-velvet-orchid-900 flex-row items-center justify-between shadow-md z-20">
         <View className="w-10">
           {step > 1 && (
             <TouchableOpacity onPress={() => setStep(step - 1)} className="p-2 -ml-2">
