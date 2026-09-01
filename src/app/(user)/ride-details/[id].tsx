@@ -25,7 +25,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import MapView, { Marker, Polyline } from "react-native-maps";
+import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from "react-native-maps";
 
 type Ride = {
   data: string;
@@ -358,6 +358,7 @@ export default function SearchDetails() {
         {/* SEÇÃO DO MAPA */}
         <View className="h-80 w-full">
           <MapView
+            provider={PROVIDER_GOOGLE}
             ref={mapRef}
             style={{ flex: 1 }}
             customMapStyle={darkMapStyle}

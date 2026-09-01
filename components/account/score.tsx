@@ -57,7 +57,7 @@ export default function Score({
   const [open, setOpen] = useState(false);
 
   return (
-    <View className="px-6 mt-6 mb-6">
+    <View className="px-6 mt-6 mb-2">
       <View className="bg-white rounded-[32px] p-6 shadow-lg border border-purple-x11-50">
         <TouchableOpacity
           onPress={() => setOpen(!open)}

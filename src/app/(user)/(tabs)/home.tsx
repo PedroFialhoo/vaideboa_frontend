@@ -47,7 +47,7 @@ export default function Home() {
           </View>
         </View>
         
-        <Text className="text-purple-x11-100 text-sm leading-5 font-medium opacity-80">
+        <Text className="text-purple-x11-100 text-base leading-5 font-medium opacity-80">
           A plataforma de caronas feita por estudantes, para estudantes. 
           Economize tempo, divida custos e chegue na facul com segurança.
         </Text>
@@ -65,7 +65,7 @@ export default function Home() {
             <Search size={32} color="#7b4d91" />
           </View>
           <Text className="text-velvet-orchid-900 font-black text-center text-lg">Buscar Carona</Text>
-          <Text className="text-gray-500 text-[10px] text-center mt-1 font-bold uppercase tracking-widest">Quero uma vaga</Text>
+          <Text className="text-gray-500 text-sm text-center mt-1 font-bold uppercase tracking-widest">Quero uma vaga</Text>
         </TouchableOpacity>
 
         {/* Iniciar Carona (Motorista) */}
@@ -78,7 +78,7 @@ export default function Home() {
             <PlusCircle size={32} color="white" />
           </View>
           <Text className="text-velvet-orchid-900 font-black text-center text-lg">Iniciar Carona</Text>
-          <Text className="text-gray-500 text-[10px] text-center mt-1 font-bold uppercase tracking-widest">Eu vou dirigir</Text>
+          <Text className="text-gray-500 text-sm text-center mt-1 font-bold uppercase tracking-widest">Eu vou dirigir</Text>
         </TouchableOpacity>
       </View>
 
@@ -94,7 +94,7 @@ export default function Home() {
             </View>
             <View className="flex-1">
               <Text className="text-velvet-orchid-900 font-bold">Segurança</Text>
-              <Text className="text-gray-500 text-xs font-medium">Modo feminino e botão de emergência.</Text>
+              <Text className="text-gray-500 text-sm font-medium">Modo feminino e botão de emergência.</Text>
             </View>
           </View>
 
@@ -105,7 +105,7 @@ export default function Home() {
             </View>
             <View className="flex-1">
               <Text className="text-velvet-orchid-900 font-bold">Rotas Inteligentes</Text>
-              <Text className="text-gray-500 text-xs font-medium">Caronas que passam exatamente no seu caminho.</Text>
+              <Text className="text-gray-500 text-sm font-medium">Caronas que passam exatamente no seu caminho.</Text>
             </View>
           </View>
 
@@ -116,7 +116,7 @@ export default function Home() {
             </View>
             <View className="flex-1">
               <Text className="text-velvet-orchid-900 font-bold">Pontualidade</Text>
-              <Text className="text-gray-500 text-xs font-medium">Combine horários direto com quem estuda com você.</Text>
+              <Text className="text-gray-500 text-sm font-medium">Combine horários direto com quem estuda com você.</Text>
             </View>
           </View>
         </View>

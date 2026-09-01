@@ -27,9 +27,9 @@ export default function RootLayout() {
   }, []);
 
   return (
-    <SafeAreaProvider>
+    <SafeAreaProvider>  
       <StatusBar style="light" backgroundColor={DARK_COLOR} />
-      {Platform.OS === "ios" && <StatusBarBg />}
+      {Platform.OS !== "web" && <StatusBarBg />}
       <Slot />
     </SafeAreaProvider>
   );

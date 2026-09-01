@@ -265,7 +265,7 @@ export default function Destination({
             <Polyline
               coordinates={coords}
               strokeWidth={4}
-              strokeColor="#7b4d91"
+              strokeColor="#aa00ff"
             />
           )}
         </MapView>

@@ -17,7 +17,7 @@ export default function Offer() {
   const [date, setDate] = useState<Date | null>(null);
   const [time, setTime] = useState<Date | null>(null);
   const [price, setPrice] = useState<number | null>(null);
-  const [seats, setSeats] = useState(1);
+  const [seats, setSeats] = useState(3);
   const [stops, setStops] = useState<StopType[]>([]);
   const [messageError, setMessageError] = useState("")
   const [loading, setLoading] = useState(false)

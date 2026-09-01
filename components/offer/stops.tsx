@@ -290,7 +290,7 @@ export default function Stops({
             <Polyline
               coordinates={coords}
               strokeWidth={4}
-              strokeColor="#7b4d91"
+              strokeColor="#aa00ff"
             />
           )}
 

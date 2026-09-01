@@ -12,11 +12,11 @@ export default function ProfileLayout() {
         tabBarActiveTintColor: "#a571c1", // cor do ícone ativo
         tabBarInactiveTintColor: "#f7e5ff", // cor do ícone inativo
         tabBarStyle: {
-          backgroundColor: "#120e15",
+          backgroundColor: "#1c1023",
         }}}
     >
       <TopTabs.Screen name="account" options={{ title: "Perfil" }} />
       <TopTabs.Screen name="config" options={{ title: "Configurações" }} />
     </TopTabs>
   );
-}
+} 

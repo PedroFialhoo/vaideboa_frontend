@@ -62,7 +62,7 @@ export default function Account() {
   );
 
   return (
-    <ScrollView className="flex-1 bg-vintage-grape-200">
+    <ScrollView className="flex-1 bg-vintage-grape-200" bounces={false}>
       <View className="bg-velvet-orchid-900 pt-12 pb-12 items-center rounded-b-[100px] shadow-xl">
         <View className="relative">
           <View className="w-32 h-32 rounded-full border-4 border-white overflow-hidden bg-platinum">
@@ -96,6 +96,8 @@ export default function Account() {
       />
 
       <Preferences preferences={preferences} setPreferences={setPreferences} />
+
+      <View className="h-12" />
     </ScrollView>
   );
 }

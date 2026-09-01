@@ -85,13 +85,11 @@ export default function Search() {
         destinoLon: destination.longitude,
       };
 
-      console.log("Payload enviado:", payload);
-
       api.post("/reserva/buscar", payload, {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then((response) => {
-        console.log("Resposta da API:", response.data);
+        console.log("Carona:", response.data);
 
         setRides(response.data);
 
@@ -100,19 +98,7 @@ export default function Search() {
         }
       })
       .catch((error) => {
-          if (error.response) {
-            // Backend respondeu com erro
-            console.error("Status:", error.response.status);
-            console.error("Data:", error.response.data);
-          } else if (error.request) {
-            // Requisição enviada mas sem resposta
-            console.error("Sem resposta do servidor:", error.request);
-          } else {
-            // Erro antes da requisição
-            console.error("Erro:", error.message);
-          }
-
-          setMessageError("Erro ao buscar caronas.");
+          setMessageError(error.response.data);          
         })
       .finally(() => {
         setLoading(false);
@@ -121,6 +107,15 @@ export default function Search() {
     });
   };
 
+  const getRatingColor = (rating?: number) => {
+    if (!rating) return "#9CA3AF"; // cinza
+
+    if (rating >= 4.0) return "#22C55E"; // verde
+    if (rating >= 3.0) return "#EAB308"; // amarelo
+    if (rating >= 2.0) return "#F97316"; // laranja
+
+    return "#EF4444"; // vermelho
+  };
 
   return (
     <View className="flex-1 bg-platinum">
@@ -152,7 +147,7 @@ export default function Search() {
         
         {/* LISTA DE RESULTADOS */}
         {(rides.length > 0 && step === 3) && (
-          <ScrollView className="mt-8">
+          <ScrollView className="mt-8 px-2">
             <Text className="text-velvet-orchid-900 font-black text-xl mb-4 ml-2">Caronas Disponíveis</Text>
             {rides.map((ride, index) => (
               <TouchableOpacity 
@@ -161,22 +156,48 @@ export default function Search() {
                 onPress={() => router.push({ pathname: "/ride-details/[id]", params: { id: ride.idRota } } as any)}
               >
                 <View className="bg-purple-x11-100 p-3 rounded-2xl mr-4">
-                  <User size={24} color="#7b4d91" />
+                  <User size={32} color="#7b4d91" />
                 </View>
                 <View className="flex-1">
-                  <Text className="text-velvet-orchid-900 font-bold text-lg">{ride.nomeMotorista}</Text>
+                  <Text className="text-velvet-orchid-900 font-bold text-lg">{ride.nomeMotorista}   
+                    {ride.avaliacaoMotorista?.numViagensMotorista &&
+                     ride.avaliacaoMotorista.numViagensMotorista !== 0 && (
+                      <>
+                        <Text> </Text>
+                        <Text className="text-gray-500 text-sm font-medium ml-8">
+                        -  {ride.avaliacaoMotorista.numViagensMotorista} Viagems realizadas
+                        </Text>
+                      </>
+                    )}
+                  </Text>
                   <View className="flex-row items-center mt-1">
                     <Clock size={14} color="#7b4d91" />
-                    <Text className="text-gray-500 text-xs ml-1 font-medium">{ride.hora.substring(0,5)} • {ride.data.split('-').reverse().join('/')}</Text>
+                    <Text className="text-gray-500 text-sm ml-1 font-medium">{ride.hora.substring(0,5)} • {ride.data.split('-').reverse().join('/')}</Text>
                   </View>
                   {ride.paradas && ride.paradas.length > 0 && (
                     <View className="flex-row items-center mt-1">
                       <CircleDot size={12} color="#7b4d91" />
-                      <Text className="text-purple-x11-600 text-xs ml-1 font-bold">{ride.paradas.length} parada{ride.paradas.length > 1 ? 's' : ''}</Text>
+                      <Text className="text-purple-x11-600 text-sm ml-1 font-bold">{ride.paradas.length} parada{ride.paradas.length > 1 ? 's' : ''}</Text>
                     </View>
                   )}
                 </View>
-                <ChevronRight size={20} color="#7b4d91" opacity={0.5} />
+                <View className="flex items-center">
+                {ride.avaliacaoMotorista?.notaMotorista != null && (
+                  <View
+                    className="w-12 h-12 rounded-xl items-center justify-center mb-3"
+                    style={{
+                      backgroundColor: getRatingColor(
+                        ride.avaliacaoMotorista.notaMotorista
+                      ),
+                    }}
+                  >
+                    <Text className="text-white font-black text-base">
+                      {ride.avaliacaoMotorista.notaMotorista.toFixed(1)}
+                    </Text>
+                  </View>
+                )}
+                <ChevronRight size={24} color="#cc66ff"/>                
+                </View>
               </TouchableOpacity>
             ))}
           </ScrollView>

@@ -29,6 +29,7 @@ export default function Index() {
     }
   }
   useEffect(() => {
+    console.log("Verificando token...")
     checkToken()
   }, [])
 }
