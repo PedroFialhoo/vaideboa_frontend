@@ -6,7 +6,7 @@ import { api } from "@/src/services/api";
 import { getToken } from "@/src/services/storage";
 import { getCurrentPositionAsync, LocationObject, requestForegroundPermissionsAsync } from "expo-location";
 import { useRouter } from "expo-router";
-import { ChevronLeft, ChevronRight, Clock, User, CircleDot } from "lucide-react-native";
+import { CalendarDays, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, CircleDot, Clock, MapPin, ShieldCheck, User } from "lucide-react-native";
 import { useEffect, useRef, useState } from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 
@@ -29,6 +29,11 @@ export default function Search() {
   const [location, setLocation] = useState<LocationObject | null>(null);
   
   const [step, setStep] = useState(1);
+  const [showForm, setShowForm] = useState(true);
+
+  useEffect(() => {
+    setShowForm(true);
+  }, [step]);
 
   async function requestLocationPermission() {
     const { granted } = await requestForegroundPermissionsAsync();
@@ -95,6 +100,8 @@ export default function Search() {
 
         if (response.data.length === 0) {
           setMessageError("Nenhuma carona encontrada para este trajeto.");
+        } else {
+          setShowForm(false);
         }
       })
       .catch((error) => {
@@ -143,64 +150,195 @@ export default function Search() {
         
         {step === 1 && <Origin origin={origin} setOrigin={setOrigin} next={handleNext} />}
         {step === 2 && <Destination origin={origin} destination={destination} setDestination={setDestination} next={handleNext} />}   
-        {step === 3 && <SearchForm date={date} showDatePicker={showDatePicker} showTimePicker={showTimePicker} setShowDatePicker={setShowDatePicker} setShowTimePicker={setShowTimePicker} onDateChange={onDateChange} onTimeChange={onTimeChange} searchTravels={searchTravels} loading={loading} origin={origin} destination={destination} messageError={messageError} />}        
-        
-        {/* LISTA DE RESULTADOS */}
-        {(rides.length > 0 && step === 3) && (
-          <ScrollView className="mt-8 px-2">
-            <Text className="text-velvet-orchid-900 font-black text-xl mb-4 ml-2">Caronas Disponíveis</Text>
+        {step === 3 && (
+          <View className="flex-1">
+            <View className="px-4 pt-4">
+              {showForm ? (
+                <>
+                  <SearchForm date={date} showDatePicker={showDatePicker} showTimePicker={showTimePicker} setShowDatePicker={setShowDatePicker} setShowTimePicker={setShowTimePicker} onDateChange={onDateChange} onTimeChange={onTimeChange} searchTravels={searchTravels} loading={loading} origin={origin} destination={destination} messageError={messageError} />
+
+                  {rides.length > 0 && (
+                    <TouchableOpacity
+                      onPress={() => setShowForm(false)}
+                      className="flex-row items-center justify-center py-3 mt-1"
+                    >
+                      <Text className="text-purple-x11-600 font-black text-[11px] uppercase tracking-wide mr-1">
+                        Ocultar filtros
+                      </Text>
+                      <ChevronUp size={15} color="#8800cc" />
+                    </TouchableOpacity>
+                  )}
+                </>
+              ) : (
+                <TouchableOpacity
+                  onPress={() => setShowForm(true)}
+                  className="bg-white rounded-3xl p-4 border border-purple-x11-100 shadow-md flex-row items-center"
+                >
+                  <View className="flex-1 pr-3">
+                    <View className="flex-row items-center">
+                      <View className="w-5 h-5 rounded-full bg-purple-x11-100 items-center justify-center border border-purple-x11-200 mr-2">
+                        <CircleDot size={8} color="#8800cc" />
+                      </View>
+                      <Text numberOfLines={1} className="text-velvet-orchid-900 font-bold text-sm">
+                        {origin?.address || "Minha localização"}
+                      </Text>
+                    </View>
+                    <View className="flex-row items-center mt-1.5">
+                      <View className="w-5 h-5 rounded-full bg-velvet-orchid-700 items-center justify-center mr-2">
+                        <MapPin size={9} color="white" />
+                      </View>
+                      <Text numberOfLines={1} className="text-velvet-orchid-900 font-bold text-sm">
+                        {destination?.address || "Selecione o destino"}
+                      </Text>
+                    </View>
+                  </View>
+                  <View className="items-end">
+                    <View className="bg-platinum/50 px-2.5 py-1 rounded-full mb-2">
+                      <Text className="text-velvet-orchid-900 font-black text-[11px]">
+                        {date.toLocaleDateString("pt-BR")} •{" "}
+                        {date.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                      </Text>
+                    </View>
+                    <View className="flex-row items-center">
+                      <Text className="text-purple-x11-600 font-black text-[11px] uppercase tracking-wide mr-1">
+                        Abrir filtros
+                      </Text>
+                      <ChevronDown size={15} color="#8800cc" />
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              )}
+            </View>
+
+            {/* LISTA DE RESULTADOS */}
+            {(rides.length > 0) && (
+              <ScrollView className="flex-1 mt-5 px-2" showsVerticalScrollIndicator={false}>
+                <Text className="text-velvet-orchid-900 font-black text-xl mb-4 ml-2">Caronas Disponíveis</Text>
             {rides.map((ride, index) => (
               <TouchableOpacity 
                 key={index} 
-                className="bg-white rounded-3xl p-5 mb-4 border border-purple-x11-100 shadow-sm flex-row items-center"
+                className="bg-white rounded-[32px] p-5 mb-5 border border-purple-x11-100 shadow-hard-2 active:scale-[0.98]"
                 onPress={() => router.push({ pathname: "/ride-details/[id]", params: { id: ride.idRota } } as any)}
               >
-                <View className="bg-purple-x11-100 p-3 rounded-2xl mr-4">
-                  <User size={32} color="#7b4d91" />
-                </View>
-                <View className="flex-1">
-                  <Text className="text-velvet-orchid-900 font-bold text-lg">{ride.nomeMotorista}   
-                    {ride.avaliacaoMotorista?.numViagensMotorista &&
-                     ride.avaliacaoMotorista.numViagensMotorista !== 0 && (
-                      <>
-                        <Text> </Text>
-                        <Text className="text-gray-500 text-sm font-medium ml-8">
-                        -  {ride.avaliacaoMotorista.numViagensMotorista} Viagems realizadas
-                        </Text>
-                      </>
-                    )}
-                  </Text>
-                  <View className="flex-row items-center mt-1">
-                    <Clock size={14} color="#7b4d91" />
-                    <Text className="text-gray-500 text-sm ml-1 font-medium">{ride.hora.substring(0,5)} • {ride.data.split('-').reverse().join('/')}</Text>
+                {/* HEADER: MOTORISTA + RATING */}
+                <View className="flex-row items-center justify-between mb-4">
+                  <View className="flex-row items-center flex-1 pr-3">
+                    <View className="bg-purple-x11-100 w-12 h-12 rounded-2xl items-center justify-center mr-3">
+                      <User size={24} color="#7b4d91" />
+                    </View>
+                    <View className="flex-1">
+                      <Text numberOfLines={1} className="text-velvet-orchid-900 font-black text-lg">
+                        {ride.nomeMotorista}
+                      </Text>
+                      {ride.avaliacaoMotorista?.numViagensMotorista != null &&
+                       ride.avaliacaoMotorista.numViagensMotorista !== 0 && (
+                        <View className="flex-row items-center mt-0.5">
+                          <ShieldCheck size={11} color="#7b4d91" />
+                          <Text className="text-gray-500 text-xs font-bold ml-1">
+                            {ride.avaliacaoMotorista.numViagensMotorista} viagens realizadas
+                          </Text>
+                        </View>
+                      )}
+                    </View>
                   </View>
-                  {ride.paradas && ride.paradas.length > 0 && (
-                    <View className="flex-row items-center mt-1">
-                      <CircleDot size={12} color="#7b4d91" />
-                      <Text className="text-purple-x11-600 text-sm ml-1 font-bold">{ride.paradas.length} parada{ride.paradas.length > 1 ? 's' : ''}</Text>
+
+                  {ride.avaliacaoMotorista?.notaMotorista != null && (
+                    <View
+                      className="px-2.5 py-1.5 rounded-xl flex-row items-center"
+                      style={{ backgroundColor: getRatingColor(ride.avaliacaoMotorista.notaMotorista) }}
+                    >
+                      <Text className="text-white font-black text-sm ml-1">
+                        ★ {ride.avaliacaoMotorista.notaMotorista.toFixed(1)}
+                      </Text>
                     </View>
                   )}
                 </View>
-                <View className="flex items-center">
-                {ride.avaliacaoMotorista?.notaMotorista != null && (
-                  <View
-                    className="w-12 h-12 rounded-xl items-center justify-center mb-3"
-                    style={{
-                      backgroundColor: getRatingColor(
-                        ride.avaliacaoMotorista.notaMotorista
-                      ),
-                    }}
-                  >
-                    <Text className="text-white font-black text-base">
-                      {ride.avaliacaoMotorista.notaMotorista.toFixed(1)}
-                    </Text>
+
+                {/* ITINERÁRIO: SAÍDA → DESTINO */}
+                {(ride.saidaTexto || ride.destinoTexto || ride.origemTexto) && (
+                  <View className="bg-platinum/40 rounded-[24px] p-4 mb-4 border border-purple-x11-50">
+                    <View className="flex-row items-center">
+                      <View className="items-center mr-4 h-16">
+                        <View className="w-4 h-4 rounded-full bg-purple-x11-100 items-center justify-center border border-purple-x11-200">
+                          <CircleDot size={7} color="#8800cc" />
+                        </View>
+                        <View className="w-[2px] flex-1 bg-purple-x11-100" />
+                        <View className="w-4 h-4 rounded-full bg-velvet-orchid-700 items-center justify-center">
+                          <MapPin size={8} color="white" />
+                        </View>
+                      </View>
+                      <View className="flex-1">
+                        {(ride.saidaTexto || ride.origemTexto) && (
+                          <>
+                            <Text className="text-purple-x11-400 text-[9px] font-black uppercase tracking-[1px] mb-1">
+                              Partida
+                            </Text>
+                            <Text numberOfLines={1} className="text-velvet-orchid-900 font-bold text-sm">
+                              {ride.saidaTexto || ride.origemTexto}
+                            </Text>
+                          </>
+                        )}
+                        {ride.destinoTexto && (
+                          <>
+                            <View className="h-[1px] bg-purple-x11-100 my-2" />
+                            <Text className="text-purple-x11-400 text-[9px] font-black uppercase tracking-[1px] mb-1">
+                              Destino
+                            </Text>
+                            <Text numberOfLines={1} className="text-velvet-orchid-900 font-bold text-sm">
+                              {ride.destinoTexto}
+                            </Text>
+                          </>
+                        )}
+                      </View>
+                    </View>
                   </View>
                 )}
-                <ChevronRight size={24} color="#cc66ff"/>                
+
+                {/* RODAPÉ: HORA/DATA, PARADAS, VAGAS */}
+                <View className="flex-row items-center justify-between">
+                  <View className="flex-1 flex-row items-center gap-3 flex-wrap pr-3">
+                    <View className="flex-row items-center">
+                      <Clock size={14} color="#7b4d91" />
+                      <Text className="text-velvet-orchid-900 font-bold text-sm ml-1.5">
+                        {ride.hora.substring(0,5)}
+                      </Text>
+                    </View>
+
+                    <View className="flex-row items-center">
+                      <CalendarDays size={14} color="#7b4d91" />
+                      <Text className="text-gray-500 font-bold text-xs ml-1.5">
+                        {ride.data.split('-').reverse().join('/')}
+                      </Text>
+                    </View>
+
+                    {ride.paradas && ride.paradas.length > 0 && (
+                      <View className="flex-row items-center bg-purple-x11-50 px-2.5 py-1 rounded-full">
+                        <CircleDot size={11} color="#8800cc" />
+                        <Text className="text-purple-x11-600 text-xs font-bold ml-1">
+                          {ride.paradas.length} {ride.paradas.length > 1 ? 'paradas' : 'parada'}
+                        </Text>
+                      </View>
+                    )}
+
+                    {ride.vagasDisponiveis != null && (
+                      <View className="flex-row items-center bg-platinum/40 px-2.5 py-1 rounded-full">
+                        <User size={11} color="#7b4d91" />
+                        <Text className="text-velvet-orchid-900 text-xs font-bold ml-1">
+                          {ride.vagasDisponiveis} vagas
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+
+                  <View className="w-9 h-9 bg-purple-x11-700 rounded-full items-center justify-center">
+                    <ChevronRight size={18} color="white" />
+                  </View>
                 </View>
               </TouchableOpacity>
-            ))}
-          </ScrollView>
+              ))}
+            </ScrollView>
+            )}
+          </View>
         )}
       </View>
     </View>
