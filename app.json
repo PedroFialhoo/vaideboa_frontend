@@ -4,14 +4,9 @@
     "slug": "vaideboa_frontend",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/logo-white.png",
+    "icon": "./assets/images/app-icon.png",
     "scheme": "vaideboafrontend",
     "userInterfaceStyle": "automatic",
-    "splash": {
-      "image": "./assets/images/logo-white.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#9F00EC"
-    },
     "ios": {
       "supportsTablet": true
     },
@@ -42,7 +37,9 @@
         {
           "locationWhenInUsePermission": "O VDB usa sua localização para encontrar caronas perto de você."
         }
-      ]
+      ],
+      "expo-splash-screen",
+      "expo-status-bar"
     ],
     "experiments": {
       "typedRoutes": true

@@ -358,7 +358,6 @@ export default function SearchDetails() {
         {/* SEÇÃO DO MAPA */}
         <View className="h-80 w-full">
           <MapView
-            provider={PROVIDER_GOOGLE}
             ref={mapRef}
             style={{ flex: 1 }}
             customMapStyle={darkMapStyle}

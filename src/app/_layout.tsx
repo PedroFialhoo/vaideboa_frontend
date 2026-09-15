@@ -1,7 +1,5 @@
 import { Slot } from "expo-router";
-import { StatusBar, setStatusBarBackgroundColor } from "expo-status-bar";
-import * as NavigationBar from "expo-navigation-bar";
-import { useEffect } from "react";
+import { StatusBar } from "expo-status-bar";
 import { Platform, View } from "react-native";
 import { SafeAreaProvider, useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -13,22 +11,9 @@ function StatusBarBg() {
 }
 
 export default function RootLayout() {
-
-  useEffect(() => {
-    async function configNavBar() {
-      await NavigationBar.setPositionAsync("relative");
-      await NavigationBar.setBackgroundColorAsync(DARK_COLOR);
-      await NavigationBar.setButtonStyleAsync("light");
-      if (Platform.OS === "android") {
-        await setStatusBarBackgroundColor(DARK_COLOR, true);
-      }
-    }
-    configNavBar();
-  }, []);
-
   return (
     <SafeAreaProvider>  
-      <StatusBar style="light" backgroundColor={DARK_COLOR} />
+      <StatusBar style="light" />
       {Platform.OS !== "web" && <StatusBarBg />}
       <Slot />
     </SafeAreaProvider>
