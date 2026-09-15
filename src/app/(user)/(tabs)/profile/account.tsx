@@ -6,7 +6,7 @@ import Preferences from "@/components/account/preferences"
 import Score from "@/components/account/score"
 import { getToken } from "@/src/services/storage"
 import { api } from "@/src/services/api"
-import { useFocusEffect } from "@react-navigation/native";
+import { useFocusEffect } from "expo-router/react-navigation";
 
 export default function Account() {
   const [name, setName] = useState<string | null>(null);

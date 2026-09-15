@@ -7,7 +7,7 @@ import { getToken, resetToken } from "@/src/services/storage";
 import { api } from "@/src/services/api";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { MaskedTextInput } from "react-native-mask-text";
-import { useFocusEffect } from "@react-navigation/native";
+import { useFocusEffect } from "expo-router/react-navigation";
 import { Input, InputField } from "@/components/ui/input";
 
 export default function Settings() {

@@ -1,4 +1,4 @@
-import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
+import { createMaterialTopTabNavigator } from 'expo-router/js-top-tabs';
 import { withLayoutContext } from 'expo-router';
 
 const { Navigator } = createMaterialTopTabNavigator();
@@ -19,4 +19,4 @@ export default function ProfileLayout() {
       <TopTabs.Screen name="config" options={{ title: "Configurações" }} />
     </TopTabs>
   );
-} 
+}
