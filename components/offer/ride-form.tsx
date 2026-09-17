@@ -8,7 +8,7 @@ import {
   Plus,
   Users,
 } from "lucide-react-native";
-import React, { useState } from "react";
+import React, { type ReactNode, useState } from "react";
 import {
   Text,
   TextInput,
@@ -33,6 +33,8 @@ type Props = {
   createRide: () => void;
   messageError: string;
   loading: boolean;
+  vehicleSection: ReactNode;
+  maxSeats: number;
 };
 
 export default function RideForm({
@@ -47,11 +49,13 @@ export default function RideForm({
   createRide,
   messageError,
   loading,
+  vehicleSection,
+  maxSeats,
 }: Props) {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
 
-  const MAX_SEATS = 6;
+  const MAX_SEATS = Math.min(7, maxSeats);
   const MIN_SEATS = 1;
 
   const formatDate = (d: Date | null) => {
@@ -80,6 +84,7 @@ export default function RideForm({
       style={{ flex: 1 }}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
+      {vehicleSection}
       <View className="mx-6 mt-4 mb-6">
         {/* DATA E HORA */}
         <View className="flex-row gap-3 mb-4">
