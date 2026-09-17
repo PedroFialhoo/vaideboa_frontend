@@ -1,6 +1,6 @@
-import { View, Text, TouchableOpacity, KeyboardAvoidingView, ScrollView } from "react-native";
-import { ChevronLeft, ChevronRight, MapPin, ArrowRight, PencilLine, CircleDot } from "lucide-react-native";
-import { useState } from "react";
+import { View, Text, TouchableOpacity, KeyboardAvoidingView, ScrollView, ActivityIndicator } from "react-native";
+import { ChevronLeft, ChevronRight, MapPin, ArrowRight, PencilLine, CircleDot, Car } from "lucide-react-native";
+import { useCallback, useEffect, useState } from "react";
 import Destination from "@/components/offer/destination";
 import Origin from "@/components/offer/origin";
 import Stops, { StopType } from "@/components/offer/stops";
@@ -9,6 +9,17 @@ import "@/global.css";
 import { api } from "@/src/services/api";
 import { getToken } from "@/src/services/storage";
 import { useRouter } from "expo-router";
+import { useFocusEffect } from "expo-router/react-navigation";
+
+type Vehicle = {
+  id: number;
+  marca: string;
+  modelo: string;
+  cor: string;
+  placa: string;
+  ano: number;
+  vagas: number;
+};
 
 export default function Offer() {
   const [step, setStep] = useState(1);
@@ -21,7 +32,38 @@ export default function Offer() {
   const [stops, setStops] = useState<StopType[]>([]);
   const [messageError, setMessageError] = useState("")
   const [loading, setLoading] = useState(false)
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [selectedVehicleId, setSelectedVehicleId] = useState<number | null>(null);
+  const [loadingVehicles, setLoadingVehicles] = useState(false);
   const router = useRouter()
+
+  const loadVehicles = useCallback(async () => {
+    setLoadingVehicles(true);
+    try {
+      const token = await getToken();
+      const response = await api.get<Vehicle[]>("/carro/meus", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setVehicles(response.data);
+      setSelectedVehicleId((current) => response.data.some((vehicle) => vehicle.id === current) ? current : response.data[0]?.id ?? null);
+    } catch {
+      setVehicles([]);
+      setSelectedVehicleId(null);
+    } finally {
+      setLoadingVehicles(false);
+    }
+  }, []);
+
+  useFocusEffect(useCallback(() => {
+    void loadVehicles();
+  }, [loadVehicles]));
+
+  useEffect(() => {
+    const selectedVehicle = vehicles.find((vehicle) => vehicle.id === selectedVehicleId);
+    if (selectedVehicle && seats > selectedVehicle.vagas) {
+      setSeats(selectedVehicle.vagas);
+    }
+  }, [selectedVehicleId, seats, vehicles]);
 
   function handleNext() {
     if (step === 1 && !origin) return;
@@ -33,8 +75,8 @@ export default function Offer() {
 
   const createRide = () => {
     setMessageError("")
-    if (!destination || !origin || !date || !time) {
-      setMessageError("Todas as informações são obrigatórias!")
+    if (!destination || !origin || !date || !time || !selectedVehicleId) {
+      setMessageError(selectedVehicleId ? "Todas as informações são obrigatórias!" : "Selecione um veículo para oferecer a carona.")
       return;
     }
 
@@ -50,6 +92,7 @@ export default function Offer() {
         "/carona/cadastrar",
         {
           qntAssentos: seats,
+          idCarro: selectedVehicleId,
           data: dataFormatada,
           hora: horaFormatada,
           saidaLat: origin.latitude,
@@ -175,6 +218,27 @@ export default function Offer() {
             </View>
 
             <RideForm
+              vehicleSection={
+                <View className="mx-6 mb-4 mt-3 bg-white rounded-3xl p-5 border border-purple-x11-100">
+                  <View className="flex-row items-center gap-2 mb-3"><Car size={19} color="#7b4d91" /><Text className="font-black text-velvet-orchid-900">Veículo da carona</Text></View>
+                  {loadingVehicles ? <ActivityIndicator color="#7b4d91" /> : vehicles.length === 0 ? (
+                    <TouchableOpacity onPress={() => router.push("/profile/vehicles" as any)} className="bg-purple-x11-50 rounded-xl p-3">
+                      <Text className="text-velvet-orchid-900 font-bold text-center">Cadastre um veículo para continuar</Text>
+                    </TouchableOpacity>
+                  ) : (
+                    <View className="gap-2">
+                      {vehicles.map((vehicle) => {
+                        const selected = vehicle.id === selectedVehicleId;
+                        return <TouchableOpacity key={vehicle.id} onPress={() => setSelectedVehicleId(vehicle.id)} className={`rounded-xl border p-3 ${selected ? "bg-purple-x11-100 border-purple-x11-600" : "bg-white border-platinum"}`}>
+                          <Text className="font-bold text-velvet-orchid-900">{vehicle.marca} {vehicle.modelo} · {vehicle.ano}</Text>
+                          <Text className="text-xs text-gray-500">{vehicle.cor} · {vehicle.placa} · até {vehicle.vagas} vagas</Text>
+                        </TouchableOpacity>;
+                      })}
+                    </View>
+                  )}
+                </View>
+              }
+              maxSeats={vehicles.find((vehicle) => vehicle.id === selectedVehicleId)?.vagas ?? 6}
               date={date}
               setDate={setDate}
               time={time}

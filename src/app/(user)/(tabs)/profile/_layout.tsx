@@ -16,6 +16,7 @@ export default function ProfileLayout() {
         }}}
     >
       <TopTabs.Screen name="account" options={{ title: "Perfil" }} />
+      <TopTabs.Screen name="vehicles" options={{ title: "Veículos" }} />
       <TopTabs.Screen name="config" options={{ title: "Configurações" }} />
     </TopTabs>
   );
