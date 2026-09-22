@@ -163,35 +163,36 @@ export default function Vehicles() {
 
   return (
     <ScrollView className="flex-1 bg-vintage-grape-200" contentContainerStyle={{ padding: 24, gap: 20 }} keyboardShouldPersistTaps="handled">
-      <View className="flex-row items-center gap-3">
-        <View className="bg-purple-x11-100 p-3 rounded-2xl"><Car size={24} color="#7b4d91" /></View>
-        <View className="flex-1"><Text className="text-velvet-orchid-900 font-black text-xl">Meus veículos</Text><Text className="text-gray-500 text-xs">Escolha um veículo ao oferecer uma carona.</Text></View>
-        <TouchableOpacity onPress={loadVehicles} className="p-2"><RefreshCw size={20} color="#7b4d91" /></TouchableOpacity>
-      </View>
-
-      {loadingVehicles ? <ActivityIndicator color="#7b4d91" /> : vehicles.length === 0 ? (
-        <Text className="text-gray-500 text-center py-4">Você ainda não cadastrou nenhum veículo.</Text>
-      ) : vehicles.map((vehicle) => (
-        <View key={vehicle.id} className="bg-white rounded-2xl p-4 border border-purple-x11-100">
-          <Text className="font-black text-velvet-orchid-900">{vehicle.marca} {vehicle.modelo}</Text>
-          <Text className="text-gray-500 text-sm">{vehicle.ano} · {vehicle.cor} · {vehicle.placa} · {vehicle.vagas} vagas</Text>
+      <View className="bg-white rounded-3xl p-5 gap-3">
+        <View className="flex-row items-center gap-3">
+          <View className="bg-purple-x11-100 p-3 rounded-2xl"><Car size={24} color="#7b4d91" /></View>
+          <View className="flex-1"><Text className="text-velvet-orchid-900 font-black text-xl">Meus veículos</Text><Text className="text-gray-500 text-xs">Escolha um veículo ao oferecer uma carona.</Text></View>
+          <TouchableOpacity onPress={loadVehicles} className="p-2"><RefreshCw size={20} color="#7b4d91" /></TouchableOpacity>
         </View>
-      ))}
 
+        {loadingVehicles ? <ActivityIndicator color="#7b4d91" /> : vehicles.length === 0 ? (
+          <Text className="text-gray-500 text-center py-4">Você ainda não cadastrou nenhum veículo.</Text>
+        ) : vehicles.map((vehicle) => (
+          <View key={vehicle.id} className="bg-white rounded-2xl p-4 border border-purple-x11-700">
+            <Text className="font-black text-velvet-orchid-900">{vehicle.marca} {vehicle.modelo}</Text>
+            <Text className="text-gray-500 text-sm">{vehicle.ano} · {vehicle.cor} · {vehicle.placa} · {vehicle.vagas} vagas</Text>
+          </View>
+        ))}
+      </View>
       <View className="bg-white rounded-3xl p-5 gap-3">
         <View className="flex-row items-center gap-2"><Plus size={20} color="#7b4d91" /><Text className="font-black text-velvet-orchid-900 text-lg">Cadastrar veículo</Text></View>
         <Text className="text-gray-500 text-xs">Use as sugestões FIPE ou preencha os dados manualmente.</Text>
 
-        <Field label="MARCA" value={brand} onChangeText={(value) => { setBrand(value); setBrandCode(""); }} placeholder="Ex.: Honda" />
+        <Field label="MARCA" value={brand} onChangeText={(value) => { setBrand(value); setBrandCode(""); }} placeholder="Ex.: Honda" placeholderTextColor="#7b4d91"/>
         {brand.length > 0 && !brandCode && filteredBrands.map((option) => <Suggestion key={option.codigo} label={option.nome} onPress={() => selectBrand(option)} />)}
-        <Field label="MODELO" value={model} onChangeText={(value) => { setModel(value); setModelCode(""); }} placeholder="Ex.: Civic" />
+        <Field label="MODELO" value={model} onChangeText={(value) => { setModel(value); setModelCode(""); }} placeholder="Ex.: Civic" placeholderTextColor="#7b4d91"/>
         {model.length > 0 && modelCode === "" && filteredModels.map((option) => <Suggestion key={option.codigo} label={option.nome} onPress={() => selectModel(option)} />)}
-        <Field label="ANO" value={year} onChangeText={setYear} placeholder="Ex.: 2020" keyboardType="number-pad" />
+        <Field label="ANO" value={year} onChangeText={setYear} placeholder="Ex.: 2020" keyboardType="number-pad" placeholderTextColor="#7b4d91"/>
         {years.length > 0 && !year && <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>{years.slice(0, 20).map((option) => <Suggestion key={option.codigo} label={option.nome} onPress={() => selectYear(option)} />)}</ScrollView>}
-        <Field label="COR" value={color} onChangeText={setColor} placeholder="Ex.: Prata" />
-        <Field label="PLACA" value={plate} onChangeText={(value) => setPlate(cleanPlate(value))} placeholder="ABC1D23" autoCapitalize="characters" />
-        <Field label="VAGAS DISPONÍVEIS" value={seats} onChangeText={setSeats} placeholder="Ex.: 4" keyboardType="number-pad" />
-        <Field label="DESCRIÇÃO (OPCIONAL)" value={description} onChangeText={setDescription} placeholder="Ex.: Porta-malas amplo" />
+        <Field label="COR" value={color} onChangeText={setColor} placeholder="Ex.: Prata" placeholderTextColor="#7b4d91"/>
+        <Field label="PLACA" value={plate} onChangeText={(value) => setPlate(cleanPlate(value))} placeholder="ABC1D23" autoCapitalize="characters" placeholderTextColor="#7b4d91"/>
+        <Field label="VAGAS DISPONÍVEIS" value={seats} onChangeText={setSeats} placeholder="Ex.: 4" keyboardType="number-pad" placeholderTextColor="#7b4d91"/>
+        <Field label="DESCRIÇÃO (OPCIONAL)" value={description} onChangeText={setDescription} placeholder="Ex.: Porta-malas amplo" placeholderTextColor="#7b4d91"/>
         <View className="flex-row items-center justify-between pt-1"><Text className="font-bold text-velvet-orchid-900">Ar-condicionado</Text><Switch value={airConditioning} onValueChange={setAirConditioning} trackColor={{ false: "#d1d5db", true: "#7b4d91" }} /></View>
         {loadingFipe && <ActivityIndicator color="#7b4d91" />}
         {message && <Text className={`text-center text-xs font-bold ${success ? "text-green-700" : "text-red-600"}`}>{message}</Text>}

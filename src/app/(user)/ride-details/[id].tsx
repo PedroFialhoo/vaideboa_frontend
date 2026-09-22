@@ -23,6 +23,7 @@ import {
   ScrollView,
   Text,
   TouchableOpacity,
+  Image,
   View,
 } from "react-native";
 import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from "react-native-maps";
@@ -41,6 +42,8 @@ type Ride = {
   lonDestino: number;
   lonSaida: number;
   nome: string;
+  idMotorista: number;
+  fotoMotorista?: string;
   qntAssentos: number;
   realizado: boolean;
   saidaTexto: string;
@@ -57,6 +60,8 @@ type Ride = {
 type Pedido = {
   idPedidoCarona: number;
   nome: string;
+  idUser: number;
+  foto?: string;
   statusPedido: string;
   saidaTexto: string;
   destinoTexto: string;
@@ -400,10 +405,10 @@ export default function SearchDetails() {
           
           {/* HEADER: MOTORISTA E VAGAS */}
           <View className="flex-row items-center justify-between mb-8">
-            <View className="flex-row items-center flex-1">
-              <View className="bg-purple-x11-100 p-3 rounded-2xl mr-4">
-                <User size={28} color="#7b4d91" />
-              </View>
+              <TouchableOpacity onPress={() => router.push({ pathname: "/user-profile/[id]", params: { id: String(ride.idMotorista), idCarona: String(id) } } as any)} className="flex-row items-center flex-1">
+               <View className="bg-purple-x11-100 w-14 h-14 rounded-2xl mr-4 overflow-hidden items-center justify-center">
+                 {ride.fotoMotorista ? <Image source={{ uri: ride.fotoMotorista }} className="w-full h-full" /> : <User size={28} color="#7b4d91" />}
+               </View>
               <View className="flex-1">
                 <Text numberOfLines={1} className="text-velvet-orchid-900 font-black text-xl">{ride.nome}</Text>
                 <View className="flex-row items-center">
@@ -411,7 +416,7 @@ export default function SearchDetails() {
                   <Text className="text-gray-600 text-[10px] font-bold uppercase ml-1">Motorista</Text>
                 </View>
               </View>
-            </View>
+              </TouchableOpacity>
             <View className="bg-purple-x11-50 px-4 py-2 rounded-2xl border border-purple-x11-100">
               <Text className="text-purple-x11-700 font-black">{ride.vagasDisponiveis} vagas</Text>
             </View>
@@ -667,9 +672,9 @@ export default function SearchDetails() {
                       {/* TOPO */}
                       <View className="flex-row items-start justify-between mb-5">                        
                         {/* USUÁRIO */}
-                        <View className="flex-row flex-1 pr-3">
-                          <View className="bg-purple-x11-100 w-14 h-14 rounded-full items-center justify-center mr-4">
-                            <User size={24} color="#7b4d91" />
+                        <TouchableOpacity onPress={() => router.push({ pathname: "/user-profile/[id]", params: { id: String(pedido.idUser), idCarona: String(id) } } as any)} className="flex-row flex-1 pr-3">
+                          <View className="bg-purple-x11-100 w-14 h-14 rounded-full items-center justify-center mr-4 overflow-hidden">
+                            {pedido.foto ? <Image source={{ uri: pedido.foto }} className="w-full h-full" /> : <User size={24} color="#7b4d91" />}
                           </View>
                           <View className="flex-1">
                             <Text
@@ -686,7 +691,7 @@ export default function SearchDetails() {
                               </Text>
                             </View>
                           </View>
-                        </View>
+                        </TouchableOpacity>
                         {/* STATUS */}
                         <View className={`px-3 py-2 rounded-2xl ${pedido.statusPedido === "ACEITO" ? "bg-green-100" : "bg-red-100"}`}>
                           <Text className={`text-[10px] font-black uppercase tracking-wide ${ pedido.statusPedido === "ACEITO" ? "text-green-800" : "text-red-600" }`}>
