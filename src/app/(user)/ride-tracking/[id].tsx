@@ -4,10 +4,11 @@ import { connectRideTracking, RideTrackingConnection, RideLocation } from "@/src
 import { getToken } from "@/src/services/storage";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { LocationAccuracy, LocationSubscription, requestForegroundPermissionsAsync, watchPositionAsync } from "expo-location";
-import { ChevronLeft, LocateFixed, Navigation } from "lucide-react-native";
+import { Car, ChevronLeft, LocateFixed, Navigation } from "lucide-react-native";
 import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
-import MapView, { Marker, Polyline } from "react-native-maps";
+import MapView, { Marker } from "react-native-maps";
+import Logo from "../../../assets/images/logo-vdb.svg";
 
 type Coord = RideLocation;
 
@@ -25,11 +26,12 @@ export default function RideTracking() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const mapRef = useRef<MapView>(null);
+  const zoomLevel = useRef(15);
+  const hasFocusedDriverRef = useRef(false);
   const connectionRef = useRef<RideTrackingConnection | null>(null);
   const locationSubscriptionRef = useRef<LocationSubscription | null>(null);
   const [ride, setRide] = useState<Ride | null>(null);
   const [role, setRole] = useState<"MOTORISTA" | "PASSAGEIRO" | null>(null);
-  const [route, setRoute] = useState<Coord[]>([]);
   const [driverLocation, setDriverLocation] = useState<Coord | null>(null);
   const [message, setMessage] = useState("Conectando ao acompanhamento...");
 
@@ -56,10 +58,6 @@ export default function RideTracking() {
 
         setRide(loadedRide);
         setRole(trip.papel);
-        const routeResponse = await api.get(`/rota/buscar/front/${loadedRide.idRota}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (active) setRoute(routeResponse.data);
       } catch {
         if (active) setMessage("Não foi possível carregar o acompanhamento da carona.");
       }
@@ -72,12 +70,22 @@ export default function RideTracking() {
   }, [id]);
 
   useEffect(() => {
-    if (route.length === 0) return;
-    mapRef.current?.fitToCoordinates(route, {
-      edgePadding: { top: 80, right: 50, bottom: 240, left: 50 },
-      animated: true,
-    });
-  }, [route]);
+    if (!driverLocation || hasFocusedDriverRef.current) return;
+
+    hasFocusedDriverRef.current = true;
+    zoomLevel.current = 17;
+    mapRef.current?.animateCamera({ center: driverLocation, zoom: zoomLevel.current });
+  }, [driverLocation]);
+
+  function zoomIn() {
+    zoomLevel.current += 1;
+    mapRef.current?.animateCamera({ zoom: zoomLevel.current });
+  }
+
+  function zoomOut() {
+    zoomLevel.current -= 1;
+    mapRef.current?.animateCamera({ zoom: zoomLevel.current });
+  }
 
   useEffect(() => {
     if (!ride || !role) return;
@@ -98,6 +106,7 @@ export default function RideTracking() {
       try {
         if (role === "MOTORISTA") {
           const permission = await requestForegroundPermissionsAsync();
+          console.log("[Rastreamento] Permissão de localização:", permission.status);
           if (!permission.granted) {
             setMessage("Permita a localização para compartilhar o trajeto.");
             return;
@@ -126,9 +135,10 @@ export default function RideTracking() {
         }
 
         const subscription = await watchPositionAsync(
-          { accuracy: LocationAccuracy.High, timeInterval: 5000, distanceInterval: 10 },
+          { accuracy: LocationAccuracy.High, timeInterval: 500, distanceInterval: 1 },
           ({ coords }) => {
             const location = { latitude: coords.latitude, longitude: coords.longitude };
+            console.log("[Rastreamento] Atualizando localização:", location);
             connection.publishLocation(location);
             setDriverLocation(location);
             setMessage("Compartilhando sua localização com os passageiros.");
@@ -174,17 +184,24 @@ export default function RideTracking() {
           longitudeDelta: 0.02,
         }}
       >
-        <Marker coordinate={{ latitude: ride.latSaida, longitude: ride.lonSaida }} title="Partida" />
-        <Marker coordinate={{ latitude: ride.latDestino, longitude: ride.lonDestino }} title="Destino" />
-        {route.length > 0 && <Polyline coordinates={route} strokeColor="#7b4d91" strokeWidth={4} />}
+
         {driverLocation && (
           <Marker coordinate={driverLocation} title={role === "MOTORISTA" ? "Sua localização" : "Motorista"}>
             <View className="bg-purple-x11-700 p-3 rounded-full border-2 border-white">
-              <Navigation size={18} color="white" />
+              <Logo width={20} height={20} color="#fff" />
             </View>
           </Marker>
         )}
       </MapView>
+
+      <View className="absolute right-4 bottom-44 bg-velvet-orchid-800 rounded-lg w-10 items-center justify-center">
+        <Pressable onPress={zoomIn} accessibilityLabel="Aumentar zoom">
+          <Text className="p-2 text-white text-2xl">+</Text>
+        </Pressable>
+        <Pressable onPress={zoomOut} accessibilityLabel="Diminuir zoom">
+          <Text className="p-2 text-white text-2xl">-</Text>
+        </Pressable>
+      </View>
 
       <Pressable onPress={() => router.back()} className="absolute top-12 left-6 bg-white p-3 rounded-xl shadow-lg">
         <ChevronLeft size={24} color="#391f47" />

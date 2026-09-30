@@ -33,33 +33,62 @@ export function connectRideTracking({
   return new Promise((resolve, reject) => {
     let subscription: StompSubscription | undefined;
     let connected = false;
+    let settled = false;
+
+    const failConnection = (error: Error) => {
+      if (settled) return;
+      settled = true;
+      void client.deactivate();
+      reject(error);
+    };
 
     const client = new Client({
       connectHeaders: { Authorization: `Bearer ${token}` },
       reconnectDelay: 5000,
       webSocketFactory: () => new WebSocket(getWebSocketUrl()),
+      // O WebSocket do React Native pode descartar o terminador nulo de frames STOMP textuais.
+      forceBinaryWSFrames: true,
+      debug: (message) => {
+        console.log(
+          "[Rastreamento][STOMP]",
+          message.replace(/Authorization:\s*Bearer [^\r\n]*/g, "Authorization: Bearer [oculto]"),
+        );
+      },
     });
+
+    const connectionTimeout = setTimeout(() => {
+      failConnection(new Error("Tempo esgotado ao autenticar o WebSocket de rastreamento"));
+    }, 10000);
 
     client.onConnect = () => {
       connected = true;
+      settled = true;
+      clearTimeout(connectionTimeout);
+      console.log(`[Rastreamento] WebSocket conectado à carona ${idCarona}`);
 
-      if (onLocation) {
-        subscription = client.subscribe(`/topic/carona/${idCarona}`, (message: IMessage) => {
-          try {
-            onLocation(JSON.parse(message.body) as RideLocation);
-          } catch {
-            // Ignore malformed real-time messages without interrupting the connection.
-          }
-        });
-      }
+        if (onLocation) {
+          subscription = client.subscribe(`/topic/carona/${idCarona}`, (message: IMessage) => {
+            try {
+              const location = JSON.parse(message.body) as RideLocation;
+              console.log("[Rastreamento] Localização recebida:", location);
+              onLocation(location);
+            } catch {
+              console.warn("[Rastreamento] Mensagem de localização inválida recebida.");
+            }
+          });
+          console.log(`[Rastreamento] Inscrito na carona ${idCarona}`);
+        }
 
       resolve({
         publishLocation: (location) => {
           if (client.connected) {
+            console.log("[Rastreamento] Publicando localização:", location);
             client.publish({
               destination: `/app/carona/${idCarona}/localizacao`,
               body: JSON.stringify(location),
             });
+          } else {
+            console.warn("[Rastreamento] Localização não publicada: WebSocket desconectado.");
           }
         },
         disconnect: async () => {
@@ -72,23 +101,26 @@ export function connectRideTracking({
     };
 
     client.onStompError = (frame) => {
+      console.error("[Rastreamento] Erro STOMP:", frame.headers.message || frame.body);
       if (!connected) {
-        void client.deactivate();
-        reject(new Error(frame.headers.message || "Não foi possível autenticar o rastreio"));
+        clearTimeout(connectionTimeout);
+        failConnection(new Error(frame.headers.message || "Não foi possível autenticar o rastreio"));
       }
     };
 
     client.onWebSocketError = () => {
+      console.error("[Rastreamento] Erro na conexão WebSocket.");
       if (!connected) {
-        void client.deactivate();
-        reject(new Error("Não foi possível conectar ao rastreio"));
+        clearTimeout(connectionTimeout);
+        failConnection(new Error("Não foi possível conectar ao rastreio"));
       }
     };
 
     client.onWebSocketClose = () => {
+      console.warn("[Rastreamento] Conexão WebSocket encerrada.");
       if (!connected) {
-        void client.deactivate();
-        reject(new Error("A conexão com o rastreio foi encerrada"));
+        clearTimeout(connectionTimeout);
+        failConnection(new Error("A conexão com o rastreio foi encerrada"));
       }
     };
 

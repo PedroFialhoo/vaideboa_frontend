@@ -19,6 +19,8 @@ import {
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
   ScrollView,
   Text,
@@ -84,6 +86,7 @@ export default function SearchDetails() {
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [loadingPedidos, setLoadingPedidos] = useState(false);
   const mapRef = useRef<MapView>(null);
+  const scrollRef = useRef<ScrollView>(null);
   const [messageError, setMessageError] = useState("");
   const [textBtn, setTextBtn] = useState("Carregando...");
   const [papel, setPapel] = useState<"MOTORISTA" | "PASSAGEIRO" | null>(null);
@@ -388,7 +391,10 @@ export default function SearchDetails() {
   ];
 
   return (
-    <View className="flex-1 bg-platinum">
+    <KeyboardAvoidingView
+      className="flex-1 bg-platinum"
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
       
       {/* BOTÃO VOLTAR FLUTUANTE */}
       <TouchableOpacity
@@ -404,7 +410,26 @@ export default function SearchDetails() {
         <ChevronLeft size={24} color="#391f47" />
       </TouchableOpacity>
 
-      <ScrollView contentContainerStyle={{ flexGrow: 1 }} bounces={false} className="bg-platinum">
+      {messageError && (
+        <View className="absolute top-24 left-20 right-6 z-30 flex-row items-center bg-red-50 border border-red-200 rounded-2xl p-3 shadow-lg">
+          <Text className="flex-1 text-red-700 font-bold text-sm pr-2">{messageError}</Text>
+          <Pressable
+            accessibilityLabel="Fechar mensagem de erro"
+            onPress={() => setMessageError("")}
+            className="p-1"
+          >
+            <X size={18} color="#b91c1c" />
+          </Pressable>
+        </View>
+      )}
+
+      <ScrollView
+        ref={scrollRef}
+        contentContainerStyle={{ flexGrow: 1 }}
+        bounces={false}
+        keyboardShouldPersistTaps="handled"
+        className="bg-platinum"
+      >
         
         {/* SEÇÃO DO MAPA */}
         <View className="h-80 w-full">
@@ -576,6 +601,9 @@ export default function SearchDetails() {
                       onChangeText={(value) => setCodigo(value.replace(/\D/g, "").slice(0, 4))}
                       keyboardType="number-pad"
                       maxLength={4}
+                      onFocus={() => {
+                        setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 250);
+                      }}
                       placeholder="0000"
                       placeholderTextColor="#938ea4"
                       className="flex-1 bg-white border border-purple-x11-200 rounded-xl px-4 h-12 text-center text-velvet-orchid-900 font-black text-lg tracking-[6px]"
@@ -867,14 +895,8 @@ export default function SearchDetails() {
               )}
             </View>
           )}
-          {/* MENSAGEM DE ERRO/FEEDBACK */}
-          {messageError && (
-            <View className="mt-4 p-4 rounded-2xl border bg-red-50 border-red-200">
-              <Text className="text-center font-bold text-xs text-red-700">{messageError}</Text>
-            </View>
-          )}
         </View>
       </ScrollView>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
