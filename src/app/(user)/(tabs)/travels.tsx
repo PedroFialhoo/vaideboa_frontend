@@ -8,6 +8,7 @@ import React, { useCallback, useState } from "react";
 import { ActivityIndicator, Platform, RefreshControl, ScrollView, Text, TouchableOpacity, View } from "react-native";
 
 interface Ride {
+  idReserva?: number;
   id: number;
   data: string;
   hora: string;
@@ -161,6 +162,7 @@ export default function MyTravels() {
           </View>
         ) : (
           filteredRides.map((ride) => (
+            <View key={ride.id}>
             <TouchableOpacity
               key={ride.id}
               activeOpacity={0.8}
@@ -220,6 +222,7 @@ export default function MyTravels() {
                 <ChevronRight size={16} color="#7b4d91" />
               </View>
             </TouchableOpacity>
+            </View>
           ))
         )}
         <View className="h-10" />

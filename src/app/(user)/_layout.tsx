@@ -7,6 +7,7 @@ export default function Layout() {
       <Stack.Screen name="ride-details/[id]" options={{ headerShown: false }} />
       <Stack.Screen name="user-profile/[id]" options={{ headerShown: false }} />
       <Stack.Screen name="review/[id]" options={{ headerShown: false }} />
+      <Stack.Screen name="chat/[idReserva]" options={{ headerShown: false }} />
     </Stack>
   );
 }

@@ -6,6 +6,7 @@ import { getToken } from "@/src/services/storage";
 import { api } from "@/src/services/api";
 import { useCallback, useEffect, useState } from "react";
 import Logo from "../../../assets/images/logo-vdb.svg";
+import LocationTest from "@/components/home/location-test";
 
 export default function Home() {
   const router = useRouter();
@@ -81,6 +82,8 @@ export default function Home() {
           <Text className="text-gray-500 text-sm text-center mt-1 font-bold uppercase tracking-widest">Eu vou dirigir</Text>
         </TouchableOpacity>
       </View>
+
+      <LocationTest />
 
       {/* Destaques / Info */}
       <View className="px-8 mt-10">
