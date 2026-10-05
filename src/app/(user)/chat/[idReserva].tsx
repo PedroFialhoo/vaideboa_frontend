@@ -20,9 +20,9 @@ export default function Chat() {
     const draft = text;
     if (await chat.enviar(draft)) { setText(current => current === draft ? "" : current); nearEnd.current = true; list.current?.scrollToOffset({ offset: 0, animated: true }); }
   }
-  return <SafeAreaView className="flex-1 bg-vintage-grape-200">
-    <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === "ios" ? "padding" : "height"}>
-      <View className="px-5 py-4 bg-velvet-orchid-900">
+  return <SafeAreaView className="flex-1 bg-velvet-orchid-900">
+    <KeyboardAvoidingView className="flex-1 bg-vintage-grape-200" behavior={Platform.OS === "ios" ? "padding" : "height"}>
+      <View className="px-5 pb-4 bg-velvet-orchid-900">
         <TouchableOpacity accessibilityRole="button" onPress={() => router.back()}><Text className="text-white font-bold">‹ Voltar</Text></TouchableOpacity>
         <Text className="text-white text-xl font-black mt-3">{params.nome || "Conversa da reserva"}</Text>
         <Text className="text-purple-x11-200 mt-1">{chat.status}</Text>
@@ -38,7 +38,7 @@ export default function Chat() {
           if (newest !== previousNewest.current && nearEnd.current) list.current?.scrollToOffset({ offset: 0, animated: true });
           previousNewest.current = newest;
         }}
-        ListEmptyComponent={!chat.loading ? <Text className="text-center text-velvet-orchid-900 p-8" style={{ transform: [{ scaleY: -1 }] }}>Nenhuma mensagem ainda. Comece a conversa!</Text> : null}
+        ListEmptyComponent={!chat.loading ? <Text className="text-center text-velvet-orchid-900 p-8">Nenhuma mensagem ainda. Comece a conversa!</Text> : null}
         ListFooterComponent={chat.hasOlder ? <Button isDisabled={chat.olderLoading} onPress={() => void chat.carregarAntigas()} className="m-4 bg-velvet-orchid-700">{chat.olderLoading && <ButtonSpinner />}<ButtonText>Carregar mensagens antigas</ButtonText></Button> : null}
         renderItem={({ item }) => {
           const own = item.idAutor === chat.idUsuario;
@@ -51,7 +51,7 @@ export default function Chat() {
       <View className="p-4 bg-platinum-50 border-t border-purple-x11-100">
         {!!chat.sendError && <Text accessibilityRole="alert" className="text-velvet-orchid-900 mb-2">{chat.sendError}</Text>}
         <Input className="h-auto min-h-12 rounded-2xl border-purple-x11-200"><InputField accessibilityLabel="Mensagem" placeholder="Escreva uma mensagem..." value={text} onChangeText={setText} multiline maxLength={1000} editable={!chat.sending} className="text-velvet-orchid-900 py-3" /></Input>
-        <View className="flex-row justify-between items-center mt-2"><Text className="text-velvet-orchid-700 text-xs">{text.length}/1000</Text><Button isDisabled={chat.sending || !text.trim()} onPress={() => void send()} className="bg-velvet-orchid-700 rounded-2xl">{chat.sending && <ButtonSpinner />}<ButtonText>{chat.sending ? "Enviando..." : "Enviar"}</ButtonText></Button></View>
+        <View className="flex-row justify-between items-center mt-2"><Text className="text-velvet-orchid-700 text-xs">{text.length}/1000</Text><Button isDisabled={chat.sending || !text.trim()} onPress={() => void send()} className="bg-velvet-orchid-700 rounded-2xl">{chat.sending && <ButtonSpinner />}<ButtonText className="text-white">{chat.sending ? "Enviando..." : "Enviar"}</ButtonText></Button></View>
       </View>
     </KeyboardAvoidingView>
   </SafeAreaView>;
