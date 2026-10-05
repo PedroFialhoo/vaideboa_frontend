@@ -1,4 +1,5 @@
 import "@/global.css";
+import ChatButton from "@/components/chat/chat-button";
 import { api } from "@/src/services/api";
 import { getToken } from "@/src/services/storage";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -58,6 +59,7 @@ type Ride = {
 };
 
 type Pedido = {
+  idReserva?: number;
   idPedidoCarona: number;
   nome: string;
   idUser: number;
@@ -517,6 +519,13 @@ export default function SearchDetails() {
             </Pressable>
           )}
 
+          {/* CHAT DA RESERVA DO PASSAGEIRO */}
+          {papel === "PASSAGEIRO" && (
+            <View className="mb-6 bg-platinum-50 p-4 rounded-2xl border border-purple-x11-100">
+              <Text className="text-velvet-orchid-900 font-bold">Sua reserva</Text>
+              <ChatButton idReserva={minhaCaronaData?.idReserva} idCarona={Number(id)} nome={ride.nome} />
+            </View>
+          )}
           {/* BOTÃO AVALIAR (quando a carona foi realizada) */}
           {ride.realizado && papel === "PASSAGEIRO" && minhaCaronaData?.idAvaliacao && (
             <Pressable
@@ -736,6 +745,7 @@ export default function SearchDetails() {
                         </View>
                       </View>
                       {/* AÇÕES */}
+                      {pedido.statusPedido === "ACEITO" && <ChatButton idReserva={pedido.idReserva} idCarona={Number(id)} nome={pedido.nome} />}
                       {pedido.statusPedido === "PENDENTE" &&
                         <View className="flex-row gap-3">                        
                           {/* ACEITAR */}
