@@ -1,13 +1,7 @@
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import MapView, { Marker, Polyline } from "react-native-maps";
-import { 
-  requestForegroundPermissionsAsync, 
-  getCurrentPositionAsync, 
-  watchPositionAsync, 
-  LocationAccuracy, 
-  LocationObject,
-  reverseGeocodeAsync
-} from "expo-location";
+import { useLocation } from "@/src/hooks/use-location";
+import { reverseGeocodeSafely } from "@/src/services/location";
 import { useEffect, useRef, useState } from "react";
 import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplete";
 import { MapPin, Navigation, Search, Map as MapIcon, X } from "lucide-react-native";
@@ -44,40 +38,14 @@ export default function Destination({
   next: () => void;
   showRouteInfo?: boolean;
 }) {
-  const [location, setLocation] = useState<LocationObject | null>(null);
+  const { location, locationError } = useLocation(true);
   const mapRef = useRef<MapView>(null);
   const [search, setSearch] = useState("");
   const GOOGLE_MAPS_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
   const [coords, setCoords] = useState<Coord[]>([]);
   const [rotaInfo, setRotaInfo] = useState<RouteInfo | null>(null);
 
-  async function requestLocationPermission() {
-    const { granted } = await requestForegroundPermissionsAsync();
-    if (granted) {
-      const currentPosition = await getCurrentPositionAsync();
-      setLocation(currentPosition);
-    }
-  }
 
-  useEffect(() => {
-    requestLocationPermission();
-  }, []);
-
-  useEffect(() => {
-    let subscription: any;
-    watchPositionAsync(
-      {
-        accuracy: LocationAccuracy.High,
-        timeInterval: 5000,
-        distanceInterval: 10,
-      },
-      (response) => {
-        setLocation(response);
-      }
-    ).then((sub) => (subscription = sub));
-
-    return () => subscription?.remove();
-  }, []);
 
   useEffect(() => {
     if (!origin || !destination) return;
@@ -117,7 +85,7 @@ export default function Destination({
   const handleMapPress = async (event: any) => {
     const coords = event.nativeEvent.coordinate;
 
-    const reverse = await reverseGeocodeAsync(coords);
+    const reverse = await reverseGeocodeSafely(coords);
 
     let address = "Local no mapa";
 
@@ -271,9 +239,13 @@ export default function Destination({
         </MapView>
       ) : (
         <View className="flex-1 justify-center items-center flex-row gap-5">
-          <Spinner size="large" color="grey" />
-          <Text className="text-lg">Carregando mapa...</Text>
+          {!locationError && <Spinner size="large" color="grey" />}
+          <Text accessibilityRole={locationError ? "alert" : undefined} className="text-lg">{locationError || "Carregando mapa..."}</Text>
         </View>
+      )}
+
+      {location && !!locationError && (
+        <Text accessibilityRole="alert" className="absolute top-24 self-center bg-platinum p-3 text-velvet-orchid-900">{locationError}</Text>
       )}
 
       {/* ZOOM */}

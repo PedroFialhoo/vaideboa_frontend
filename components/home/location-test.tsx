@@ -5,6 +5,7 @@ import { useCallback, useRef, useState } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 import { api } from "@/src/services/api";
 import { getToken } from "@/src/services/storage";
+import { ensureLocationAccess } from "@/src/services/location";
 
 const RIDE_ID = 10;
 type Position = { latitude: number; longitude: number };
@@ -60,9 +61,8 @@ export default function LocationTest() {
       const token = await getToken();
       if (!current()) return;
       if (!token) throw new Error("Faça login para testar a carona 10.");
-      const permission = await Location.requestForegroundPermissionsAsync();
+      await ensureLocationAccess();
       if (!current()) return;
-      if (!permission.granted) throw new Error("Permita o acesso à localização para iniciar o teste.");
       setStatus("Iniciando carona 10...");
       await api.get(`/carona/iniciar/${RIDE_ID}`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -97,6 +97,17 @@ export default function LocationTest() {
         }
         return { latitude: value.latitude, longitude: value.longitude };
       };
+      const publishCurrentPosition = async () => {
+        try {
+          await ensureLocationAccess();
+          if (!current()) return;
+          const location = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
+          publish(location.coords);
+        } catch (failure) {
+          console.error("Erro ao obter localização para compartilhamento:", failure);
+          if (current()) setError(errorMessage(failure));
+        }
+      };
       client.onConnect = () => {
         if (!current()) return;
         setError("");
@@ -115,9 +126,7 @@ export default function LocationTest() {
           } catch (failure) { setError(errorMessage(failure)); }
         });
         client.publish({ destination: `/app/carona/${RIDE_ID}/trajeto`, body: "" });
-        void Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High })
-          .then((location) => publish(location.coords))
-          .catch((failure) => { if (current()) setError(errorMessage(failure)); });
+        void publishCurrentPosition();
       };
       client.onStompError = (frame) => {
         if (!current()) return;
@@ -133,11 +142,20 @@ export default function LocationTest() {
         if (current()) setError("Falha no WebSocket. Verifique o backend e a conexão de rede.");
       };
       client.activate();
+      await ensureLocationAccess();
+      if (!current()) return;
       const watcher = await Location.watchPositionAsync({
         accuracy: Location.Accuracy.High,
         distanceInterval: 0,
         timeInterval: 5000,
-      }, (location) => publish(location.coords));
+      }, (location) => publish(location.coords), (reason) => {
+        if (!current()) return;
+        console.error("Erro ao acompanhar localização:", reason);
+        stop();
+        setActive(false);
+        setStatus("Compartilhamento interrompido por erro de localização.");
+        setError(reason);
+      });
       if (!current()) { watcher.remove(); return; }
       watcherRef.current = watcher;
       setActive(true);

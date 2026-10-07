@@ -1,13 +1,7 @@
 import { View, Text, Pressable, StyleSheet, ScrollView } from "react-native";
 import MapView, { Marker, Polyline } from "react-native-maps";
-import {
-  requestForegroundPermissionsAsync,
-  getCurrentPositionAsync,
-  watchPositionAsync,
-  LocationAccuracy,
-  LocationObject,
-  reverseGeocodeAsync,
-} from "expo-location";
+import { useLocation } from "@/src/hooks/use-location";
+import { reverseGeocodeSafely } from "@/src/services/location";
 import { useEffect, useRef, useState } from "react";
 import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplete";
 import {
@@ -53,7 +47,7 @@ export default function Stops({
   setStops: (stops: StopType[]) => void;
   next: () => void;
 }) {
-  const [location, setLocation] = useState<LocationObject | null>(null);
+  const { location, locationError } = useLocation(true);
   const mapRef = useRef<MapView>(null);
   const [search, setSearch] = useState("");
   const GOOGLE_MAPS_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
@@ -62,33 +56,7 @@ export default function Stops({
   const [pendingStop, setPendingStop] = useState<StopType | null>(null);
   const pendingStopRef = useRef<StopType | null>(null);
 
-  async function requestLocationPermission() {
-    const { granted } = await requestForegroundPermissionsAsync();
-    if (granted) {
-      const currentPosition = await getCurrentPositionAsync();
-      setLocation(currentPosition);
-    }
-  }
 
-  useEffect(() => {
-    requestLocationPermission();
-  }, []);
-
-  useEffect(() => {
-    let subscription: any;
-    watchPositionAsync(
-      {
-        accuracy: LocationAccuracy.High,
-        timeInterval: 5000,
-        distanceInterval: 10,
-      },
-      (response) => {
-        setLocation(response);
-      }
-    ).then((sub) => (subscription = sub));
-
-    return () => subscription?.remove();
-  }, []);
 
   useEffect(() => {
     if (!origin || !destination) return;
@@ -146,7 +114,7 @@ export default function Stops({
       pendingStopRef.current = stop;
       animateTo(coord.latitude, coord.longitude);
 
-      reverseGeocodeAsync(coord)
+      reverseGeocodeSafely(coord)
         .then((reverse) => {
           if (reverse.length > 0) {
             const address = `${reverse[0].street ?? ""}, ${reverse[0].name ?? ""}`;
@@ -335,9 +303,13 @@ export default function Stops({
         </MapView>
       ) : (
         <View className="flex-1 justify-center items-center flex-row gap-5">
-          <Spinner size="large" color="grey" />
-          <Text className="text-lg">Carregando mapa...</Text>
+          {!locationError && <Spinner size="large" color="grey" />}
+          <Text accessibilityRole={locationError ? "alert" : undefined} className="text-lg">{locationError || "Carregando mapa..."}</Text>
         </View>
+      )}
+
+      {location && !!locationError && (
+        <Text accessibilityRole="alert" className="absolute top-24 self-center bg-platinum p-3 text-velvet-orchid-900">{locationError}</Text>
       )}
 
       {/* ZOOM */}
