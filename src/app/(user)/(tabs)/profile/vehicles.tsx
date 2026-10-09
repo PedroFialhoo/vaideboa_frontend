@@ -1,7 +1,7 @@
 import "@/global.css";
 import { Car, Check, Plus, RefreshCw } from "lucide-react-native";
 import { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, ScrollView, Switch, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, Switch, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { useFocusEffect } from "expo-router/react-navigation";
 import { api } from "@/src/services/api";
 import { getToken } from "@/src/services/storage";
@@ -90,6 +90,7 @@ export default function Vehicles() {
       setModels(data.modelos);
     } catch {
       setMessage("Não foi possível buscar os modelos FIPE. Você pode preencher manualmente.");
+      
       setSuccess(false);
     } finally {
       setLoadingFipe(false);
@@ -142,7 +143,7 @@ export default function Vehicles() {
       const response = await api.post("/carro/cadastrar", {
         marca: brand.trim(), modelo: model.trim(), cor: color.trim(), placa: normalizedPlate,
         ano: parsedYear, vagas: parsedSeats, arCondicionado: airConditioning,
-        descricao: description.trim() || null,
+        descricao: description.trim() || null, consumo: 12,
       }, { headers: { Authorization: `Bearer ${token}` } });
       setMessage(response.data);
       setSuccess(true);
@@ -151,7 +152,7 @@ export default function Vehicles() {
       setModels([]); setYears([]);
       await loadVehicles();
     } catch (error: any) {
-      setMessage(error.response?.data || "Não foi possível cadastrar o veículo.");
+      setMessage("Não foi possível cadastrar o veículo.");
       setSuccess(false);
     } finally {
       setSaving(false);
@@ -162,7 +163,8 @@ export default function Vehicles() {
   const filteredModels = models.filter((item) => item.nome.toLowerCase().includes(model.toLowerCase())).slice(0, 6);
 
   return (
-    <ScrollView className="flex-1 bg-vintage-grape-200" contentContainerStyle={{ padding: 24, gap: 20 }} keyboardShouldPersistTaps="handled">
+    <KeyboardAvoidingView className="flex-1 bg-vintage-grape-200" behavior={Platform.OS === "ios" ? "padding" : "height"}>
+    <ScrollView contentContainerStyle={{ padding: 24, gap: 20 }} keyboardShouldPersistTaps="handled">
       <View className="bg-white rounded-3xl p-5 gap-3">
         <View className="flex-row items-center gap-3">
           <View className="bg-purple-x11-100 p-3 rounded-2xl"><Car size={24} color="#7b4d91" /></View>
@@ -201,6 +203,7 @@ export default function Vehicles() {
         </TouchableOpacity>
       </View>
     </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
