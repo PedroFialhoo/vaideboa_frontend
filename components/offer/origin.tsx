@@ -1,4 +1,4 @@
-import { View, Text, Pressable, StyleSheet } from "react-native";
+import { View, Text, Pressable, StyleSheet, KeyboardAvoidingView, Platform } from "react-native";
 import MapView, { Marker } from "react-native-maps";
 import { 
   requestForegroundPermissionsAsync, 
@@ -106,7 +106,7 @@ export default function Origin({
   }
 
   return (
-    <View className="flex-1 bg-platinum">
+    <KeyboardAvoidingView className="flex-1 bg-platinum" behavior={Platform.OS === "ios" ? "padding" : "height"}>
       {/* BUSCA */}
       <View className="absolute top-3 w-[92%] self-center z-10 shadow-lg">
         <GooglePlacesAutocomplete
@@ -119,6 +119,7 @@ export default function Origin({
           fetchDetails={true}
           debounce={300}
           enablePoweredByContainer={false}
+          keyboardShouldPersistTaps="handled"
           onPress={(data, details = null) => {
             if (!details) return;
 
@@ -263,7 +264,7 @@ export default function Origin({
           </Pressable>
         </View>
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 

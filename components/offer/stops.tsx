@@ -1,4 +1,4 @@
-import { View, Text, Pressable, StyleSheet, ScrollView } from "react-native";
+import { View, Text, Pressable, StyleSheet, ScrollView, KeyboardAvoidingView, Platform } from "react-native";
 import MapView, { Marker, Polyline } from "react-native-maps";
 import {
   requestForegroundPermissionsAsync,
@@ -201,7 +201,7 @@ export default function Stops({
   const listHeight = Math.min(stops.length, 3) * 40;
 
   return (
-    <View className="flex-1 bg-platinum">
+    <KeyboardAvoidingView className="flex-1 bg-platinum" behavior={Platform.OS === "ios" ? "padding" : "height"}>
       {/* BUSCA */}
       <View className="absolute top-3 w-[92%] self-center z-10 shadow-lg">
         <GooglePlacesAutocomplete
@@ -213,6 +213,7 @@ export default function Stops({
           fetchDetails={true}
           debounce={300}
           enablePoweredByContainer={false}
+          keyboardShouldPersistTaps="handled"
           onPress={(data, details = null) => {
             if (!details) return;
 
@@ -462,7 +463,7 @@ export default function Stops({
           </Pressable>
         </View>
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 

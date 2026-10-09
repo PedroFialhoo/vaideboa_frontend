@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, KeyboardAvoidingView, ScrollView, ActivityIndicator } from "react-native";
+import { View, Text, TouchableOpacity, KeyboardAvoidingView, ScrollView, ActivityIndicator, Platform } from "react-native";
 import { ChevronLeft, ChevronRight, MapPin, ArrowRight, PencilLine, CircleDot, Car } from "lucide-react-native";
 import { useCallback, useEffect, useState } from "react";
 import Destination from "@/components/offer/destination";
@@ -131,7 +131,7 @@ export default function Offer() {
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
-      behavior="padding"
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
     <View className="flex-1 bg-platinum">
 
