@@ -77,7 +77,7 @@ type Coord = {
 };
 
 export default function SearchDetails() {
-  const { id } = useLocalSearchParams();
+  const { id, saidaLat, saidaLng, destinoLat, destinoLng } = useLocalSearchParams();
   const router = useRouter();
   const [ride, setRide] = useState<Ride | null>(null);
   const [coords, setCoords] = useState<Coord[]>([]);
@@ -157,13 +157,18 @@ export default function SearchDetails() {
 
   const requestRide = () => {
     setMessageError("");
+    const getCoordinate = (value: string | string[] | undefined, fallback: number | undefined) => {
+      const param = Array.isArray(value) ? value[0] : value;
+      const coordinate = param?.trim() ? Number(param) : NaN;
+      return Number.isFinite(coordinate) ? coordinate : fallback;
+    };
     getToken().then((token) => {
       api.post("/pedido/agendar", {
         idCarona: id,
-        saidaLat: ride?.latSaida,
-        saidaLng: ride?.lonSaida,
-        destinoLat: ride?.latDestino,
-        destinoLng: ride?.lonDestino,
+        saidaLat: getCoordinate(saidaLat, ride?.latSaida),
+        saidaLng: getCoordinate(saidaLng, ride?.lonSaida),
+        destinoLat: getCoordinate(destinoLat, ride?.latDestino),
+        destinoLng: getCoordinate(destinoLng, ride?.lonDestino),
       }, {
         headers: { Authorization: `Bearer ${token}` }
       })

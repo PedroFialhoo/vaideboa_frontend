@@ -205,7 +205,16 @@ export default function Search() {
               <TouchableOpacity 
                 key={index} 
                 className="bg-white rounded-[32px] p-5 mb-5 border border-purple-x11-100 shadow-hard-2 active:scale-[0.98]"
-                onPress={() => router.push({ pathname: "/ride-details/[id]", params: { id: ride.idRota } } as any)}
+                onPress={() => router.push({
+                  pathname: "/ride-details/[id]",
+                  params: {
+                    id: ride.idRota,
+                    saidaLat: origin?.latitude,
+                    saidaLng: origin?.longitude,
+                    destinoLat: destination?.latitude,
+                    destinoLng: destination?.longitude,
+                  },
+                } as any)}
               >
                 {/* HEADER: MOTORISTA + RATING */}
                 <View className="flex-row items-center justify-between mb-4">
