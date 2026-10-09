@@ -14,9 +14,7 @@ import {
   TextInput,
   TouchableOpacity,
   View,
-  Platform,
   Pressable,
-  KeyboardAvoidingView,
   ActivityIndicator,
 } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
@@ -80,10 +78,7 @@ export default function RideForm({
   };
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-    >
+    <>
       {vehicleSection}
       <View className="mx-6 mt-4 mb-6">
         {/* DATA E HORA */}
@@ -240,6 +235,6 @@ export default function RideForm({
           )}
         </Pressable>
       </View>
-    </KeyboardAvoidingView>
+    </>
   );
 }

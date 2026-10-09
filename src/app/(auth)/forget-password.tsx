@@ -1,4 +1,4 @@
-import { View, Text, Image, KeyboardAvoidingView, ScrollView, Pressable, TouchableOpacity, Alert } from "react-native";
+import { View, Text, Image, KeyboardAvoidingView, ScrollView, Pressable, TouchableOpacity, Alert, Platform } from "react-native";
 import "@/global.css"
 import { Input, InputField } from "@/components/ui/input";
 import { Link, useLocalSearchParams, useRouter } from "expo-router";
@@ -80,7 +80,7 @@ export default function ForgetPassword() {
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
-      behavior="padding"
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       <ScrollView
         contentContainerStyle={{ flexGrow: 1 }}
