@@ -2,7 +2,7 @@ import "@/global.css";
 import ChatButton from "@/components/chat/chat-button";
 import { api } from "@/src/services/api";
 import { getToken } from "@/src/services/storage";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import {
   Calendar,
   ChevronLeft,
@@ -17,14 +17,17 @@ import {
   ShieldCheck,
   CircleDot
 } from "lucide-react-native";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
   ScrollView,
   Text,
   TouchableOpacity,
   Image,
+  TextInput,
   View,
 } from "react-native";
 import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from "react-native-maps";
@@ -47,6 +50,7 @@ type Ride = {
   fotoMotorista?: string;
   qntAssentos: number;
   realizado: boolean;
+  statusCarona: "EM_ESPERA" | "EM_ANDAMENTO" | "CONCLUIDA" | "CANCELADA" | null;
   saidaTexto: string;
   vagasDisponiveis: number;
   papel: "MOTORISTA" | "PASSAGEIRO";
@@ -84,13 +88,18 @@ export default function SearchDetails() {
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [loadingPedidos, setLoadingPedidos] = useState(false);
   const mapRef = useRef<MapView>(null);
+  const scrollRef = useRef<ScrollView>(null);
   const [messageError, setMessageError] = useState("");
   const [textBtn, setTextBtn] = useState("Carregando...");
   const [papel, setPapel] = useState<"MOTORISTA" | "PASSAGEIRO" | null>(null);
   const [minhaCaronaData, setMinhaCaronaData] = useState<any>(null);
   const [filter, setFilter] = useState<"TODOS" | "ACEITOS" | "PENDENTES">("TODOS");
+  const [iniciandoCarona, setIniciandoCarona] = useState(false);
+  const [codigo, setCodigo] = useState("");
+  const [confirmandoCodigo, setConfirmandoCodigo] = useState(false);
+  const [codigoFeedback, setCodigoFeedback] = useState("");
 
-  useEffect(() => {
+  const carregarDetalhes = useCallback(() => {
     if (!id) return;
 
     getToken().then((token) => {
@@ -125,6 +134,12 @@ export default function SearchDetails() {
       .catch((error) => console.log(error));
     });
   }, [id]);
+
+  useFocusEffect(useCallback(() => {
+    carregarDetalhes();
+    const interval = setInterval(carregarDetalhes, 15000);
+    return () => clearInterval(interval);
+  }, [carregarDetalhes]));
 
   const fetchPedidos = (token: string) => {
     setLoadingPedidos(true);
@@ -177,36 +192,70 @@ export default function SearchDetails() {
     });
   };
 
-  const iniciarCarona = () => {
+  const iniciarCarona = async () => {
+    if (iniciandoCarona) return;
+
     setMessageError("");
-    getToken().then((token) => {
-      api.get(`/carona/iniciar/${id}`, {
+    const token = await getToken();
+    if (!token) return;
+
+    setIniciandoCarona(true);
+    try {
+      await api.get(`/carona/iniciar/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
-      })
-      .then(() => {
-        router.replace({
-          pathname: "/page-sucess",
-          params: { sucess: "true", message: "Carona iniciada com sucesso!", to: `/ride-details/${id}` }
-        });
-      })
-      .catch((error) => setMessageError(error.response?.data || "Erro ao iniciar carona"));
-    });
+      });
+      setRide((currentRide) => currentRide && { ...currentRide, statusCarona: "EM_ANDAMENTO" });
+      router.push({ pathname: "/ride-tracking/[id]", params: { id: String(id) } } as any);
+    } catch (error: any) {
+      setMessageError(error.response?.data || "Erro ao iniciar carona");
+    } finally {
+      setIniciandoCarona(false);
+    }
   };
 
-  const finalizarCarona = () => {
+  const finalizarCarona = async () => {
     setMessageError("");
-    getToken().then((token) => {
-      api.get(`/carona/finalizar/${id}`, {
+    const token = await getToken();
+    if (!token) return;
+
+    try {
+      await api.get(`/carona/finalizar/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
-      })
-      .then(() => {
-        router.replace({
-          pathname: "/page-sucess",
-          params: { sucess: "true", message: "Carona finalizada com sucesso!", to: `/ride-details/${id}` }
-        });
-      })
-      .catch((error) => setMessageError(error.response?.data || "Erro ao finalizar carona"));
-    });
+      });
+      router.replace({
+        pathname: "/page-sucess",
+        params: { sucess: "true", message: "Carona finalizada com sucesso!", to: `/ride-details/${id}` }
+      });
+    } catch (error: any) {
+      setMessageError(error.response?.data || "Erro ao finalizar carona");
+    }
+  };
+
+  const confirmarCodigo = async () => {
+    if (codigo.length !== 4) {
+      setCodigoFeedback("Informe os quatro dígitos do código.");
+      return;
+    }
+
+    const token = await getToken();
+    if (!token) return;
+
+    setConfirmandoCodigo(true);
+    setCodigoFeedback("");
+    try {
+      const response = await api.post("/codigo/confirmar", {
+        idCarona: Number(id),
+        codigo,
+      }, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setCodigo("");
+      setCodigoFeedback(response.data);
+    } catch (error: any) {
+      setCodigoFeedback(error.response?.data || "Não foi possível confirmar o código.");
+    } finally {
+      setConfirmandoCodigo(false);
+    }
   };
 
   const handleAction = () => {
@@ -344,7 +393,10 @@ export default function SearchDetails() {
   ];
 
   return (
-    <View className="flex-1 bg-platinum">
+    <KeyboardAvoidingView
+      className="flex-1 bg-platinum"
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
       
       {/* BOTÃO VOLTAR FLUTUANTE */}
       <TouchableOpacity
@@ -360,7 +412,26 @@ export default function SearchDetails() {
         <ChevronLeft size={24} color="#391f47" />
       </TouchableOpacity>
 
-      <ScrollView contentContainerStyle={{ flexGrow: 1 }} bounces={false} className="bg-platinum">
+      {messageError && (
+        <View className="absolute top-24 left-20 right-6 z-30 flex-row items-center bg-red-50 border border-red-200 rounded-2xl p-3 shadow-lg">
+          <Text className="flex-1 text-red-700 font-bold text-sm pr-2">{messageError}</Text>
+          <Pressable
+            accessibilityLabel="Fechar mensagem de erro"
+            onPress={() => setMessageError("")}
+            className="p-1"
+          >
+            <X size={18} color="#b91c1c" />
+          </Pressable>
+        </View>
+      )}
+
+      <ScrollView
+        ref={scrollRef}
+        contentContainerStyle={{ flexGrow: 1 }}
+        bounces={false}
+        keyboardShouldPersistTaps="handled"
+        className="bg-platinum"
+      >
         
         {/* SEÇÃO DO MAPA */}
         <View className="h-80 w-full">
@@ -493,12 +564,15 @@ export default function SearchDetails() {
           {/* BOTÕES DE AÇÃO DO MOTORISTA */}
           {papel === "MOTORISTA" && !ride.realizado && (
             <View className="gap-3 mb-8">
-              <Pressable
-                className="bg-purple-x11-700 h-16 rounded-2xl items-center justify-center shadow-lg active:scale-[0.97] flex-row"
-                onPress={iniciarCarona}
-              >
-                <Text className="text-white font-black text-lg">Iniciar Carona</Text>
-              </Pressable>
+              {ride.statusCarona !== "EM_ANDAMENTO" && (
+                <Pressable
+                  disabled={iniciandoCarona}
+                  className="bg-purple-x11-700 h-16 rounded-2xl items-center justify-center shadow-lg active:scale-[0.97] flex-row"
+                  onPress={iniciarCarona}
+                >
+                  <Text className="text-white font-black text-lg">{iniciandoCarona ? "Iniciando..." : "Iniciar Carona"}</Text>
+                </Pressable>
+              )}
 
               <Pressable
                 className="bg-velvet-orchid-700 h-16 rounded-2xl items-center justify-center shadow-lg active:scale-[0.97] flex-row"
@@ -511,11 +585,53 @@ export default function SearchDetails() {
 
           {/* BOTÃO DE AÇÃO DO PASSAGEIRO */}
           {papel !== "MOTORISTA" && !ride.realizado && (
+            <View className="gap-3 mb-8">
+              <Pressable
+                className="bg-velvet-orchid-700 h-16 rounded-2xl items-center justify-center shadow-lg active:scale-[0.97]"
+                onPress={handleAction}
+              >
+                <Text className="text-white font-black text-lg">{textBtn}</Text>
+              </Pressable>
+
+              {textBtn === "Cancelar reserva" && (
+                <View className="bg-purple-x11-100 border border-purple-x11-200 rounded-2xl p-5">
+                  <Text className="text-purple-x11-700 font-black text-base">Confirmar embarque ou desembarque</Text>
+                  <Text className="text-velvet-orchid-900 text-sm mt-1 mb-4">Informe o código de quatro dígitos enviado para seu e-mail.</Text>
+                  <View className="flex-row gap-3">
+                    <TextInput
+                      value={codigo}
+                      onChangeText={(value) => setCodigo(value.replace(/\D/g, "").slice(0, 4))}
+                      keyboardType="number-pad"
+                      maxLength={4}
+                      onFocus={() => {
+                        setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 250);
+                      }}
+                      placeholder="0000"
+                      placeholderTextColor="#938ea4"
+                      className="flex-1 bg-white border border-purple-x11-200 rounded-xl px-4 h-12 text-center text-velvet-orchid-900 font-black text-lg tracking-[6px]"
+                    />
+                    <Pressable
+                      disabled={confirmandoCodigo}
+                      onPress={confirmarCodigo}
+                      className={`px-5 h-12 rounded-xl items-center justify-center ${confirmandoCodigo ? "bg-purple-x11-300" : "bg-purple-x11-700"}`}
+                    >
+                      <Text className="text-white font-black">{confirmandoCodigo ? "..." : "Confirmar"}</Text>
+                    </Pressable>
+                  </View>
+                  {!!codigoFeedback && <Text className="text-velvet-orchid-900 text-sm mt-3">{codigoFeedback}</Text>}
+                </View>
+              )}
+
+            </View>
+          )}
+
+          {papel && !ride.realizado && ride.statusCarona === "EM_ANDAMENTO" && (
             <Pressable
-              className="bg-velvet-orchid-700 h-16 rounded-2xl items-center justify-center shadow-lg active:scale-[0.97] mb-8"
-              onPress={handleAction}
+              className="bg-purple-x11-700 h-16 rounded-2xl items-center justify-center shadow-lg active:scale-[0.97] flex-row mb-8"
+              onPress={() => router.push({ pathname: "/ride-tracking/[id]", params: { id: String(id) } } as any)}
             >
-              <Text className="text-white font-black text-lg">{textBtn}</Text>
+              <Navigation size={20} color="white" />
+              <Text className="text-white font-black text-lg ml-2">Acompanhar carona</Text>
             </Pressable>
           )}
 
@@ -789,14 +905,8 @@ export default function SearchDetails() {
               )}
             </View>
           )}
-          {/* MENSAGEM DE ERRO/FEEDBACK */}
-          {messageError && (
-            <View className="mt-4 p-4 rounded-2xl border bg-red-50 border-red-200">
-              <Text className="text-center font-bold text-xs text-red-700">{messageError}</Text>
-            </View>
-          )}
         </View>
       </ScrollView>
-    </View>
+    </KeyboardAvoidingView>
   );
 }

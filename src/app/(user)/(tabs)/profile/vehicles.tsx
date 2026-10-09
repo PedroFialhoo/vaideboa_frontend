@@ -90,6 +90,7 @@ export default function Vehicles() {
       setModels(data.modelos);
     } catch {
       setMessage("Não foi possível buscar os modelos FIPE. Você pode preencher manualmente.");
+      
       setSuccess(false);
     } finally {
       setLoadingFipe(false);
