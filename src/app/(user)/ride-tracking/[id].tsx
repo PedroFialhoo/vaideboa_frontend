@@ -50,8 +50,9 @@ export default function RideTracking() {
         if (!active) return;
 
         const loadedRide = rideResponse.data as Ride;
-        const trip = tripsResponse.data.find((item: { id: number; papel: "MOTORISTA" | "PASSAGEIRO" }) => item.id === Number(id));
-        if (loadedRide.realizado || loadedRide.statusCarona !== "EM_ANDAMENTO" || !trip) {
+        const trip = tripsResponse.data.find((item: { id: number; papel: "MOTORISTA" | "PASSAGEIRO"; idReserva?: number | null }) => item.id === Number(id));
+        const canTrack = trip?.papel === "MOTORISTA" || (trip?.papel === "PASSAGEIRO" && trip.idReserva != null);
+        if (loadedRide.realizado || loadedRide.statusCarona !== "EM_ANDAMENTO" || !canTrack) {
           setMessage("O acompanhamento não está disponível para esta carona.");
           return;
         }

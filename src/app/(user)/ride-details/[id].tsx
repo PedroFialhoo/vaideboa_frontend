@@ -75,6 +75,15 @@ type Pedido = {
   idAvaliacao?: number;
 };
 
+type MinhaCarona = {
+  id: number;
+  papel: "MOTORISTA" | "PASSAGEIRO";
+  idReserva?: number | null;
+  idPedidoCarona?: number | null;
+  statusPedido?: string | null;
+  idAvaliacao?: number | null;
+};
+
 type Coord = {
   latitude: number;
   longitude: number;
@@ -90,14 +99,19 @@ export default function SearchDetails() {
   const mapRef = useRef<MapView>(null);
   const scrollRef = useRef<ScrollView>(null);
   const [messageError, setMessageError] = useState("");
-  const [textBtn, setTextBtn] = useState("Carregando...");
+  const [carregandoVinculo, setCarregandoVinculo] = useState(true);
   const [papel, setPapel] = useState<"MOTORISTA" | "PASSAGEIRO" | null>(null);
-  const [minhaCaronaData, setMinhaCaronaData] = useState<any>(null);
+  const [minhaCaronaData, setMinhaCaronaData] = useState<MinhaCarona | null>(null);
   const [filter, setFilter] = useState<"TODOS" | "ACEITOS" | "PENDENTES">("TODOS");
   const [iniciandoCarona, setIniciandoCarona] = useState(false);
   const [codigo, setCodigo] = useState("");
   const [confirmandoCodigo, setConfirmandoCodigo] = useState(false);
   const [codigoFeedback, setCodigoFeedback] = useState("");
+
+  const temReserva = papel === "PASSAGEIRO" && minhaCaronaData?.idReserva != null;
+  const pedidoPendente = papel === "PASSAGEIRO" && !temReserva && minhaCaronaData?.statusPedido === "PENDENTE";
+  const podeSolicitar = !carregandoVinculo && papel === null && !ride?.realizado;
+  const podeAcompanhar = (papel === "MOTORISTA" || temReserva) && !ride?.realizado && ride?.statusCarona === "EM_ANDAMENTO";
 
   const carregarDetalhes = useCallback(() => {
     if (!id) return;
@@ -110,24 +124,24 @@ export default function SearchDetails() {
       .then((response) => {
         console.log(response.data)
         setRide(response.data)
-        api.get("/carona/minhas", {
+        return api.get("/carona/minhas", {
           headers: { Authorization: `Bearer ${token}` },
         })
         .then(resMinhas => {
           const caronas = resMinhas.data;
-          const minhaCarona = caronas.find((carona: any) => carona.id === Number(id));
+          const minhaCarona: MinhaCarona | undefined = caronas.find((carona: MinhaCarona) => carona.id === Number(id));
+          setMinhaCaronaData(minhaCarona ?? null);
+          setPapel(minhaCarona?.papel ?? null);
+          setCarregandoVinculo(false);
+          if (minhaCarona?.papel !== "PASSAGEIRO" || minhaCarona.idReserva == null) {
+            setCodigo("");
+            setCodigoFeedback("");
+          }
           
           if (minhaCarona) {
-            setMinhaCaronaData(minhaCarona);
             if (minhaCarona.papel === "MOTORISTA") {
-              setPapel("MOTORISTA");
               fetchPedidos(token);
-            } else {
-              setPapel("PASSAGEIRO");
-              setTextBtn("Cancelar reserva");
             }
-          } else {
-            setTextBtn("Solicitar reserva");
           }
         });
       })
@@ -264,8 +278,8 @@ export default function SearchDetails() {
   };
 
   const handleAction = () => {
-    if (textBtn === "Solicitar reserva") requestRide();
-    else if (textBtn === "Cancelar reserva") setMessageError("Cancelamento de reserva não disponível no momento");
+    if (temReserva) setMessageError("Cancelamento de reserva não disponível no momento");
+    else if (podeSolicitar) requestRide();
   };
 
   if (!ride) {
@@ -589,16 +603,22 @@ export default function SearchDetails() {
           )}
 
           {/* BOTÃO DE AÇÃO DO PASSAGEIRO */}
-          {papel !== "MOTORISTA" && !ride.realizado && (
+          {pedidoPendente && (
+            <View className="bg-purple-x11-100 border border-purple-x11-200 rounded-2xl p-5 mb-8">
+              <Text className="text-purple-x11-700 font-black text-base">Aguardando aprovação do motorista</Text>
+            </View>
+          )}
+
+          {(podeSolicitar || temReserva) && !ride.realizado && (
             <View className="gap-3 mb-8">
               <Pressable
                 className="bg-velvet-orchid-700 h-16 rounded-2xl items-center justify-center shadow-lg active:scale-[0.97]"
                 onPress={handleAction}
               >
-                <Text className="text-white font-black text-lg">{textBtn}</Text>
+                <Text className="text-white font-black text-lg">{temReserva ? "Cancelar reserva" : "Solicitar reserva"}</Text>
               </Pressable>
 
-              {textBtn === "Cancelar reserva" && (
+              {temReserva && (
                 <View className="bg-purple-x11-100 border border-purple-x11-200 rounded-2xl p-5">
                   <Text className="text-purple-x11-700 font-black text-base">Confirmar embarque ou desembarque</Text>
                   <Text className="text-velvet-orchid-900 text-sm mt-1 mb-4">Informe o código de quatro dígitos enviado para seu e-mail.</Text>
@@ -630,7 +650,7 @@ export default function SearchDetails() {
             </View>
           )}
 
-          {papel && !ride.realizado && ride.statusCarona === "EM_ANDAMENTO" && (
+          {podeAcompanhar && (
             <Pressable
               className="bg-purple-x11-700 h-16 rounded-2xl items-center justify-center shadow-lg active:scale-[0.97] flex-row mb-8"
               onPress={() => router.push({ pathname: "/ride-tracking/[id]", params: { id: String(id) } } as any)}
@@ -641,10 +661,10 @@ export default function SearchDetails() {
           )}
 
           {/* CHAT DA RESERVA DO PASSAGEIRO */}
-          {papel === "PASSAGEIRO" && (
+          {temReserva && (
             <View className="mb-6 bg-platinum-50 p-4 rounded-2xl border border-purple-x11-100">
               <Text className="text-velvet-orchid-900 font-bold">Sua reserva</Text>
-              <ChatButton idReserva={minhaCaronaData?.idReserva} idCarona={Number(id)} nome={ride.nome} />
+              <ChatButton idReserva={minhaCaronaData?.idReserva ?? undefined} idCarona={Number(id)} nome={ride.nome} />
             </View>
           )}
           {/* BOTÃO AVALIAR (quando a carona foi realizada) */}
