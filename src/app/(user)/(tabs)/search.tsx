@@ -4,7 +4,6 @@ import SearchForm from "@/components/search/search-form";
 import "@/global.css";
 import { api } from "@/src/services/api";
 import { getToken } from "@/src/services/storage";
-import { getCurrentPositionAsync, LocationObject, requestForegroundPermissionsAsync } from "expo-location";
 import { useRouter } from "expo-router";
 import { CalendarDays, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, CircleDot, Clock, MapPin, ShieldCheck, User } from "lucide-react-native";
 import { useEffect, useRef, useState } from "react";
@@ -26,7 +25,6 @@ export default function Search() {
   const [showTimePicker, setShowTimePicker] = useState(false);
 
   const GOOGLE_MAPS_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
-  const [location, setLocation] = useState<LocationObject | null>(null);
   
   const [step, setStep] = useState(1);
   const [showForm, setShowForm] = useState(true);
@@ -34,14 +32,6 @@ export default function Search() {
   useEffect(() => {
     setShowForm(true);
   }, [step]);
-
-  async function requestLocationPermission() {
-    const { granted } = await requestForegroundPermissionsAsync();
-    if (granted) {
-      const currentPosition = await getCurrentPositionAsync();
-      setLocation(currentPosition);
-    }
-  }
 
   function handleNext() {
     if (step === 1 && !origin) return;
@@ -51,9 +41,6 @@ export default function Search() {
   
   const canGoNext = (step === 1 && origin) || (step === 2 && destination);
 
-  useEffect(() => {
-    requestLocationPermission();
-  }, []);
 
   const onDateChange = (event: any, selectedDate?: Date) => {
     setShowDatePicker(false);
@@ -218,7 +205,16 @@ export default function Search() {
               <TouchableOpacity 
                 key={index} 
                 className="bg-white rounded-[32px] p-5 mb-5 border border-purple-x11-100 shadow-hard-2 active:scale-[0.98]"
-                onPress={() => router.push({ pathname: "/ride-details/[id]", params: { id: ride.idRota } } as any)}
+                onPress={() => router.push({
+                  pathname: "/ride-details/[id]",
+                  params: {
+                    id: ride.idRota,
+                    saidaLat: origin?.latitude,
+                    saidaLng: origin?.longitude,
+                    destinoLat: destination?.latitude,
+                    destinoLng: destination?.longitude,
+                  },
+                } as any)}
               >
                 {/* HEADER: MOTORISTA + RATING */}
                 <View className="flex-row items-center justify-between mb-4">

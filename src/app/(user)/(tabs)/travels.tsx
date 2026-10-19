@@ -8,7 +8,9 @@ import React, { useCallback, useState } from "react";
 import { ActivityIndicator, Platform, RefreshControl, ScrollView, Text, TouchableOpacity, View } from "react-native";
 
 interface Ride {
-  idReserva?: number;
+  idReserva?: number | null;
+  idPedidoCarona?: number | null;
+  statusPedido?: string | null;
   id: number;
   data: string;
   hora: string;
@@ -175,7 +177,7 @@ export default function MyTravels() {
                     <Text className="font-black text-[10px] uppercase text-white">{ride.papel}</Text>
                   </View>
                   <View className={`px-3 py-1 rounded-full ${ride.realizada ? "bg-emerald-500" : "bg-amber-400"}`}>
-                    <Text className="font-black text-[10px] uppercase text-white">{ride.realizada ? "Realizada" : "Pendente"}</Text>
+                    <Text className="font-black text-[10px] uppercase text-white">{ride.realizada ? "Realizada" : ride.papel === "PASSAGEIRO" && ride.idReserva == null && ride.statusPedido === "PENDENTE" ? "Aguardando aprovação" : "Agendada"}</Text>
                   </View>
                 </View>
                 <Text className="text-velvet-orchid-900 font-bold text-[10px] bg-platinum/50 px-3 py-1 rounded-full">
