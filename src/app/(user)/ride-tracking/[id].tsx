@@ -7,7 +7,7 @@ import { LocationAccuracy, LocationSubscription, requestForegroundPermissionsAsy
 import { Car, ChevronLeft, LocateFixed, Navigation } from "lucide-react-native";
 import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
-import MapView, { Marker } from "react-native-maps";
+import MapView, { Marker, Polyline } from "react-native-maps";
 import Logo from "../../../assets/images/logo-vdb.svg";
 
 type Coord = RideLocation;
@@ -33,6 +33,7 @@ export default function RideTracking() {
   const [ride, setRide] = useState<Ride | null>(null);
   const [role, setRole] = useState<"MOTORISTA" | "PASSAGEIRO" | null>(null);
   const [driverLocation, setDriverLocation] = useState<Coord | null>(null);
+  const [driverRoute, setDriverRoute] = useState<Coord[]>([]);
   const [message, setMessage] = useState("Conectando ao acompanhamento...");
 
   useEffect(() => {
@@ -120,9 +121,15 @@ export default function RideTracking() {
           onLocation: role === "PASSAGEIRO" ? (location) => {
             if (active) {
               setDriverLocation(location);
+              setDriverRoute((route) => appendLocation(route, location));
               setMessage("Motorista em deslocamento.");
             }
           } : undefined,
+          onRoute: (route) => {
+            if (!active) return;
+            setDriverRoute((currentRoute) => mergeRoutes(route, currentRoute));
+            setDriverLocation((location) => location ?? route.at(-1) ?? null);
+          },
         });
         if (!active) {
           await connection.disconnect();
@@ -142,6 +149,7 @@ export default function RideTracking() {
             console.log("[Rastreamento] Atualizando localização:", location);
             connection.publishLocation(location);
             setDriverLocation(location);
+            setDriverRoute((route) => appendLocation(route, location));
             setMessage("Compartilhando sua localização com os passageiros.");
           },
         );
@@ -185,7 +193,9 @@ export default function RideTracking() {
           longitudeDelta: 0.02,
         }}
       >
-
+        {driverRoute.length > 1 && (
+          <Polyline coordinates={driverRoute} strokeColor="#660099" strokeWidth={5} />
+        )}
         {driverLocation && (
           <Marker coordinate={driverLocation} title={role === "MOTORISTA" ? "Sua localização" : "Motorista"}>
             <View className="bg-purple-x11-700 p-3 rounded-full border-2 border-white">
@@ -221,4 +231,16 @@ export default function RideTracking() {
       </View>
     </View>
   );
+}
+
+function appendLocation(route: Coord[], location: Coord) {
+  const lastLocation = route.at(-1);
+  if (lastLocation?.latitude === location.latitude && lastLocation.longitude === location.longitude) {
+    return route;
+  }
+  return [...route, location];
+}
+
+function mergeRoutes(route: Coord[], currentRoute: Coord[]) {
+  return currentRoute.reduce(appendLocation, route);
 }

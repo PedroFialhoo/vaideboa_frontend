@@ -25,13 +25,16 @@ export function connectRideTracking({
   idCarona,
   token,
   onLocation,
+  onRoute,
 }: {
   idCarona: string | number;
   token: string;
   onLocation?: (location: RideLocation) => void;
+  onRoute?: (route: RideLocation[]) => void;
 }): Promise<RideTrackingConnection> {
   return new Promise((resolve, reject) => {
     let subscription: StompSubscription | undefined;
+    let routeSubscription: StompSubscription | undefined;
     let connected = false;
     let settled = false;
 
@@ -79,6 +82,26 @@ export function connectRideTracking({
           console.log(`[Rastreamento] Inscrito na carona ${idCarona}`);
         }
 
+        if (onRoute) {
+          routeSubscription = client.subscribe(`/user/queue/carona/${idCarona}/trajeto`, (message: IMessage) => {
+            try {
+              const route: unknown = JSON.parse(message.body);
+              if (!Array.isArray(route)) throw new Error("Trajeto inválido");
+
+              const locations = route.filter((location): location is RideLocation => (
+                typeof location?.latitude === "number"
+                && Number.isFinite(location.latitude)
+                && typeof location.longitude === "number"
+                && Number.isFinite(location.longitude)
+              ));
+              onRoute(locations);
+            } catch {
+              console.warn("[Rastreamento] Trajeto inválido recebido do servidor.");
+            }
+          });
+          client.publish({ destination: `/app/carona/${idCarona}/trajeto`, body: "" });
+        }
+
       resolve({
         publishLocation: (location) => {
           if (client.connected) {
@@ -93,6 +116,7 @@ export function connectRideTracking({
         },
         disconnect: async () => {
           subscription?.unsubscribe();
+          routeSubscription?.unsubscribe();
           if (client.active) {
             await client.deactivate();
           }
