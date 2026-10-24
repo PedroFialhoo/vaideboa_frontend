@@ -2,11 +2,12 @@ import "@/global.css";
 import { api } from "@/src/services/api";
 import { connectRideTracking, RideTrackingConnection, RideLocation } from "@/src/services/ride-tracking";
 import { getToken } from "@/src/services/storage";
+import { obterLinkCompartilhamento } from "@/src/services/compartilhamento";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { LocationAccuracy, LocationSubscription, requestForegroundPermissionsAsync, watchPositionAsync } from "expo-location";
 import { ChevronLeft, LocateFixed } from "lucide-react-native";
 import { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, Share, Text, TextInput, View } from "react-native";
 import MapView, { Marker, Polyline } from "react-native-maps";
 import Logo from "../../../assets/images/logo-vdb.svg";
 
@@ -42,6 +43,24 @@ export default function RideTracking() {
   const [codigo, setCodigo] = useState("");
   const [feedback, setFeedback] = useState("");
   const [confirmando, setConfirmando] = useState(false);
+  const [compartilhando, setCompartilhando] = useState(false);
+  const [erroCompartilhamento, setErroCompartilhamento] = useState("");
+  const sharingRef = useRef(false);
+  const compartilhar = async () => {
+    if (sharingRef.current) return;
+    sharingRef.current = true;
+    setCompartilhando(true);
+    setErroCompartilhamento("");
+    try {
+      const { url } = await obterLinkCompartilhamento(Number(id));
+      await Share.share({ message: `Acompanhe minha carona no Vai de Boa: ${url}` });
+    } catch (error) {
+      setErroCompartilhamento(error instanceof Error ? error.message : "Não foi possível compartilhar o acompanhamento.");
+    } finally {
+      sharingRef.current = false;
+      setCompartilhando(false);
+    }
+  };
   const submittingRef = useRef(false);
   const canConfirm = role === "MOTORISTA" && ride?.statusCarona === "EM_ANDAMENTO" && !ride.realizado;
 
@@ -291,6 +310,11 @@ export default function RideTracking() {
             <Text className="text-velvet-orchid-700 text-sm mt-1">{message}</Text>
           </View>
         </View>
+        <Pressable onPress={compartilhar} disabled={compartilhando} accessibilityRole="button" accessibilityState={{ disabled: compartilhando, busy: compartilhando }} className="mt-5 rounded-xl bg-purple-x11-700 px-4 h-12 flex-row gap-3 items-center justify-center">
+          {compartilhando && <ActivityIndicator color="white" />}
+          <Text className="text-white font-black">{compartilhando ? "Obtendo link..." : "Compartilhar acompanhamento"}</Text>
+        </Pressable>
+        {!!erroCompartilhamento && <Text accessibilityLiveRegion="polite" className="text-velvet-orchid-900 mt-3">{erroCompartilhamento}</Text>}
         {canConfirm && (
           <View className="mt-5">
             <Text className="text-velvet-orchid-900 font-black text-lg">Confirmar embarque</Text>
