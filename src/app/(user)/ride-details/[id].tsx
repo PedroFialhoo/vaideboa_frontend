@@ -104,6 +104,7 @@ export default function SearchDetails() {
   const [minhaCaronaData, setMinhaCaronaData] = useState<MinhaCarona | null>(null);
   const [filter, setFilter] = useState<"TODOS" | "ACEITOS" | "PENDENTES">("TODOS");
   const [iniciandoCarona, setIniciandoCarona] = useState(false);
+  const [cancelandoReserva, setCancelandoReserva] = useState(false);
   const [codigo, setCodigo] = useState("");
   const [confirmandoCodigo, setConfirmandoCodigo] = useState(false);
   const [codigoFeedback, setCodigoFeedback] = useState("");
@@ -277,8 +278,36 @@ export default function SearchDetails() {
     }
   };
 
+  const cancelarReserva = async () => {
+    const idReserva = minhaCaronaData?.idReserva;
+    if (cancelandoReserva || idReserva == null) return;
+
+    setMessageError("");
+    setCancelandoReserva(true);
+    try {
+      const token = await getToken();
+      if (!token) return;
+
+      const response = await api.get(`/reserva/cancelar/${idReserva}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      router.replace({
+        pathname: "/page-sucess",
+        params: { sucess: "true", message: response.data, to: "/travels" },
+      });
+    } catch (error: any) {
+      setMessageError(
+        typeof error.response?.data === "string"
+          ? error.response.data
+          : "Não foi possível cancelar a reserva."
+      );
+    } finally {
+      setCancelandoReserva(false);
+    }
+  };
+
   const handleAction = () => {
-    if (temReserva) setMessageError("Cancelamento de reserva não disponível no momento");
+    if (temReserva) cancelarReserva();
     else if (podeSolicitar) requestRide();
   };
 
@@ -614,8 +643,13 @@ export default function SearchDetails() {
               <Pressable
                 className="bg-velvet-orchid-700 h-16 rounded-2xl items-center justify-center shadow-lg active:scale-[0.97]"
                 onPress={handleAction}
+                disabled={cancelandoReserva}
               >
-                <Text className="text-white font-black text-lg">{temReserva ? "Cancelar reserva" : "Solicitar reserva"}</Text>
+                {cancelandoReserva ? (
+                  <ActivityIndicator size="small" color="white" />
+                ) : (
+                  <Text className="text-white font-black text-lg">{temReserva ? "Cancelar reserva" : "Solicitar reserva"}</Text>
+                )}
               </Pressable>
 
               {temReserva && (
