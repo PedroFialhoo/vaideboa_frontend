@@ -27,7 +27,6 @@ import {
   Text,
   TouchableOpacity,
   Image,
-  TextInput,
   View,
 } from "react-native";
 import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from "react-native-maps";
@@ -105,9 +104,7 @@ export default function SearchDetails() {
   const [filter, setFilter] = useState<"TODOS" | "ACEITOS" | "PENDENTES">("TODOS");
   const [iniciandoCarona, setIniciandoCarona] = useState(false);
   const [cancelandoReserva, setCancelandoReserva] = useState(false);
-  const [codigo, setCodigo] = useState("");
-  const [confirmandoCodigo, setConfirmandoCodigo] = useState(false);
-  const [codigoFeedback, setCodigoFeedback] = useState("");
+
 
   const temReserva = papel === "PASSAGEIRO" && minhaCaronaData?.idReserva != null;
   const pedidoPendente = papel === "PASSAGEIRO" && !temReserva && minhaCaronaData?.statusPedido === "PENDENTE";
@@ -134,10 +131,6 @@ export default function SearchDetails() {
           setMinhaCaronaData(minhaCarona ?? null);
           setPapel(minhaCarona?.papel ?? null);
           setCarregandoVinculo(false);
-          if (minhaCarona?.papel !== "PASSAGEIRO" || minhaCarona.idReserva == null) {
-            setCodigo("");
-            setCodigoFeedback("");
-          }
           
           if (minhaCarona) {
             if (minhaCarona.papel === "MOTORISTA") {
@@ -248,33 +241,6 @@ export default function SearchDetails() {
       });
     } catch (error: any) {
       setMessageError(error.response?.data || "Erro ao finalizar carona");
-    }
-  };
-
-  const confirmarCodigo = async () => {
-    if (codigo.length !== 4) {
-      setCodigoFeedback("Informe os quatro dígitos do código.");
-      return;
-    }
-
-    const token = await getToken();
-    if (!token) return;
-
-    setConfirmandoCodigo(true);
-    setCodigoFeedback("");
-    try {
-      const response = await api.post("/codigo/confirmar", {
-        idCarona: Number(id),
-        codigo,
-      }, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setCodigo("");
-      setCodigoFeedback(response.data);
-    } catch (error: any) {
-      setCodigoFeedback(error.response?.data || "Não foi possível confirmar o código.");
-    } finally {
-      setConfirmandoCodigo(false);
     }
   };
 
@@ -652,34 +618,7 @@ export default function SearchDetails() {
                 )}
               </Pressable>
 
-              {temReserva && (
-                <View className="bg-purple-x11-100 border border-purple-x11-200 rounded-2xl p-5">
-                  <Text className="text-purple-x11-700 font-black text-base">Confirmar embarque ou desembarque</Text>
-                  <Text className="text-velvet-orchid-900 text-sm mt-1 mb-4">Informe o código de quatro dígitos enviado para seu e-mail.</Text>
-                  <View className="flex-row gap-3">
-                    <TextInput
-                      value={codigo}
-                      onChangeText={(value) => setCodigo(value.replace(/\D/g, "").slice(0, 4))}
-                      keyboardType="number-pad"
-                      maxLength={4}
-                      onFocus={() => {
-                        setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 250);
-                      }}
-                      placeholder="0000"
-                      placeholderTextColor="#938ea4"
-                      className="flex-1 bg-white border border-purple-x11-200 rounded-xl px-4 h-12 text-center text-velvet-orchid-900 font-black text-lg tracking-[6px]"
-                    />
-                    <Pressable
-                      disabled={confirmandoCodigo}
-                      onPress={confirmarCodigo}
-                      className={`px-5 h-12 rounded-xl items-center justify-center ${confirmandoCodigo ? "bg-purple-x11-300" : "bg-purple-x11-700"}`}
-                    >
-                      <Text className="text-white font-black">{confirmandoCodigo ? "..." : "Confirmar"}</Text>
-                    </Pressable>
-                  </View>
-                  {!!codigoFeedback && <Text className="text-velvet-orchid-900 text-sm mt-3">{codigoFeedback}</Text>}
-                </View>
-              )}
+
 
             </View>
           )}
