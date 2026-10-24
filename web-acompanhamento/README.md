@@ -12,9 +12,28 @@ cp .env.example .env
 npm run dev
 ```
 
-Configure `VITE_API_BASE_URL` com a API em execução. Configure `VITE_MAP_TILE_URL` e `VITE_MAP_ATTRIBUTION` com um provedor de tiles compatível com `no-referrer`. Sem essas duas opções, a página informa que o mapa não está configurado. A atribuição aceita HTML confiável definido pelo operador. As variáveis `VITE_*` são públicas e entram no build; não use credenciais secretas. Reinicie o servidor após modificar `.env`.
+Configure `VITE_API_BASE_URL` com a API em execução.
 
-O serviço padrão `tile.openstreetmap.org` não permite suprimir Referer, portanto não o utilize com a política de privacidade desta página. Consulte as condições do provedor escolhido. Referências: [política OSM](https://operations.osmfoundation.org/policies/tiles/), [Leaflet](https://leafletjs.com/reference.html).
+### Google Maps
+
+Defina `VITE_GOOGLE_MAPS_API_KEY` no `.env` desta pasta. Quando preenchida, a página usa Google Maps, sem precisar de `VITE_MAP_TILE_URL` e `VITE_MAP_ATTRIBUTION`.
+
+```dotenv
+VITE_API_BASE_URL=http://localhost:8080
+VITE_GOOGLE_MAPS_API_KEY=SUA_CHAVE_PUBLICA
+```
+
+No Google Cloud, habilite **Maps JavaScript API**, configure faturamento e autorize a origem local (`http://localhost:5173`) nas restrições de sites da chave. O carregador usa `auth_referrer_policy=origin`: a restrição deve permitir a origem sem exigir um caminho específico. Para celular ou produção, autorize também a origem utilizada. Prefira uma chave própria para web se a chave do aplicativo estiver restrita a Android/iOS. Reinicie o Vite após alterar o `.env`.
+
+A página usa `Referrer-Policy: strict-origin`: o Google recebe a origem do site, sem caminho, fragmento ou coordenadas no Referer. As consultas à API pública continuam com `no-referrer`. O Google Maps recebe a posição exibida no mapa. Não envie o token público em parâmetros de URL; mantenha-o no fragmento `/v#TOKEN`.
+
+As variáveis `VITE_*` são públicas e entram no build; use somente chaves públicas com restrições. Referência: [carregamento oficial do Google Maps](https://developers.google.com/maps/documentation/javascript/load-maps-js-api).
+
+### Alternativa Leaflet
+
+Sem chave Google, configure `VITE_MAP_TILE_URL` e `VITE_MAP_ATTRIBUTION` com um provedor de tiles compatível com `no-referrer`. A atribuição aceita HTML confiável definido pelo operador. Sem as duas opções, a página informa que o mapa não está configurado.
+
+O serviço padrão `tile.openstreetmap.org` não permite suprimir Referer, portanto não o utilize com esta configuração. Consulte as condições do provedor escolhido. Referências: [política OSM](https://operations.osmfoundation.org/policies/tiles/), [Leaflet](https://leafletjs.com/reference.html).
 
 No backend, configure:
 
@@ -37,7 +56,7 @@ Publique `dist/` com HTTPS. Configure as variáveis de produção **antes** do b
 ```nginx
 location / {
     try_files $uri $uri/ /index.html;
-    add_header Referrer-Policy no-referrer always;
+    add_header Referrer-Policy strict-origin always;
     add_header Cache-Control no-store always;
     add_header X-Content-Type-Options nosniff always;
 }

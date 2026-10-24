@@ -1,39 +1,61 @@
 import { useEffect, useRef, useState } from "react";
-import L from "leaflet";
-import "leaflet/dist/leaflet.css";
 import type { Coordenadas } from "../types/acompanhamento";
+import { GoogleCircle, GoogleMap, loadGoogleMaps, onGoogleMapsAuthFailure } from "../services/google-maps";
+import { MapaLeaflet } from "./MapaLeaflet";
 
-export function MapaAcompanhamento({ posicao, antiga }: { posicao: Coordenadas; antiga: boolean }) {
+type Props = { posicao: Coordenadas; antiga: boolean };
+const key = import.meta.env.VITE_GOOGLE_MAPS_API_KEY?.trim();
+
+export function MapaAcompanhamento(props: Props) {
+  return key ? <MapaGoogle {...props} /> : <MapaLeaflet {...props} />;
+}
+
+function MapaGoogle({ posicao, antiga }: Props) {
   const container = useRef<HTMLDivElement>(null);
-  const map = useRef<L.Map | null>(null);
-  const marker = useRef<L.CircleMarker | null>(null);
-  const [falhaTiles, setFalhaTiles] = useState(false);
-  const tileUrl = import.meta.env.VITE_MAP_TILE_URL;
-  const attribution = import.meta.env.VITE_MAP_ATTRIBUTION;
+  const map = useRef<GoogleMap | null>(null);
+  const marker = useRef<GoogleCircle | null>(null);
+  const latest = useRef({ posicao, antiga });
+  latest.current = { posicao, antiga };
+  const [status, setStatus] = useState("Carregando Google Maps...");
+  const [failed, setFailed] = useState(false);
   useEffect(() => {
-    if (!container.current || !tileUrl || !attribution) return;
-    const instance = L.map(container.current);
-    map.current = instance;
-    L.tileLayer(tileUrl, { attribution, maxZoom: 19, referrerPolicy: "no-referrer" })
-      .on("tileerror", () => setFalhaTiles(true)).addTo(instance);
-    const resize = new ResizeObserver(() => instance.invalidateSize());
-    resize.observe(container.current);
-    return () => { resize.disconnect(); instance.remove(); map.current = null; marker.current = null; };
-  }, [tileUrl, attribution]);
+    let cancelled = false;
+    const authFailure = () => {
+      if (cancelled) return;
+      setFailed(true);
+      setStatus("Google Maps não autorizado. Confira Maps JavaScript API, faturamento e restrições da chave no Google Cloud.");
+    };
+    const unsubscribe = onGoogleMapsAuthFailure(authFailure);
+    void loadGoogleMaps(key!).then(maps => {
+      if (cancelled || !container.current) return;
+      const { posicao: point, antiga: old } = latest.current;
+      const center = { lat: point.latitude, lng: point.longitude };
+      map.current = new maps.Map(container.current, { center, zoom: 16, streetViewControl: false, mapTypeControl: false, fullscreenControl: true });
+      marker.current = new maps.Circle({ map: map.current, center, radius: 12,
+        strokeColor: "#f7e5ff", strokeWeight: 4, fillColor: old ? "#78718e" : "#660099", fillOpacity: 1, clickable: false });
+      setStatus("");
+    }).catch(error => {
+      if (!cancelled) { setFailed(true); setStatus(error instanceof Error ? error.message : "Não foi possível carregar o mapa."); }
+    });
+    return () => {
+      cancelled = true;
+      unsubscribe();
+      marker.current?.setMap(null);
+      if (map.current) window.google?.maps.event.clearInstanceListeners(map.current);
+      marker.current = null;
+      map.current = null;
+    };
+  }, []);
   useEffect(() => {
-    if (!map.current) return;
-    const coords: L.LatLngExpression = [posicao.latitude, posicao.longitude];
-    if (!marker.current) {
-      marker.current = L.circleMarker(coords, { radius: 12, color: "#f7e5ff", weight: 4, fillOpacity: 1 }).addTo(map.current).bindTooltip("Motorista");
-      map.current.setView(coords, 16);
-    }
-    marker.current.setLatLng(coords).setStyle({ fillColor: antiga ? "#78718e" : "#660099" });
+    marker.current?.setCenter({ lat: posicao.latitude, lng: posicao.longitude });
+    marker.current?.setOptions({ fillColor: antiga ? "#78718e" : "#660099" });
   }, [posicao, antiga]);
   return <section className="map-section" aria-label="Localização do motorista">
-    {tileUrl && attribution ? <>
-      <div className="map" ref={container} />
-      <button className="center-button" onClick={() => map.current?.setView([posicao.latitude, posicao.longitude], 16)}>◎ Centralizar no motorista</button>
-      {falhaTiles && <p className="map-warning" role="status">Não foi possível carregar parte do mapa.</p>}
-    </> : <div className="placeholder"><strong>Mapa não configurado</strong><p>O serviço de mapas precisa ser configurado pelo responsável pela página.</p></div>}
+    <div className="map" ref={container} />
+    {!status && <button className="center-button" onClick={() => {
+      map.current?.setCenter({ lat: posicao.latitude, lng: posicao.longitude });
+      map.current?.setZoom(16);
+    }}>◎ Centralizar no motorista</button>}
+    {status && <p className="map-warning" role={failed ? "alert" : "status"}>{status}</p>}
   </section>;
 }
