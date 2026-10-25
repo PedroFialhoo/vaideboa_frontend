@@ -1,9 +1,10 @@
 import { View, Text, TouchableOpacity, KeyboardAvoidingView, ScrollView, ActivityIndicator, Platform } from "react-native";
 import { ChevronLeft, ChevronRight, MapPin, ArrowRight, PencilLine, CircleDot, Car } from "lucide-react-native";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Destination from "@/components/offer/destination";
 import Origin from "@/components/offer/origin";
 import Stops, { StopType } from "@/components/offer/stops";
+import { extrairInfoRota } from "@/components/offer/route-info-badge";
 import RideForm from "@/components/offer/ride-form";
 import "@/global.css";
 import { api } from "@/src/services/api";
@@ -35,7 +36,64 @@ export default function Offer() {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [selectedVehicleId, setSelectedVehicleId] = useState<number | null>(null);
   const [loadingVehicles, setLoadingVehicles] = useState(false);
+  const [recommendationEnabled, setRecommendationEnabled] = useState(false);
+  const [recommendationAttempt, setRecommendationAttempt] = useState(0);
+  const [recommendation, setRecommendation] = useState<number | null>(null);
+  const [recommendationLoading, setRecommendationLoading] = useState(false);
+  const [recommendationError, setRecommendationError] = useState("");
+  const priceEdited = useRef(false);
   const router = useRouter()
+
+  useEffect(() => {
+    if (step !== 4 || !recommendationEnabled) return;
+    let active = true;
+    setRecommendation(null);
+    setRecommendationError("");
+    setRecommendationLoading(true);
+    async function loadRecommendation() {
+      try {
+        if (!origin || !destination || !selectedVehicleId) {
+          throw new Error("Selecione a rota e o veículo para receber uma recomendação.");
+        }
+        const token = await getToken();
+        const headers = { Authorization: `Bearer ${token}` };
+        const route = await api.post("/rota/buscar", {
+          latSaida: origin.latitude,
+          lonSaida: origin.longitude,
+          latDestino: destination.latitude,
+          lonDestino: destination.longitude,
+          paradas: stops.map((stop, index) => ({
+            indexOrder: index, latitude: stop.latitude, longitude: stop.longitude,
+          })),
+        }, { headers });
+        if (!active) return;
+        const distancia = extrairInfoRota(route.data.features?.[0]).distanciaKm;
+        if (!Number.isFinite(distancia) || distancia <= 0) {
+          throw new Error("Não foi possível obter a distância da rota. Preencha a contribuição manualmente.");
+        }
+        const response = await api.get("/recomendacaoPreco/buscar", {
+          headers,
+          params: { distancia, quantidadePessoas: seats + 1, idCarro: selectedVehicleId },
+        });
+        const suggested = response.data.precoPorPessoa;
+        if (typeof suggested !== "number" || !Number.isFinite(suggested) || suggested < 0) {
+          throw new Error("A recomendação recebida é inválida. Preencha a contribuição manualmente.");
+        }
+        if (active) {
+          const rounded = Math.round(suggested * 100) / 100;
+          setRecommendation(rounded);
+          if (!priceEdited.current) setPrice(rounded);
+        }
+      } catch (error) {
+        if (active) setRecommendationError(error instanceof Error && !('isAxiosError' in error)
+          ? error.message : "Não foi possível obter a recomendação. Tente novamente ou preencha a contribuição manualmente.");
+      } finally {
+        if (active) setRecommendationLoading(false);
+      }
+    }
+    void loadRecommendation();
+    return () => { active = false; };
+  }, [step, recommendationEnabled, recommendationAttempt, origin, destination, stops, seats, selectedVehicleId]);
 
   const loadVehicles = useCallback(async () => {
     setLoadingVehicles(true);
@@ -80,6 +138,11 @@ export default function Offer() {
       return;
     }
 
+    if (price === null || !Number.isFinite(price) || price < 0) {
+      setMessageError("Informe uma contribuição válida. Zero é permitido.");
+      return;
+    }
+    const precoTotal = Math.round(price * (seats + 1) * 100) / 100;
     setLoading(true)
     getToken().then(token => {
       const dataObj = new Date(date);
@@ -92,6 +155,7 @@ export default function Offer() {
         "/carona/cadastrar",
         {
           qntAssentos: seats,
+          precoTotal,
           idCarro: selectedVehicleId,
           data: dataFormatada,
           hora: horaFormatada,
@@ -122,7 +186,8 @@ export default function Offer() {
         })        
       })
       .catch(error => {
-        setMessageError("Erro ao criar carona!")
+        const message = error.response?.data;
+        setMessageError(typeof message === "string" ? message : message?.message || "Erro ao criar carona!")
       })
       .finally(() => setLoading(false));
     });
@@ -244,7 +309,20 @@ export default function Offer() {
               time={time}
               setTime={setTime}
               price={price}
-              setPrice={setPrice}
+              setPrice={(value) => { priceEdited.current = true; setPrice(value); }}
+              recommendation={recommendation}
+              recommendationLoading={recommendationLoading}
+              recommendationError={recommendationError}
+              requestRecommendation={() => {
+                setRecommendationEnabled(true);
+                setRecommendationAttempt((attempt) => attempt + 1);
+              }}
+              applyRecommendation={() => {
+                if (recommendation !== null) {
+                  priceEdited.current = false;
+                  setPrice(recommendation);
+                }
+              }}
               seats={seats}
               setSeats={setSeats}
               createRide={createRide}

@@ -25,7 +25,7 @@ type Props = {
   time: Date | null;
   setTime: (time: Date) => void;
   price: number | null;
-  setPrice: (price: number) => void;
+  setPrice: (price: number | null) => void;
   seats: number;
   setSeats: (seats: number) => void;
   createRide: () => void;
@@ -33,6 +33,11 @@ type Props = {
   loading: boolean;
   vehicleSection: ReactNode;
   maxSeats: number;
+  recommendation: number | null;
+  recommendationLoading: boolean;
+  recommendationError: string;
+  requestRecommendation: () => void;
+  applyRecommendation: () => void;
 };
 
 export default function RideForm({
@@ -49,7 +54,14 @@ export default function RideForm({
   loading,
   vehicleSection,
   maxSeats,
+  recommendation,
+  recommendationLoading,
+  recommendationError,
+  requestRecommendation,
+  applyRecommendation,
 }: Props) {
+  const [priceFocused, setPriceFocused] = useState(false);
+  const [priceInput, setPriceInput] = useState("");
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
 
@@ -185,7 +197,7 @@ export default function RideForm({
         {/* PREÇO */}
         <View className="mb-5">
           <Text className="text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-1.5 ml-1">
-            Contribuição (R$)
+            Contribuição por pessoa (R$)
           </Text>
           <View className="bg-white rounded-2xl border border-purple-x11-100 px-4 h-14 flex-row items-center">
             <View className="bg-purple-x11-50 w-9 h-9 rounded-xl items-center justify-center mr-3">
@@ -196,12 +208,40 @@ export default function RideForm({
               placeholderTextColor="#aeaabb"
               className="flex-1 text-velvet-orchid-900 font-black text-xl"
               keyboardType="decimal-pad"
-              value={price ? String(price) : ""}
-              onChangeText={(text) =>
-                setPrice(Number(text.replace(",", ".")))
-              }
+              value={priceFocused ? priceInput : price === null ? "" : price.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              onFocus={() => {
+                setPriceInput(price === null ? "" : String(price).replace(".", ","));
+                setPriceFocused(true);
+              }}
+              onBlur={() => setPriceFocused(false)}
+              onChangeText={(text) => {
+                if (!/^\d*([,.]\d{0,2})?$/.test(text)) return;
+                setPriceInput(text);
+                const parsed = Number(text.replace(",", "."));
+                setPrice(text === "" || !Number.isFinite(parsed) ? null : parsed);
+              }}
             />
           </View>
+          <TouchableOpacity
+            onPress={requestRecommendation}
+            disabled={recommendationLoading}
+            className="mt-3 p-3 bg-purple-x11-100 rounded-xl items-center"
+          >
+            {recommendationLoading ? <ActivityIndicator /> : (
+              <Text className="text-velvet-orchid-900 font-bold">Receber recomendação de contribuição</Text>
+            )}
+          </TouchableOpacity>
+          {recommendation !== null && !recommendationLoading && (
+            <View className="mt-2">
+              <Text className="text-velvet-orchid-900 text-sm">
+                Sugestão: {recommendation.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} por pessoa ({seats + 1} pessoas, incluindo você).
+              </Text>
+              <TouchableOpacity onPress={applyRecommendation} className="py-2">
+                <Text className="text-velvet-orchid-700 font-bold">Usar valor sugerido</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+          {recommendationError ? <Text accessibilityRole="alert" className="mt-2 text-red-700 text-sm">{recommendationError}</Text> : null}
         </View>
 
         {/* ERRO */}

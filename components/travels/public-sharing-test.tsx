@@ -139,9 +139,9 @@ export default function PublicSharingTest() {
   }
 
   return (
-    <View className="mx-6 mt-8 p-5 rounded-3xl bg-platinum-50 border border-purple-x11-200">
+    <View className="mt-3 p-4 rounded-3xl bg-platinum-50 border border-purple-x11-200">
       <Text className="text-velvet-orchid-900 font-black text-lg">Teste público • Carona 21</Text>
-      <Text className="text-velvet-orchid-700 mt-2">Usa o motorista logado e grava posições simuladas na carona 21. Mantenha a Home aberta em primeiro plano.</Text>
+      <Text className="text-velvet-orchid-700 mt-2">Usa o motorista logado e grava posições simuladas na carona 21. Mantenha Minhas viagens aberta em primeiro plano.</Text>
       <Text className="text-velvet-orchid-700 mt-2">{simulationRoute.length} pontos • {(routeLength / 1000).toFixed(2)} km • aproximadamente {Math.ceil(routeLength / SPEED / 60)} min a 40 km/h.</Text>
       <Text className="text-velvet-orchid-900 mt-3 font-bold" accessibilityLiveRegion="polite">{status}</Text>
       <Text className="text-velvet-orchid-700 mt-2">Progresso: {Math.floor(meters / routeLength * 100)}%{position ? ` • ${position.latitude.toFixed(6)}, ${position.longitude.toFixed(6)}` : ""}</Text>

@@ -1,12 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import L from "leaflet";
+import carroUrl from "../../../assets/images/iconCarro.png";
+
+const carroIcon = L.icon({ iconUrl: carroUrl, iconSize: [48, 48], iconAnchor: [24, 24], tooltipAnchor: [0, -24] });
 import "leaflet/dist/leaflet.css";
 import type { Coordenadas } from "../types/acompanhamento";
 
 export function MapaLeaflet({ posicao, antiga }: { posicao: Coordenadas; antiga: boolean }) {
   const container = useRef<HTMLDivElement>(null);
   const map = useRef<L.Map | null>(null);
-  const marker = useRef<L.CircleMarker | null>(null);
+  const marker = useRef<L.Marker | null>(null);
   const [falhaTiles, setFalhaTiles] = useState(false);
   const tileUrl = import.meta.env.VITE_MAP_TILE_URL;
   const attribution = import.meta.env.VITE_MAP_ATTRIBUTION;
@@ -24,10 +27,10 @@ export function MapaLeaflet({ posicao, antiga }: { posicao: Coordenadas; antiga:
     if (!map.current) return;
     const coords: L.LatLngExpression = [posicao.latitude, posicao.longitude];
     if (!marker.current) {
-      marker.current = L.circleMarker(coords, { radius: 12, color: "#f7e5ff", weight: 4, fillOpacity: 1 }).addTo(map.current).bindTooltip("Motorista");
+      marker.current = L.marker(coords, { icon: carroIcon, title: "Motorista", keyboard: false }).addTo(map.current).bindTooltip("Motorista");
       map.current.setView(coords, 16);
     }
-    marker.current.setLatLng(coords).setStyle({ fillColor: antiga ? "#78718e" : "#660099" });
+    marker.current.setLatLng(coords).setOpacity(antiga ? 0.55 : 1);
   }, [posicao, antiga]);
   return <section className="map-section" aria-label="Localização do motorista">
     {tileUrl && attribution ? <>

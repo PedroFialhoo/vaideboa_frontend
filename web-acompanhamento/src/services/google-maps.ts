@@ -1,14 +1,16 @@
 // Superfície da API utilizada pela página, sem dependências adicionais.
 export type LatLng = { lat: number; lng: number };
 export type GoogleMap = { setCenter(center: LatLng): void; setZoom(zoom: number): void };
-export type GoogleCircle = {
-  setCenter(center: LatLng): void;
-  setOptions(options: { fillColor: string }): void;
+export type GoogleMarker = {
+  setPosition(position: LatLng): void;
+  setOpacity(opacity: number): void;
   setMap(map: GoogleMap | null): void;
 };
 type Maps = {
   Map: new (element: HTMLElement, options: { center: LatLng; zoom: number; streetViewControl: boolean; mapTypeControl: boolean; fullscreenControl: boolean }) => GoogleMap;
-  Circle: new (options: { map: GoogleMap; center: LatLng; radius: number; strokeColor: string; strokeWeight: number; fillColor: string; fillOpacity: number; clickable: boolean }) => GoogleCircle;
+  Marker: new (options: { map: GoogleMap; position: LatLng; icon: { url: string; scaledSize: object; anchor: object }; title: string; opacity: number; clickable: boolean }) => GoogleMarker;
+  Size: new (width: number, height: number) => object;
+  Point: new (x: number, y: number) => object;
   event: { clearInstanceListeners(instance: object): void };
 };
 declare global {

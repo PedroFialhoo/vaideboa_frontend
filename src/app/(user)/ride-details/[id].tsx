@@ -1,4 +1,5 @@
 import "@/global.css";
+import CancelRideAction from "@/components/travels/cancel-ride-action";
 import ChatButton from "@/components/chat/chat-button";
 import { api } from "@/src/services/api";
 import { getToken } from "@/src/services/storage";
@@ -102,6 +103,8 @@ export default function SearchDetails() {
   const [papel, setPapel] = useState<"MOTORISTA" | "PASSAGEIRO" | null>(null);
   const [minhaCaronaData, setMinhaCaronaData] = useState<MinhaCarona | null>(null);
   const [filter, setFilter] = useState<"TODOS" | "ACEITOS" | "PENDENTES">("TODOS");
+  const [cancelamentoBloqueado, setCancelamentoBloqueado] = useState(false);
+  const [cancelamentoMensagem, setCancelamentoMensagem] = useState("");
   const [iniciandoCarona, setIniciandoCarona] = useState(false);
   const [cancelandoReserva, setCancelandoReserva] = useState(false);
 
@@ -575,12 +578,14 @@ export default function SearchDetails() {
             </View>
           </View>
 
+          {!!cancelamentoMensagem && <Text accessibilityRole="alert" className="text-velvet-orchid-900 font-bold mb-4">{cancelamentoMensagem}</Text>}
+          {ride.statusCarona === "CANCELADA" && <Text className="text-velvet-orchid-900 font-black mb-4">CANCELADA</Text>}
           {/* BOTÕES DE AÇÃO DO MOTORISTA */}
-          {papel === "MOTORISTA" && !ride.realizado && (
+          {papel === "MOTORISTA" && !ride.realizado && (ride.statusCarona === "EM_ESPERA" || ride.statusCarona === "EM_ANDAMENTO") && (
             <View className="gap-3 mb-8">
               {ride.statusCarona !== "EM_ANDAMENTO" && (
                 <Pressable
-                  disabled={iniciandoCarona}
+                  disabled={iniciandoCarona || cancelamentoBloqueado}
                   className="bg-purple-x11-700 h-16 rounded-2xl items-center justify-center shadow-lg active:scale-[0.97] flex-row"
                   onPress={iniciarCarona}
                 >
@@ -590,10 +595,25 @@ export default function SearchDetails() {
 
               <Pressable
                 className="bg-velvet-orchid-700 h-16 rounded-2xl items-center justify-center shadow-lg active:scale-[0.97] flex-row"
+                disabled={cancelamentoBloqueado}
                 onPress={finalizarCarona}
               >
                 <Text className="text-white font-black text-lg">Marcar como realizada</Text>
               </Pressable>
+              {ride.statusCarona === "EM_ESPERA" && <CancelRideAction
+                id={Number(id)}
+                onBlockedChange={setCancelamentoBloqueado}
+                onMessage={setCancelamentoMensagem}
+                onRefresh={async () => {
+                  const token = await getToken();
+                  if (!token) throw new Error("Sessão expirada");
+                  const { data } = await api.get(`/carona/buscar/${id}`, {
+                    headers: { Authorization: `Bearer ${token}` }, timeout: 15000,
+                  });
+                  setRide(data);
+                  carregarDetalhes();
+                }}
+              />}
             </View>
           )}
 
