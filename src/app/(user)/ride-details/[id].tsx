@@ -2,6 +2,7 @@ import "@/global.css";
 import CancelRideAction from "@/components/travels/cancel-ride-action";
 import ChatButton from "@/components/chat/chat-button";
 import { api } from "@/src/services/api";
+import { obterLinkCompartilhamento } from "@/src/services/compartilhamento";
 import { getToken } from "@/src/services/storage";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import {
@@ -25,6 +26,7 @@ import {
   Platform,
   Pressable,
   ScrollView,
+  Share,
   Text,
   TouchableOpacity,
   Image,
@@ -105,6 +107,9 @@ export default function SearchDetails() {
   const [filter, setFilter] = useState<"TODOS" | "ACEITOS" | "PENDENTES">("TODOS");
   const [cancelamentoBloqueado, setCancelamentoBloqueado] = useState(false);
   const [cancelamentoMensagem, setCancelamentoMensagem] = useState("");
+  const compartilhamentoLock = useRef(false);
+  const [compartilhando, setCompartilhando] = useState(false);
+  const [erroCompartilhamento, setErroCompartilhamento] = useState("");
   const [iniciandoCarona, setIniciandoCarona] = useState(false);
   const [cancelandoReserva, setCancelandoReserva] = useState(false);
 
@@ -206,6 +211,22 @@ export default function SearchDetails() {
       })
       .catch(error => setMessageError(error.response?.data || "Erro ao agendar carona"));
     });
+  };
+
+  const compartilharCarona = async () => {
+    if (compartilhamentoLock.current || papel !== "MOTORISTA" || ride?.statusCarona !== "EM_ANDAMENTO" || ride.realizado) return;
+    compartilhamentoLock.current = true;
+    setCompartilhando(true);
+    setErroCompartilhamento("");
+    try {
+      const { url } = await obterLinkCompartilhamento(Number(id));
+      await Share.share({ message: `Acompanhe minha carona no Vai de Boa: ${url}` });
+    } catch (error) {
+      setErroCompartilhamento(error instanceof Error ? error.message : "Não foi possível compartilhar a carona. Tente novamente.");
+    } finally {
+      compartilhamentoLock.current = false;
+      setCompartilhando(false);
+    }
   };
 
   const iniciarCarona = async () => {
@@ -651,6 +672,20 @@ export default function SearchDetails() {
               <Navigation size={20} color="white" />
               <Text className="text-white font-black text-lg ml-2">Acompanhar carona</Text>
             </Pressable>
+          )}
+
+          {papel === "MOTORISTA" && !ride.realizado && ride.statusCarona === "EM_ANDAMENTO" && (
+            <View className="mb-8">
+              <Pressable
+                accessibilityRole="button"
+                disabled={compartilhando}
+                onPress={() => void compartilharCarona()}
+                className={`bg-velvet-orchid-700 h-16 rounded-2xl items-center justify-center ${compartilhando ? "opacity-50" : ""}`}
+              >
+                <Text className="text-white font-black text-lg">{compartilhando ? "Obtendo link…" : "Compartilhar carona"}</Text>
+              </Pressable>
+              {!!erroCompartilhamento && <Text accessibilityRole="alert" className="text-velvet-orchid-900 mt-3 font-bold">{erroCompartilhamento}</Text>}
+            </View>
           )}
 
           {/* CHAT DA RESERVA DO PASSAGEIRO */}

@@ -1,5 +1,4 @@
 import "@/global.css";
-import DriverRideActions from "@/components/travels/driver-ride-actions";
 import { api } from "@/src/services/api";
 import { getToken } from "@/src/services/storage";
 import DateTimePicker from "@react-native-community/datetimepicker";
@@ -238,7 +237,6 @@ export default function MyTravels() {
                 <ChevronRight size={16} color="#7b4d91" />
               </View>
             </TouchableOpacity>
-            {ride.papel === "MOTORISTA" && !ride.realizada && (ride.statusCarona === "EM_ESPERA" || ride.statusCarona === "EM_ANDAMENTO") && <DriverRideActions id={ride.id} />}
             </View>
           ))
         )}
