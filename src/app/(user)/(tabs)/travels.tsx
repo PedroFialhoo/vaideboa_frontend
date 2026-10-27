@@ -1,4 +1,5 @@
 import "@/global.css";
+import PublicSharingTest from "@/components/travels/public-sharing-test";
 import { api } from "@/src/services/api";
 import { getToken } from "@/src/services/storage";
 import DateTimePicker from "@react-native-community/datetimepicker";
@@ -166,6 +167,9 @@ export default function MyTravels() {
         className="flex-1 px-6 mt-4"
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); refreshRides(); }} tintColor="#7b4d91" />}
       >
+        <View className="mb-4">
+          <PublicSharingTest />
+        </View>
         {loading && !refreshing ? (
           <ActivityIndicator size="large" color="#7b4d91" className="mt-20" />
         ) : filteredRides.length === 0 ? (
