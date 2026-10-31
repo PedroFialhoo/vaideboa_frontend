@@ -95,7 +95,7 @@ export default function Chat() {
               if (newest !== previousNewest.current && nearEnd.current) list.current?.scrollToOffset({ offset: 0, animated: true });
               previousNewest.current = newest;
             }}
-            ListEmptyComponent={!chat.loading ? (
+            ListEmptyComponent={chat.loading ? undefined : (
               <View className="flex-1 items-center justify-center px-8">
                 <View className="w-14 h-14 rounded-3xl bg-purple-x11-100 items-center justify-center mb-4">
                   <Send size={23} color="#7b4d91" />
@@ -103,12 +103,12 @@ export default function Chat() {
                 <Text className="text-velvet-orchid-900 font-black text-base text-center">A conversa começa aqui</Text>
                 <Text className="text-gray-500 text-sm text-center mt-1">Envie uma mensagem para combinar os detalhes da carona.</Text>
               </View>
-            ) : null}
+            )}
             ListFooterComponent={chat.hasOlder ? (
               <TouchableOpacity disabled={chat.olderLoading} onPress={() => void chat.carregarAntigas()} className="self-center mt-4 mb-3 bg-purple-x11-100 px-4 py-2.5 rounded-full">
                 {chat.olderLoading ? <ActivityIndicator size="small" color="#7b4d91" /> : <Text className="text-purple-x11-700 font-black text-xs">Carregar mensagens anteriores</Text>}
               </TouchableOpacity>
-            ) : null}
+            ) : undefined}
             renderItem={({ item }) => {
               const own = item.idAutor === chat.idUsuario;
               return (
@@ -128,16 +128,16 @@ export default function Chat() {
           {!!chat.sendError && <Text accessibilityRole="alert" className="text-red-300 text-xs font-semibold mb-2">{chat.sendError}</Text>}
           <View className="flex-row items-end">
             <Input className="flex-1 min-h-12 h-auto rounded-2xl bg-white/10 border-velvet-orchid-700 mr-2">
-              <InputField accessibilityLabel="Mensagem" placeholder="Escreva uma mensagem..." placeholderTextColor="#d8b4fe" value={text} onChangeText={setText} multiline maxLength={1000} editable={!chat.sending} className="text-white py-3" />
+              <InputField accessibilityLabel="Mensagem" placeholder={chat.canSend ? "Escreva uma mensagem..." : "Chat indisponível"} placeholderTextColor="#d8b4fe" value={text} onChangeText={setText} multiline maxLength={1000} editable={!chat.sending && chat.canSend} className="text-white py-3" />
             </Input>
             <TouchableOpacity
               accessibilityRole="button"
               accessibilityLabel="Enviar mensagem"
-              disabled={chat.sending || !text.trim()}
+              disabled={chat.sending || !chat.canSend || !text.trim()}
               onPress={() => void send()}
-              className={`w-12 h-12 rounded-2xl items-center justify-center ${chat.sending || !text.trim() ? "bg-purple-x11-100" : "bg-velvet-orchid-700"}`}
+              className={`w-12 h-12 rounded-2xl items-center justify-center ${chat.sending || !chat.canSend || !text.trim() ? "bg-purple-x11-100" : "bg-velvet-orchid-700"}`}
             >
-              {chat.sending ? <ActivityIndicator size="small" color="white" /> : <Send size={19} color={text.trim() ? "white" : "#7b4d91"} />}
+              {chat.sending ? <ActivityIndicator size="small" color="white" /> : <Send size={19} color={chat.canSend && text.trim() ? "white" : "#7b4d91"} />}
             </TouchableOpacity>
           </View>
           <Text className="text-purple-x11-200 text-[10px] text-right mt-1.5 mr-1">{text.length}/1000</Text>

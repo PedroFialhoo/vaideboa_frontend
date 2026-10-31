@@ -1,9 +1,4 @@
-import { createMaterialTopTabNavigator } from 'expo-router/js-top-tabs';
-import { withLayoutContext } from 'expo-router';
-
-const { Navigator } = createMaterialTopTabNavigator();
-
-const TopTabs = withLayoutContext(Navigator);
+import { TopTabs } from 'expo-router/js-top-tabs';
 
 export default function ProfileLayout() {
   return (

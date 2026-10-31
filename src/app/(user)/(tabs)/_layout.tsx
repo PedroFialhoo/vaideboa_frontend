@@ -21,7 +21,7 @@ export default function UserLayout() {
           title: "Home",
           headerShown: false,
           tabBarIcon: ({ color, size }) => {
-            return <FontAwesome name="home" color={color} size={size} />;
+            return <FontAwesome name="home" color={color as string} size={size} />;
           },
         }}
       />
@@ -61,7 +61,7 @@ export default function UserLayout() {
           title: "Perfil",
           headerShown: false,
           tabBarIcon: ({ color, size }) => {
-            return <FontAwesome name="user-circle" color={color} size={size} />;
+            return <FontAwesome name="user-circle" color={color as string} size={size} />;
           },
         }}
       />

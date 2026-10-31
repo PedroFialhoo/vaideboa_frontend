@@ -11,7 +11,6 @@ import {
 import React, { type ReactNode, useState } from "react";
 import {
   Text,
-  TextInput,
   TouchableOpacity,
   View,
   Pressable,
@@ -25,7 +24,7 @@ type Props = {
   time: Date | null;
   setTime: (time: Date) => void;
   price: number | null;
-  setPrice: (price: number) => void;
+  setPrice: (price: number | null) => void;
   seats: number;
   setSeats: (seats: number) => void;
   createRide: () => void;
@@ -33,6 +32,9 @@ type Props = {
   loading: boolean;
   vehicleSection: ReactNode;
   maxSeats: number;
+  recommendation: number | null;
+  recommendationLoading: boolean;
+  recommendationError: string;
 };
 
 export default function RideForm({
@@ -49,12 +51,16 @@ export default function RideForm({
   loading,
   vehicleSection,
   maxSeats,
+  recommendation,
+  recommendationLoading,
+  recommendationError,
 }: Props) {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
 
   const MAX_SEATS = Math.min(7, maxSeats);
   const MIN_SEATS = 1;
+  const MIN_PRICE = 5;
 
   const formatDate = (d: Date | null) => {
     if (!d) return "Selecionar";
@@ -76,6 +82,19 @@ export default function RideForm({
   const decrementSeats = () => {
     if (seats > MIN_SEATS) setSeats(seats - 1);
   };
+
+  const changePrice = (variation: number) => {
+    const current = price ?? recommendation ?? MIN_PRICE;
+    setPrice(Math.max(MIN_PRICE, Math.round(current + variation)));
+  };
+
+  const priceAssessment = (() => {
+    if (price === null || recommendation === null || recommendation <= 0) return null;
+    const difference = (price - recommendation) / recommendation;
+    if (difference <= -0.2) return { text: "Abaixo do recomendado: pode estar barato demais.", tone: "text-velvet-orchid-700" };
+    if (difference >= 0.2) return { text: "Acima do recomendado: pode estar caro demais.", tone: "text-velvet-orchid-700" };
+    return { text: "Valor próximo da recomendação para esta rota.", tone: "text-ash-grey-500" };
+  })();
 
   return (
     <>
@@ -185,23 +204,49 @@ export default function RideForm({
         {/* PREÇO */}
         <View className="mb-5">
           <Text className="text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-1.5 ml-1">
-            Contribuição (R$)
+            Contribuição por pessoa (R$)
           </Text>
-          <View className="bg-white rounded-2xl border border-purple-x11-100 px-4 h-14 flex-row items-center">
-            <View className="bg-purple-x11-50 w-9 h-9 rounded-xl items-center justify-center mr-3">
-              <DollarSign size={18} color="#7b4d91" />
+          <View className="bg-white rounded-2xl border border-purple-x11-100 p-4">
+            <View className="flex-row items-center justify-between">
+              <TouchableOpacity
+                accessibilityRole="button"
+                accessibilityLabel="Diminuir contribuição"
+                onPress={() => changePrice(-1)}
+                disabled={(price ?? recommendation ?? MIN_PRICE) <= MIN_PRICE || recommendationLoading}
+                className={(price ?? recommendation ?? MIN_PRICE) <= MIN_PRICE || recommendationLoading ? "opacity-30" : ""}
+              >
+                <Minus size={20} color="#391f47" />
+              </TouchableOpacity>
+              <View className="items-center">
+                <View className="flex-row items-center">
+                  <DollarSign size={22} color="#7b4d91" />
+                  <Text className="text-2xl font-black text-velvet-orchid-900 ml-1">
+                    {recommendationLoading ? "..." : String(price ?? MIN_PRICE)}
+                  </Text>
+                </View>
+                <Text className="text-center text-xs text-gray-400 mt-1">por pessoa</Text>
+              </View>
+              <TouchableOpacity
+                accessibilityRole="button"
+                accessibilityLabel="Aumentar contribuição"
+                onPress={() => changePrice(1)}
+                disabled={recommendationLoading}
+                className={recommendationLoading ? "opacity-30" : ""}
+              >
+                <Plus size={20} color="#391f47" />
+              </TouchableOpacity>
             </View>
-            <TextInput
-              placeholder="0,00"
-              placeholderTextColor="#aeaabb"
-              className="flex-1 text-velvet-orchid-900 font-black text-xl"
-              keyboardType="decimal-pad"
-              value={price ? String(price) : ""}
-              onChangeText={(text) =>
-                setPrice(Number(text.replace(",", ".")))
-              }
-            />
           </View>
+          {recommendation !== null && !recommendationLoading && (
+            <View className="mt-3 bg-purple-x11-50 rounded-2xl p-3">
+              <Text className="text-velvet-orchid-900 text-sm font-bold">
+                Recomendado: R$ {recommendation} por pessoa
+              </Text>
+              <Text className="text-gray-500 text-xs mt-1">Calculado para {seats + 1} pessoas, incluindo você.</Text>
+              {priceAssessment && <Text className={`text-xs font-bold mt-2 ${priceAssessment.tone}`}>{priceAssessment.text}</Text>}
+            </View>
+          )}
+          {recommendationError ? <Text accessibilityRole="alert" className="mt-2 text-red-700 text-sm">{recommendationError}</Text> : null}
         </View>
 
         {/* ERRO */}

@@ -16,6 +16,7 @@ export function useChat(idReserva: number, idCarona: number) {
   const [error, setError] = useState("");
   const [sendError, setSendError] = useState("");
   const [status, setStatus] = useState("Conectando...");
+  const [canSend, setCanSend] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const session = useRef<{
     active: boolean; controller: AbortController; busy: boolean; page: number; last: boolean;
@@ -27,7 +28,7 @@ export function useChat(idReserva: number, idCarona: number) {
 
   useFocusEffect(useCallback(() => {
     setMensagens([]); setIdUsuario(undefined); setError(""); setLoading(true); setHasOlder(false);
-    setStatus("Conectando..."); setOlderLoading(false); setRecovering(false);
+    setStatus("Conectando..."); setOlderLoading(false); setRecovering(false); setCanSend(false);
     if (!reservaValida(idReserva) || !reservaValida(idCarona)) {
       setError("Reserva inválida."); setLoading(false); return;
     }
@@ -75,14 +76,19 @@ export function useChat(idReserva: number, idCarona: number) {
         const options = { headers, signal: s.controller.signal, timeout: 15000 };
         const [minhas, ride] = await Promise.all([api.get("/carona/minhas", options), api.get(`/carona/buscar/${idCarona}`, options)]);
         if (!s.active) return;
-        const minha = minhas.data.find((r: { id: number }) => r.id === idCarona);
+        const minha = minhas.data.find((r: { id: number; papel: "MOTORISTA" | "PASSAGEIRO"; idReserva?: number | null; statusCarona?: string | null; statusReserva?: string | null }) => r.id === idCarona);
         if (!minha) throw new Error("Você não participa desta carona.");
+        if (minha.statusCarona === "CANCELADA") throw new Error("O chat não está disponível para uma carona cancelada.");
         if (minha.papel === "MOTORISTA") s.own = ride.data.idMotorista;
         else {
           if (minha.idReserva !== idReserva) throw new Error("Reserva inválida para esta carona.");
+          if (!["ACEITA", "EMBARQUE_LIBERADO", "EMBARCADO", "CONCLUIDA_USUARIO", "CONCLUIDA_SISTEMA"].includes(minha.statusReserva ?? "")) {
+            throw new Error("O chat não está disponível para o estado atual da reserva.");
+          }
           s.counterpart = ride.data.idMotorista;
         }
         setIdUsuario(s.own);
+        setCanSend(true);
         stop = acompanharChat({ reserva: idReserva,
           message: m => { if (s.syncing) s.buffered.push(m); else s.merge([m]); },
           connected: () => { if (s.active) { setStatus("Conectado"); void s.sync(); } },
@@ -110,7 +116,7 @@ export function useChat(idReserva: number, idCarona: number) {
   }
   async function enviar(text: string) {
     const s = session.current;
-    if (!s || sendingRef.current) return false;
+    if (!s || !canSend || sendingRef.current) return false;
     sendingRef.current = true; setSending(true); setSendError("");
     try {
       const message = await enviarMensagem(idReserva, text);
@@ -121,6 +127,6 @@ export function useChat(idReserva: number, idCarona: number) {
       return false;
     } finally { sendingRef.current = false; setSending(false); }
   }
-  return { mensagens, idUsuario, loading, recovering, olderLoading, hasOlder, sending, error, sendError, status, carregarAntigas, enviar,
+  return { mensagens, idUsuario, loading, recovering, olderLoading, hasOlder, sending, canSend, error, sendError, status, carregarAntigas, enviar,
     sincronizar: () => { const s = session.current; if (s && (s.own || s.counterpart)) void s.sync(); else setAttempt(a => a + 1); } };
 }

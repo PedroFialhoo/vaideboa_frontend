@@ -1,6 +1,8 @@
 import "@/global.css";
+import CancelRideAction from "@/components/travels/cancel-ride-action";
 import ChatButton from "@/components/chat/chat-button";
 import { api } from "@/src/services/api";
+import { obterLinkCompartilhamento } from "@/src/services/compartilhamento";
 import { getToken } from "@/src/services/storage";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import {
@@ -24,10 +26,11 @@ import {
   Platform,
   Pressable,
   ScrollView,
+  type ScrollViewInstance,
+  Share,
   Text,
   TouchableOpacity,
   Image,
-  TextInput,
   View,
 } from "react-native";
 import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from "react-native-maps";
@@ -69,6 +72,7 @@ type Pedido = {
   idUser: number;
   foto?: string;
   statusPedido: string;
+  statusReserva?: string | null;
   saidaTexto: string;
   destinoTexto: string;
   genero: string;
@@ -81,6 +85,7 @@ type MinhaCarona = {
   idReserva?: number | null;
   idPedidoCarona?: number | null;
   statusPedido?: string | null;
+  statusReserva?: string | null;
   idAvaliacao?: number | null;
 };
 
@@ -97,72 +102,69 @@ export default function SearchDetails() {
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [loadingPedidos, setLoadingPedidos] = useState(false);
   const mapRef = useRef<MapView>(null);
-  const scrollRef = useRef<ScrollView>(null);
+  const scrollRef = useRef<ScrollViewInstance>(null);
   const [messageError, setMessageError] = useState("");
   const [carregandoVinculo, setCarregandoVinculo] = useState(true);
   const [papel, setPapel] = useState<"MOTORISTA" | "PASSAGEIRO" | null>(null);
   const [minhaCaronaData, setMinhaCaronaData] = useState<MinhaCarona | null>(null);
   const [filter, setFilter] = useState<"TODOS" | "ACEITOS" | "PENDENTES">("TODOS");
+  const [cancelamentoBloqueado, setCancelamentoBloqueado] = useState(false);
+  const [cancelamentoMensagem, setCancelamentoMensagem] = useState("");
+  const compartilhamentoLock = useRef(false);
+  const [compartilhando, setCompartilhando] = useState(false);
+  const [erroCompartilhamento, setErroCompartilhamento] = useState("");
   const [iniciandoCarona, setIniciandoCarona] = useState(false);
-  const [codigo, setCodigo] = useState("");
-  const [confirmandoCodigo, setConfirmandoCodigo] = useState(false);
-  const [codigoFeedback, setCodigoFeedback] = useState("");
+  const [cancelandoReserva, setCancelandoReserva] = useState(false);
+
 
   const temReserva = papel === "PASSAGEIRO" && minhaCaronaData?.idReserva != null;
+  const reservaAcompanhavel = minhaCaronaData?.statusReserva === "ACEITA" || minhaCaronaData?.statusReserva === "EMBARQUE_LIBERADO" || minhaCaronaData?.statusReserva === "EMBARCADO";
+  const dataCaronaNaoPassou = !!ride?.data && new Date(`${ride.data}T23:59:59`).getTime() >= Date.now();
+  const podeCancelarReserva = temReserva && (minhaCaronaData?.statusReserva === "PENDENTE" || minhaCaronaData?.statusReserva === "ACEITA") && ride?.statusCarona === "EM_ESPERA" && dataCaronaNaoPassou;
   const pedidoPendente = papel === "PASSAGEIRO" && !temReserva && minhaCaronaData?.statusPedido === "PENDENTE";
-  const podeSolicitar = !carregandoVinculo && papel === null && !ride?.realizado;
-  const podeAcompanhar = (papel === "MOTORISTA" || temReserva) && !ride?.realizado && ride?.statusCarona === "EM_ANDAMENTO";
+  const podeSolicitar = !carregandoVinculo && papel === null && !ride?.realizado && ride?.statusCarona === "EM_ESPERA";
+  const podeAcompanhar = !ride?.realizado && ride?.statusCarona === "EM_ANDAMENTO" && (papel === "MOTORISTA" || (papel === "PASSAGEIRO" && reservaAcompanhavel));
+  const chatDisponivel = temReserva && ride?.statusCarona !== "CANCELADA" && ["ACEITA", "EMBARQUE_LIBERADO", "EMBARCADO", "CONCLUIDA_USUARIO", "CONCLUIDA_SISTEMA"].includes(minhaCaronaData?.statusReserva ?? "");
 
-  const carregarDetalhes = useCallback(() => {
+  const carregarDetalhes = useCallback(async () => {
     if (!id) return;
-
-    getToken().then((token) => {
-      if (!token) return;
-      api.get(`/carona/buscar/${id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      .then((response) => {
-        console.log(response.data)
-        setRide(response.data)
-        return api.get("/carona/minhas", {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-        .then(resMinhas => {
-          const caronas = resMinhas.data;
-          const minhaCarona: MinhaCarona | undefined = caronas.find((carona: MinhaCarona) => carona.id === Number(id));
-          setMinhaCaronaData(minhaCarona ?? null);
-          setPapel(minhaCarona?.papel ?? null);
-          setCarregandoVinculo(false);
-          if (minhaCarona?.papel !== "PASSAGEIRO" || minhaCarona.idReserva == null) {
-            setCodigo("");
-            setCodigoFeedback("");
-          }
-          
-          if (minhaCarona) {
-            if (minhaCarona.papel === "MOTORISTA") {
-              fetchPedidos(token);
-            }
-          }
-        });
-      })
-      .catch((error) => console.log(error));
-    });
+    setCarregandoVinculo(true);
+    try {
+      const token = await getToken();
+      if (!token) throw new Error("Sessão expirada.");
+      const headers = { Authorization: `Bearer ${token}` };
+      const [rideResponse, minhasResponse] = await Promise.all([
+        api.get(`/carona/buscar/${id}`, { headers }),
+        api.get("/carona/minhas", { headers }),
+      ]);
+      const minhaCarona: MinhaCarona | undefined = minhasResponse.data.find((carona: MinhaCarona) => carona.id === Number(id));
+      setRide(rideResponse.data);
+      setMinhaCaronaData(minhaCarona ?? null);
+      setPapel(minhaCarona?.papel ?? null);
+      if (minhaCarona?.papel === "MOTORISTA") await fetchPedidos(token);
+      else setPedidos([]);
+      setMessageError("");
+    } catch (error: any) {
+      setMessageError(typeof error.response?.data === "string" ? error.response.data : "Não foi possível atualizar os dados da carona.");
+    } finally {
+      setCarregandoVinculo(false);
+    }
   }, [id]);
 
   useFocusEffect(useCallback(() => {
-    carregarDetalhes();
-    const interval = setInterval(carregarDetalhes, 15000);
+    void carregarDetalhes();
+    const interval = setInterval(() => void carregarDetalhes(), 15000);
     return () => clearInterval(interval);
   }, [carregarDetalhes]));
 
-  const fetchPedidos = (token: string) => {
+  const fetchPedidos = async (token: string) => {
     setLoadingPedidos(true);
-    api.get(`/pedido/buscarPedidos/${id}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-    .then(response => setPedidos(response.data))
-    .catch(error => console.log(error))
-    .finally(() => setLoadingPedidos(false));
+    try {
+      const response = await api.get(`/pedido/buscarPedidos/${id}`, { headers: { Authorization: `Bearer ${token}` } });
+      setPedidos(response.data);
+    } finally {
+      setLoadingPedidos(false);
+    }
   };
 
   useEffect(() => {
@@ -201,7 +203,8 @@ export default function SearchDetails() {
       }, {
         headers: { Authorization: `Bearer ${token}` }
       })
-      .then(() => {
+      .then(async () => {
+        await carregarDetalhes();
         router.push({
           pathname: "/page-sucess",
           params: { sucess: "true", message: "Carona agendada com sucesso!", to: "/travels" }
@@ -209,6 +212,22 @@ export default function SearchDetails() {
       })
       .catch(error => setMessageError(error.response?.data || "Erro ao agendar carona"));
     });
+  };
+
+  const compartilharCarona = async () => {
+    if (compartilhamentoLock.current || papel !== "MOTORISTA" || ride?.statusCarona !== "EM_ANDAMENTO" || ride.realizado) return;
+    compartilhamentoLock.current = true;
+    setCompartilhando(true);
+    setErroCompartilhamento("");
+    try {
+      const { url } = await obterLinkCompartilhamento(Number(id));
+      await Share.share({ message: `Acompanhe minha carona no Vai de Boa: ${url}` });
+    } catch (error) {
+      setErroCompartilhamento(error instanceof Error ? error.message : "Não foi possível compartilhar a carona. Tente novamente.");
+    } finally {
+      compartilhamentoLock.current = false;
+      setCompartilhando(false);
+    }
   };
 
   const iniciarCarona = async () => {
@@ -223,7 +242,7 @@ export default function SearchDetails() {
       await api.get(`/carona/iniciar/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setRide((currentRide) => currentRide && { ...currentRide, statusCarona: "EM_ANDAMENTO" });
+      await carregarDetalhes();
       router.push({ pathname: "/ride-tracking/[id]", params: { id: String(id) } } as any);
     } catch (error: any) {
       setMessageError(error.response?.data || "Erro ao iniciar carona");
@@ -241,6 +260,7 @@ export default function SearchDetails() {
       await api.get(`/carona/finalizar/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      await carregarDetalhes();
       router.replace({
         pathname: "/page-sucess",
         params: { sucess: "true", message: "Carona finalizada com sucesso!", to: `/ride-details/${id}` }
@@ -250,35 +270,37 @@ export default function SearchDetails() {
     }
   };
 
-  const confirmarCodigo = async () => {
-    if (codigo.length !== 4) {
-      setCodigoFeedback("Informe os quatro dígitos do código.");
-      return;
-    }
+  const cancelarReserva = async () => {
+    const idReserva = minhaCaronaData?.idReserva;
+    if (cancelandoReserva || idReserva == null || !podeCancelarReserva) return;
 
-    const token = await getToken();
-    if (!token) return;
-
-    setConfirmandoCodigo(true);
-    setCodigoFeedback("");
+    setMessageError("");
+    setCancelandoReserva(true);
     try {
-      const response = await api.post("/codigo/confirmar", {
-        idCarona: Number(id),
-        codigo,
-      }, {
+      const token = await getToken();
+      if (!token) return;
+
+      const response = await api.get(`/reserva/cancelar/${idReserva}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setCodigo("");
-      setCodigoFeedback(response.data);
+      await carregarDetalhes();
+      router.replace({
+        pathname: "/page-sucess",
+        params: { sucess: "true", message: response.data, to: "/travels" },
+      });
     } catch (error: any) {
-      setCodigoFeedback(error.response?.data || "Não foi possível confirmar o código.");
+      setMessageError(
+        typeof error.response?.data === "string"
+          ? error.response.data
+          : "Não foi possível cancelar a reserva."
+      );
     } finally {
-      setConfirmandoCodigo(false);
+      setCancelandoReserva(false);
     }
   };
 
   const handleAction = () => {
-    if (temReserva) setMessageError("Cancelamento de reserva não disponível no momento");
+    if (podeCancelarReserva) cancelarReserva();
     else if (podeSolicitar) requestRide();
   };
 
@@ -580,12 +602,14 @@ export default function SearchDetails() {
             </View>
           </View>
 
+          {!!cancelamentoMensagem && <Text accessibilityRole="alert" className="text-velvet-orchid-900 font-bold mb-4">{cancelamentoMensagem}</Text>}
+          {ride.statusCarona === "CANCELADA" && <Text className="text-velvet-orchid-900 font-black mb-4">CANCELADA</Text>}
           {/* BOTÕES DE AÇÃO DO MOTORISTA */}
-          {papel === "MOTORISTA" && !ride.realizado && (
+          {papel === "MOTORISTA" && !ride.realizado && (ride.statusCarona === "EM_ESPERA" || ride.statusCarona === "EM_ANDAMENTO") && (
             <View className="gap-3 mb-8">
               {ride.statusCarona !== "EM_ANDAMENTO" && (
                 <Pressable
-                  disabled={iniciandoCarona}
+                  disabled={iniciandoCarona || cancelamentoBloqueado}
                   className="bg-purple-x11-700 h-16 rounded-2xl items-center justify-center shadow-lg active:scale-[0.97] flex-row"
                   onPress={iniciarCarona}
                 >
@@ -595,10 +619,25 @@ export default function SearchDetails() {
 
               <Pressable
                 className="bg-velvet-orchid-700 h-16 rounded-2xl items-center justify-center shadow-lg active:scale-[0.97] flex-row"
+                disabled={cancelamentoBloqueado}
                 onPress={finalizarCarona}
               >
                 <Text className="text-white font-black text-lg">Marcar como realizada</Text>
               </Pressable>
+              {ride.statusCarona === "EM_ESPERA" && <CancelRideAction
+                id={Number(id)}
+                onBlockedChange={setCancelamentoBloqueado}
+                onMessage={setCancelamentoMensagem}
+                onRefresh={async () => {
+                  const token = await getToken();
+                  if (!token) throw new Error("Sessão expirada");
+                  const { data } = await api.get(`/carona/buscar/${id}`, {
+                    headers: { Authorization: `Bearer ${token}` }, timeout: 15000,
+                  });
+                  setRide(data);
+                  carregarDetalhes();
+                }}
+              />}
             </View>
           )}
 
@@ -609,43 +648,21 @@ export default function SearchDetails() {
             </View>
           )}
 
-          {(podeSolicitar || temReserva) && !ride.realizado && (
+          {(podeSolicitar || podeCancelarReserva) && !ride.realizado && (
             <View className="gap-3 mb-8">
               <Pressable
                 className="bg-velvet-orchid-700 h-16 rounded-2xl items-center justify-center shadow-lg active:scale-[0.97]"
                 onPress={handleAction}
+                disabled={cancelandoReserva}
               >
-                <Text className="text-white font-black text-lg">{temReserva ? "Cancelar reserva" : "Solicitar reserva"}</Text>
+                {cancelandoReserva ? (
+                  <ActivityIndicator size="small" color="white" />
+                ) : (
+                  <Text className="text-white font-black text-lg">{podeCancelarReserva ? "Cancelar reserva" : "Solicitar reserva"}</Text>
+                )}
               </Pressable>
 
-              {temReserva && (
-                <View className="bg-purple-x11-100 border border-purple-x11-200 rounded-2xl p-5">
-                  <Text className="text-purple-x11-700 font-black text-base">Confirmar embarque ou desembarque</Text>
-                  <Text className="text-velvet-orchid-900 text-sm mt-1 mb-4">Informe o código de quatro dígitos enviado para seu e-mail.</Text>
-                  <View className="flex-row gap-3">
-                    <TextInput
-                      value={codigo}
-                      onChangeText={(value) => setCodigo(value.replace(/\D/g, "").slice(0, 4))}
-                      keyboardType="number-pad"
-                      maxLength={4}
-                      onFocus={() => {
-                        setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 250);
-                      }}
-                      placeholder="0000"
-                      placeholderTextColor="#938ea4"
-                      className="flex-1 bg-white border border-purple-x11-200 rounded-xl px-4 h-12 text-center text-velvet-orchid-900 font-black text-lg tracking-[6px]"
-                    />
-                    <Pressable
-                      disabled={confirmandoCodigo}
-                      onPress={confirmarCodigo}
-                      className={`px-5 h-12 rounded-xl items-center justify-center ${confirmandoCodigo ? "bg-purple-x11-300" : "bg-purple-x11-700"}`}
-                    >
-                      <Text className="text-white font-black">{confirmandoCodigo ? "..." : "Confirmar"}</Text>
-                    </Pressable>
-                  </View>
-                  {!!codigoFeedback && <Text className="text-velvet-orchid-900 text-sm mt-3">{codigoFeedback}</Text>}
-                </View>
-              )}
+
 
             </View>
           )}
@@ -660,11 +677,26 @@ export default function SearchDetails() {
             </Pressable>
           )}
 
+          {papel === "MOTORISTA" && !ride.realizado && ride.statusCarona === "EM_ANDAMENTO" && (
+            <View className="mb-8">
+              <Pressable
+                accessibilityRole="button"
+                disabled={compartilhando}
+                onPress={() => void compartilharCarona()}
+                className={`bg-velvet-orchid-700 h-16 rounded-2xl items-center justify-center ${compartilhando ? "opacity-50" : ""}`}
+              >
+                <Text className="text-white font-black text-lg">{compartilhando ? "Obtendo link…" : "Compartilhar carona"}</Text>
+              </Pressable>
+              {!!erroCompartilhamento && <Text accessibilityRole="alert" className="text-velvet-orchid-900 mt-3 font-bold">{erroCompartilhamento}</Text>}
+            </View>
+          )}
+
           {/* CHAT DA RESERVA DO PASSAGEIRO */}
           {temReserva && (
             <View className="mb-6 bg-platinum-50 p-4 rounded-2xl border border-purple-x11-100">
               <Text className="text-velvet-orchid-900 font-bold">Sua reserva</Text>
-              <ChatButton idReserva={minhaCaronaData?.idReserva ?? undefined} idCarona={Number(id)} nome={ride.nome} />
+              <Text className="text-velvet-orchid-700 text-sm mt-1">Status: {minhaCaronaData?.statusReserva ?? "Indisponível"}</Text>
+              {chatDisponivel ? <ChatButton idReserva={minhaCaronaData?.idReserva ?? undefined} idCarona={Number(id)} nome={ride.nome} /> : <Text className="text-gray-500 text-sm mt-2">Chat indisponível para o estado atual da reserva.</Text>}
             </View>
           )}
           {/* BOTÃO AVALIAR (quando a carona foi realizada) */}
@@ -843,9 +875,9 @@ export default function SearchDetails() {
                           </View>
                         </TouchableOpacity>
                         {/* STATUS */}
-                        <View className={`px-3 py-2 rounded-2xl ${pedido.statusPedido === "ACEITO" ? "bg-green-100" : "bg-red-100"}`}>
-                          <Text className={`text-[10px] font-black uppercase tracking-wide ${ pedido.statusPedido === "ACEITO" ? "text-green-800" : "text-red-600" }`}>
-                            {pedido.statusPedido}
+                        <View className={`px-3 py-2 rounded-2xl ${(pedido.statusReserva ?? pedido.statusPedido) === "ACEITO" || (pedido.statusReserva ?? pedido.statusPedido) === "ACEITA" || (pedido.statusReserva ?? pedido.statusPedido) === "EMBARCADO" ? "bg-green-100" : "bg-red-100"}`}>
+                          <Text className={`text-[10px] font-black uppercase tracking-wide ${(pedido.statusReserva ?? pedido.statusPedido) === "ACEITO" || (pedido.statusReserva ?? pedido.statusPedido) === "ACEITA" || (pedido.statusReserva ?? pedido.statusPedido) === "EMBARCADO" ? "text-green-800" : "text-red-600"}`}>
+                            {pedido.statusReserva ?? pedido.statusPedido}
                           </Text>
                         </View>
                       </View>

@@ -2,15 +2,18 @@ import "@/global.css";
 import { api } from "@/src/services/api";
 import { connectRideTracking, RideTrackingConnection, RideLocation } from "@/src/services/ride-tracking";
 import { getToken } from "@/src/services/storage";
+import { obterLinkCompartilhamento } from "@/src/services/compartilhamento";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { LocationAccuracy, LocationSubscription, requestForegroundPermissionsAsync, watchPositionAsync } from "expo-location";
-import { Car, ChevronLeft, LocateFixed, Navigation } from "lucide-react-native";
+import { ChevronDown, ChevronLeft, LocateFixed } from "lucide-react-native";
 import { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Pressable, Text, View } from "react-native";
+import { ActivityIndicator, KeyboardAvoidingView, LayoutAnimation, Platform, Pressable, ScrollView, Share, Text, TextInput, View } from "react-native";
 import MapView, { Marker, Polyline } from "react-native-maps";
 import Logo from "../../../assets/images/logo-vdb.svg";
 
 type Coord = RideLocation;
+type Passenger = { idPedidoCarona: number; nome: string; statusPedido: string; statusReserva?: string | null };
+type Trip = { id: number; papel: "MOTORISTA" | "PASSAGEIRO"; idReserva?: number | null; statusReserva?: string | null };
 
 type Ride = {
   idRota: string;
@@ -32,9 +35,87 @@ export default function RideTracking() {
   const locationSubscriptionRef = useRef<LocationSubscription | null>(null);
   const [ride, setRide] = useState<Ride | null>(null);
   const [role, setRole] = useState<"MOTORISTA" | "PASSAGEIRO" | null>(null);
+  const [statusReserva, setStatusReserva] = useState<string | null>(null);
   const [driverLocation, setDriverLocation] = useState<Coord | null>(null);
   const [driverRoute, setDriverRoute] = useState<Coord[]>([]);
   const [message, setMessage] = useState("Conectando ao acompanhamento...");
+
+  const [passengers, setPassengers] = useState<Passenger[]>([]);
+  const [codigo, setCodigo] = useState("");
+  const [feedback, setFeedback] = useState("");
+  const [confirmando, setConfirmando] = useState(false);
+  const [compartilhando, setCompartilhando] = useState(false);
+  const [erroCompartilhamento, setErroCompartilhamento] = useState("");
+  const [cardExpanded, setCardExpanded] = useState(false);
+  const [refreshAttempt, setRefreshAttempt] = useState(0);
+  const sharingRef = useRef(false);
+  const compartilhar = async () => {
+    if (sharingRef.current) return;
+    sharingRef.current = true;
+    setCompartilhando(true);
+    setErroCompartilhamento("");
+    try {
+      const { url } = await obterLinkCompartilhamento(Number(id));
+      await Share.share({ message: `Acompanhe minha carona no Vai de Boa: ${url}` });
+    } catch (error) {
+      setErroCompartilhamento(error instanceof Error ? error.message : "Não foi possível compartilhar o acompanhamento.");
+    } finally {
+      sharingRef.current = false;
+      setCompartilhando(false);
+    }
+  };
+  const submittingRef = useRef(false);
+  const reservaAcompanhavel = statusReserva === "ACEITA" || statusReserva === "EMBARQUE_LIBERADO" || statusReserva === "EMBARCADO";
+  const trackingEligible = !!ride && !ride.realizado && ride.statusCarona === "EM_ANDAMENTO" && (role === "MOTORISTA" || (role === "PASSAGEIRO" && reservaAcompanhavel));
+  const canConfirm = role === "MOTORISTA" && trackingEligible;
+
+  const toggleCard = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setCardExpanded((expanded) => !expanded);
+  };
+
+  const confirmarEmbarque = async () => {
+    if (!canConfirm || submittingRef.current) return;
+    if (!/^[0-9]{4}$/.test(codigo)) {
+      setFeedback("Informe os quatro dígitos do código.");
+      return;
+    }
+    submittingRef.current = true;
+    setConfirmando(true);
+    setFeedback("");
+    try {
+      const token = await getToken();
+      if (!token) {
+        setFeedback("Sessão expirada. Entre novamente para confirmar o embarque.");
+        return;
+      }
+      const headers = { Authorization: `Bearer ${token}` };
+      const response = await api.post<string>("/codigo/confirmar", {
+        idCarona: Number(id),
+        codigo,
+      }, { headers, responseType: "text" });
+      setCodigo("");
+      setFeedback(response.data);
+      try {
+        const [rideResponse, tripsResponse, passengersResponse] = await Promise.all([
+          api.get(`/carona/buscar/${id}`, { headers }),
+          api.get<Trip[]>("/carona/minhas", { headers }),
+          api.get<Passenger[]>(`/pedido/buscarPedidos/${id}`, { headers }),
+        ]);
+        setRide(rideResponse.data);
+        setRole(tripsResponse.data.find((trip) => trip.id === Number(id))?.papel ?? null);
+        setPassengers(passengersResponse.data);
+      } catch {
+        setFeedback(`${response.data}. Não foi possível atualizar os dados. Reabra o acompanhamento para atualizar a lista.`);
+      }
+    } catch (error: any) {
+      setFeedback(typeof error.response?.data === "string" && error.response.data
+        ? error.response.data : "Não foi possível confirmar o embarque. Tente novamente.");
+    } finally {
+      submittingRef.current = false;
+      setConfirmando(false);
+    }
+  };
 
   useEffect(() => {
     let active = true;
@@ -51,25 +132,41 @@ export default function RideTracking() {
         if (!active) return;
 
         const loadedRide = rideResponse.data as Ride;
-        const trip = tripsResponse.data.find((item: { id: number; papel: "MOTORISTA" | "PASSAGEIRO"; idReserva?: number | null }) => item.id === Number(id));
-        const canTrack = trip?.papel === "MOTORISTA" || (trip?.papel === "PASSAGEIRO" && trip.idReserva != null);
+        const trip = tripsResponse.data.find((item: Trip) => item.id === Number(id));
+        const canTrack = trip?.papel === "MOTORISTA" || (trip?.papel === "PASSAGEIRO" && trip.idReserva != null && ["ACEITA", "EMBARQUE_LIBERADO", "EMBARCADO"].includes(trip.statusReserva ?? ""));
         if (loadedRide.realizado || loadedRide.statusCarona !== "EM_ANDAMENTO" || !canTrack) {
+          setRide(null);
+          setRole(null);
+          setStatusReserva(null);
           setMessage("O acompanhamento não está disponível para esta carona.");
           return;
         }
 
         setRide(loadedRide);
         setRole(trip.papel);
+        setStatusReserva(trip.statusReserva ?? null);
+        if (trip.papel === "MOTORISTA") {
+          try {
+            const response = await api.get<Passenger[]>(`/pedido/buscarPedidos/${id}`, {
+              headers: { Authorization: `Bearer ${token}` },
+            });
+            if (active) setPassengers(response.data);
+          } catch {
+            if (active) setFeedback("Não foi possível carregar os passageiros.");
+          }
+        }
       } catch {
         if (active) setMessage("Não foi possível carregar o acompanhamento da carona.");
       }
     };
 
     void loadTracking();
+    const interval = setInterval(() => void loadTracking(), 15000);
     return () => {
       active = false;
+      clearInterval(interval);
     };
-  }, [id]);
+  }, [id, refreshAttempt]);
 
   useEffect(() => {
     if (!driverLocation || hasFocusedDriverRef.current) return;
@@ -90,7 +187,7 @@ export default function RideTracking() {
   }
 
   useEffect(() => {
-    if (!ride || !role) return;
+    if (!trackingEligible || !ride || !role) return;
     let active = true;
 
     const stopTracking = () => {
@@ -165,7 +262,7 @@ export default function RideTracking() {
       active = false;
       stopTracking();
     };
-  }, [id, ride, role]);
+  }, [id, trackingEligible, role]);
 
   if (!ride || !role) {
     return (
@@ -173,9 +270,14 @@ export default function RideTracking() {
         {message === "Conectando ao acompanhamento..." && <ActivityIndicator color="#dd99ff" size="large" />}
         <Text className="text-white font-bold text-center mt-4">{message}</Text>
         {message !== "Conectando ao acompanhamento..." && (
-          <Pressable onPress={() => router.back()} className="mt-6 bg-purple-x11-700 px-5 py-3 rounded-xl">
-            <Text className="text-white font-black">Voltar</Text>
-          </Pressable>
+          <View className="flex-row gap-3 mt-6">
+            <Pressable onPress={() => setRefreshAttempt((attempt) => attempt + 1)} className="bg-purple-x11-700 px-5 py-3 rounded-xl">
+              <Text className="text-white font-black">Tentar novamente</Text>
+            </Pressable>
+            <Pressable onPress={() => router.back()} className="bg-white/10 px-5 py-3 rounded-xl">
+              <Text className="text-white font-black">Voltar</Text>
+            </Pressable>
+          </View>
         )}
       </View>
     );
@@ -205,7 +307,7 @@ export default function RideTracking() {
         )}
       </MapView>
 
-      <View className="absolute right-4 bottom-44 bg-velvet-orchid-800 rounded-lg w-10 items-center justify-center">
+      <View className="absolute right-4 top-44 bg-velvet-orchid-800 rounded-lg w-10 items-center justify-center">
         <Pressable onPress={zoomIn} accessibilityLabel="Aumentar zoom">
           <Text className="p-2 text-white text-2xl">+</Text>
         </Pressable>
@@ -218,17 +320,58 @@ export default function RideTracking() {
         <ChevronLeft size={24} color="#391f47" />
       </Pressable>
 
-      <View className="absolute bottom-0 left-0 right-0 bg-vintage-grape-50 rounded-t-[32px] px-7 pt-6 pb-10">
-        <View className="flex-row items-center">
-          <View className="bg-purple-x11-100 p-3 rounded-2xl mr-3">
-            <LocateFixed size={22} color="#7b4d91" />
+      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="absolute bottom-0 left-0 right-0" pointerEvents="box-none">
+      <ScrollView keyboardShouldPersistTaps="handled" style={{ maxHeight: cardExpanded ? 420 : 235 }} className="bg-vintage-grape-50 rounded-t-[32px]" contentContainerStyle={{ paddingHorizontal: 28, paddingTop: 14, paddingBottom: 32 }}>
+        <Pressable onPress={toggleCard} accessibilityRole="button" accessibilityState={{ expanded: cardExpanded }} className="py-2">
+          <View className="w-10 h-1 rounded-full bg-purple-x11-200 self-center mb-4" />
+          <View className="flex-row items-center">
+            <View className="bg-purple-x11-100 p-3 rounded-2xl mr-3">
+              <LocateFixed size={22} color="#7b4d91" />
+            </View>
+            <View className="flex-1">
+              <Text className="text-velvet-orchid-900 font-black text-lg">Acompanhamento ao vivo</Text>
+              <Text className="text-velvet-orchid-700 text-sm mt-1">{message}</Text>
+            </View>
+            <ChevronDown size={20} color="#7b4d91" style={{ transform: [{ rotate: cardExpanded ? "180deg" : "0deg" }] }} />
           </View>
-          <View className="flex-1">
-            <Text className="text-velvet-orchid-900 font-black text-lg">Acompanhamento ao vivo</Text>
-            <Text className="text-velvet-orchid-700 text-sm mt-1">{message}</Text>
+        </Pressable>
+        <Pressable onPress={compartilhar} disabled={compartilhando || !trackingEligible} accessibilityRole="button" accessibilityState={{ disabled: compartilhando || !trackingEligible, busy: compartilhando }} className={`mt-3 rounded-xl px-4 h-12 flex-row gap-3 items-center justify-center ${compartilhando || !trackingEligible ? "bg-purple-x11-300" : "bg-purple-x11-700"}`}>
+          {compartilhando && <ActivityIndicator color="white" />}
+          <Text className="text-white font-black">{compartilhando ? "Obtendo link..." : "Compartilhar acompanhamento"}</Text>
+        </Pressable>
+        {!!erroCompartilhamento && <Text accessibilityLiveRegion="polite" className="text-velvet-orchid-900 mt-3">{erroCompartilhamento}</Text>}
+        {cardExpanded && canConfirm && (
+          <View className="mt-5">
+            <Text className="text-velvet-orchid-900 font-black text-lg">Confirmar embarque</Text>
+            <Text className="text-velvet-orchid-700 mt-1">Peça o código ao passageiro após ele entrar no veículo.</Text>
+            <Text nativeID="boarding-code-label" className="text-velvet-orchid-900 font-bold mt-4 mb-2">Código de embarque</Text>
+            <TextInput
+              accessibilityLabel="Código de embarque"
+              value={codigo}
+              onChangeText={(value) => setCodigo(value.replace(/[^0-9]/g, "").slice(0, 4))}
+              keyboardType="number-pad"
+              maxLength={4}
+              editable={!confirmando}
+              placeholder="0000"
+              className="bg-white border border-purple-x11-200 rounded-xl px-4 h-12 text-center text-velvet-orchid-900 font-black text-lg"
+            />
+            <Pressable onPress={confirmarEmbarque} disabled={confirmando} accessibilityRole="button" className={`mt-3 rounded-xl h-12 flex-row gap-3 items-center justify-center ${confirmando ? "bg-purple-x11-300" : "bg-purple-x11-700"}`}>
+              {confirmando && <ActivityIndicator color="white" />}
+              <Text className="text-white font-black">{confirmando ? "Confirmando..." : "Confirmar embarque"}</Text>
+            </Pressable>
           </View>
-        </View>
-      </View>
+        )}
+        {cardExpanded && role === "MOTORISTA" && (
+          <View className="mt-4">
+            {!!feedback && <Text accessibilityLiveRegion="polite" className="text-velvet-orchid-900 mb-3">{feedback}</Text>}
+            <Text className="text-velvet-orchid-900 font-bold">Passageiros e solicitações</Text>
+            {passengers.map((passenger) => (
+              <Text key={passenger.idPedidoCarona} className="text-velvet-orchid-700 mt-2">{passenger.nome} · {passenger.statusReserva ?? passenger.statusPedido}</Text>
+            ))}
+          </View>
+        )}
+      </ScrollView>
+      </KeyboardAvoidingView>
     </View>
   );
 }

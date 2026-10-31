@@ -18,6 +18,8 @@ interface Ride {
   origemTexto: string;
   destinoTexto: string;
   realizada: boolean;
+  statusCarona?: string | null;
+  statusReserva?: string | null;
   paradas?: Array<{
     latPonto: number;
     lonPonto: number;
@@ -30,6 +32,7 @@ export default function MyTravels() {
   const [rides, setRides] = useState<Ride[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState("");
   
   const [filterRole, setFilterRole] = useState<"TODOS" | "MOTORISTA" | "PASSAGEIRO">("TODOS");
   const [filterStatus, setFilterStatus] = useState<"TODOS" | "PENDENTES" | "REALIZADAS">("TODOS");
@@ -40,15 +43,27 @@ export default function MyTravels() {
 
   const router = useRouter();
 
-  const fetchRides = () => {
-    getToken()
-      .then(token => api.get("/carona/minhas", { headers: { Authorization: `Bearer ${token}` } }))
-      .then(response => setRides(response.data))
-      .catch(error => console.error(error))
-      .finally(() => { setLoading(false); setRefreshing(false); });
+
+  const fetchRides = async () => {
+    try {
+      const token = await getToken();
+      if (!token) throw new Error("Sessão expirada.");
+      const options = { headers: { Authorization: `Bearer ${token}` }, timeout: 15000 };
+      const response = await api.get("/carona/minhas", options);
+      setRides(Array.isArray(response.data) ? response.data : []);
+      setError("");
+    } catch (failure) {
+      setRides([]);
+      setError(failure instanceof Error ? failure.message : "Não foi possível atualizar suas viagens.");
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
   };
 
-  useFocusEffect(useCallback(() => { fetchRides(); }, []));
+  const refreshRides = () => { void fetchRides(); };
+
+  useFocusEffect(useCallback(() => { refreshRides(); }, []));
 
   const onDateChange = (event: any, selectedDate?: Date) => {
     setShowCalendar(false);
@@ -58,7 +73,7 @@ export default function MyTravels() {
   const filteredRides = rides.filter(ride => {
     const matchesRole = filterRole === "TODOS" || ride.papel === filterRole;
     const matchesStatus = filterStatus === "TODOS" ||
-      (filterStatus === "PENDENTES" && !ride.realizada) ||
+      (filterStatus === "PENDENTES" && !ride.realizada && ride.statusCarona !== "CANCELADA" && ride.statusReserva !== "CANCELADA" && ride.statusPedido !== "CANCELADO") ||
       (filterStatus === "REALIZADAS" && ride.realizada);
     
     let matchesDate = true;
@@ -151,8 +166,14 @@ export default function MyTravels() {
 
       <ScrollView 
         className="flex-1 px-6 mt-4"
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchRides(); }} tintColor="#7b4d91" />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); refreshRides(); }} tintColor="#7b4d91" />}
       >
+        {!!error && <View className="mb-4 bg-red-50 border border-red-200 rounded-2xl p-4">
+          <Text accessibilityRole="alert" className="text-red-700 font-semibold text-sm">{error}</Text>
+          <TouchableOpacity onPress={refreshRides} className="self-start mt-2 bg-red-100 rounded-xl px-3 py-2">
+            <Text className="text-red-700 font-bold text-xs">Tentar novamente</Text>
+          </TouchableOpacity>
+        </View>}
         {loading && !refreshing ? (
           <ActivityIndicator size="large" color="#7b4d91" className="mt-20" />
         ) : filteredRides.length === 0 ? (
@@ -164,20 +185,20 @@ export default function MyTravels() {
           </View>
         ) : (
           filteredRides.map((ride) => (
-            <View key={ride.id}>
+            <View key={ride.id} className="bg-white rounded-[32px] mb-4 border border-purple-x11-100 shadow-sm">
             <TouchableOpacity
               key={ride.id}
               activeOpacity={0.8}
               onPress={() => router.push({ pathname: "/ride-details/[id]", params: { id: ride.id } } as any)}
-              className="bg-white rounded-[32px] p-5 mb-4 border border-purple-x11-100 shadow-sm"
+              className="p-5"
             >
               <View className="flex-row justify-between items-center mb-4">
                 <View className="flex-row items-center gap-2">
                   <View className={`px-3 py-1 rounded-full ${ride.papel === "MOTORISTA" ? "bg-velvet-orchid-700" : "bg-blue-600"}`}>
                     <Text className="font-black text-[10px] uppercase text-white">{ride.papel}</Text>
                   </View>
-                  <View className={`px-3 py-1 rounded-full ${ride.realizada ? "bg-emerald-500" : "bg-amber-400"}`}>
-                    <Text className="font-black text-[10px] uppercase text-white">{ride.realizada ? "Realizada" : ride.papel === "PASSAGEIRO" && ride.idReserva == null && ride.statusPedido === "PENDENTE" ? "Aguardando aprovação" : "Agendada"}</Text>
+                  <View className={`px-3 py-1 rounded-full ${ride.statusCarona === "CANCELADA" || ride.statusReserva === "CANCELADA" ? "bg-ash-grey-500" : ride.realizada ? "bg-emerald-500" : "bg-amber-400"}`}>
+                    <Text className="font-black text-[10px] uppercase text-white">{ride.statusCarona === "CANCELADA" ? "Carona cancelada" : ride.statusReserva === "CANCELADA" ? "Reserva cancelada" : ride.statusCarona === "EM_ANDAMENTO" ? "Em andamento" : ride.realizada || ride.statusCarona === "CONCLUIDA" ? "Realizada" : ride.papel === "PASSAGEIRO" && ride.statusPedido === "PENDENTE" ? "Aguardando aprovação" : ride.papel === "PASSAGEIRO" && ride.statusReserva === "ACEITA" ? "Reserva aceita" : "Agendada"}</Text>
                   </View>
                 </View>
                 <Text className="text-velvet-orchid-900 font-bold text-[10px] bg-platinum/50 px-3 py-1 rounded-full">
