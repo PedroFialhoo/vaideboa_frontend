@@ -11,6 +11,7 @@ import { api } from "@/src/services/api";
 import { getToken } from "@/src/services/storage";
 import { useRouter } from "expo-router";
 import { useFocusEffect } from "expo-router/react-navigation";
+import { buscarLocais, locaisParaAtalhos, PlaceShortcut } from "@/src/services/saved-places";
 
 type Vehicle = {
   id: number;
@@ -39,8 +40,21 @@ export default function Offer() {
   const [recommendation, setRecommendation] = useState<number | null>(null);
   const [recommendationLoading, setRecommendationLoading] = useState(false);
   const [recommendationError, setRecommendationError] = useState("");
+  const [savedPlaces, setSavedPlaces] = useState<PlaceShortcut[]>([]);
   const priceEdited = useRef(false);
   const router = useRouter()
+
+  useFocusEffect(useCallback(() => {
+    let active = true;
+    setSavedPlaces([]);
+    buscarLocais().then((data) => {
+      if (active) setSavedPlaces(locaisParaAtalhos(data));
+    }).catch(() => {
+      // A busca por texto continua disponível se os locais não puderem ser carregados.
+      if (active) setSavedPlaces([]);
+    });
+    return () => { active = false; };
+  }, []));
 
   useEffect(() => {
     if (step !== 4) return;
@@ -219,8 +233,8 @@ export default function Offer() {
       </View>
 
       <View className="flex-1">
-        {step === 1 && <Origin origin={origin} setOrigin={setOrigin} next={handleNext} />}
-        {step === 2 && <Destination origin={origin} destination={destination} setDestination={setDestination} next={handleNext} showRouteInfo />}
+        {step === 1 && <Origin origin={origin} setOrigin={setOrigin} next={handleNext} savedPlaces={savedPlaces} />}
+        {step === 2 && <Destination origin={origin} destination={destination} setDestination={setDestination} next={handleNext} showRouteInfo savedPlaces={savedPlaces} />}
         {step === 3 && <Stops origin={origin!} destination={destination!} stops={stops} setStops={setStops} next={handleNext} />}
         {step === 4 && (
           <ScrollView className="flex-1" contentContainerStyle={{ flexGrow: 1 }}>
