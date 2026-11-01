@@ -1,4 +1,6 @@
 import "@/global.css";
+import PassengerMapMarker from "@/components/travels/passenger-map-marker";
+import { passengerMapPoints } from "@/src/services/passenger-map-points";
 import { api } from "@/src/services/api";
 import { connectRideTracking, RideTrackingConnection, RideLocation } from "@/src/services/ride-tracking";
 import { getToken } from "@/src/services/storage";
@@ -6,13 +8,16 @@ import { obterLinkCompartilhamento } from "@/src/services/compartilhamento";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { LocationAccuracy, LocationSubscription, requestForegroundPermissionsAsync, watchPositionAsync } from "expo-location";
 import { ChevronDown, ChevronLeft, LocateFixed } from "lucide-react-native";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, KeyboardAvoidingView, LayoutAnimation, Platform, Pressable, ScrollView, Share, Text, TextInput, View } from "react-native";
 import MapView, { Marker, Polyline } from "react-native-maps";
 import Logo from "../../../assets/images/logo-vdb.svg";
 
 type Coord = RideLocation;
-type Passenger = { idPedidoCarona: number; nome: string; statusPedido: string; statusReserva?: string | null };
+type Passenger = {
+  idPedidoCarona: number; nome: string; statusPedido: string; statusReserva?: string | null;
+  latSaida: number; lonSaida: number; latDestino: number; lonDestino: number;
+};
 type Trip = { id: number; papel: "MOTORISTA" | "PASSAGEIRO"; idReserva?: number | null; statusReserva?: string | null };
 
 type Ride = {
@@ -41,6 +46,8 @@ export default function RideTracking() {
   const [message, setMessage] = useState("Conectando ao acompanhamento...");
 
   const [passengers, setPassengers] = useState<Passenger[]>([]);
+  const passengerPoints = useMemo(() => role === "MOTORISTA"
+    ? passengerMapPoints(passengers, "tracking") : [], [role, passengers]);
   const [codigo, setCodigo] = useState("");
   const [feedback, setFeedback] = useState("");
   const [confirmando, setConfirmando] = useState(false);
@@ -145,14 +152,20 @@ export default function RideTracking() {
         setRide(loadedRide);
         setRole(trip.papel);
         setStatusReserva(trip.statusReserva ?? null);
+        if (trip.papel !== "MOTORISTA") setPassengers([]);
         if (trip.papel === "MOTORISTA") {
           try {
             const response = await api.get<Passenger[]>(`/pedido/buscarPedidos/${id}`, {
               headers: { Authorization: `Bearer ${token}` },
             });
             if (active) setPassengers(response.data);
-          } catch {
-            if (active) setFeedback("Não foi possível carregar os passageiros.");
+          } catch (error: any) {
+            if (!active) return;
+            if (error.response?.status === 400 && error.response?.data === "Carona não possui nenhum pedido") {
+              setPassengers([]);
+            } else {
+              setFeedback("Não foi possível carregar os passageiros.");
+            }
           }
         }
       } catch {
@@ -295,6 +308,7 @@ export default function RideTracking() {
           longitudeDelta: 0.02,
         }}
       >
+        {passengerPoints.map((point) => <PassengerMapMarker key={point.key} point={point} />)}
         {driverRoute.length > 1 && (
           <Polyline coordinates={driverRoute} strokeColor="#660099" strokeWidth={5} />
         )}

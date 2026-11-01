@@ -47,3 +47,11 @@ export function horarioMensagem(value: string) {
   const [data, hora] = value.split("T");
   return `${data.split("-").reverse().join("/")} ${hora?.slice(0, 5) ?? ""}`;
 }
+
+export type ParticipanteChat = { idUsuario: number; nome: string; papel: "MOTORISTA" | "PASSAGEIRO"; fotoUrl: string | null };
+export async function buscarParticipante(idReserva: number, signal?: AbortSignal) {
+  if (!reservaValida(idReserva)) throw new Error("Reserva inválida.");
+  return (await api.get<ParticipanteChat>(`/fotos/chat/${idReserva}/participante`, {
+    headers: await chatHeaders(), signal, timeout: 15000,
+  })).data;
+}

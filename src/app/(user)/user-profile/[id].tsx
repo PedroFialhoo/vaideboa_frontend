@@ -1,8 +1,10 @@
+import { profilePhotoPath } from "@/src/services/avatar";
+import UserAvatar from "@/components/user-avatar";
 import "@/global.css";
 import { ArrowLeft, Car, Cigarette, MessageCircle, Music, PawPrint, Star, User } from "lucide-react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { type ReactNode, useEffect, useState } from "react";
-import { ActivityIndicator, Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { api } from "@/src/services/api";
 import { getToken } from "@/src/services/storage";
 
@@ -10,6 +12,7 @@ type Profile = {
   id: number;
   nome: string;
   foto: string | null;
+  fotoUrl: string | null;
   genero: string;
   preferenciasDto: { conversa: string; musica: string; cigarro: string; animais: string };
   rankingDto: {
@@ -35,24 +38,29 @@ export default function UserProfile() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
+    const controller = new AbortController();
     async function loadProfile() {
+      setLoading(true);
+      setProfile(null);
+      setError("");
       try {
         const token = await getToken();
         const response = await api.get<Profile>(`/user/perfil/${id}`, {
+          signal: controller.signal,
           params: { idCarona },
           headers: { Authorization: `Bearer ${token}` },
         });
-        setProfile(response.data);
+        if (!controller.signal.aborted) setProfile(response.data);
       } catch (requestError: any) {
-        setError(requestError.response?.data || "Não foi possível carregar este perfil.");
+        if (!controller.signal.aborted) setError(requestError.response?.data || "Não foi possível carregar este perfil.");
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) setLoading(false);
       }
     }
     if (id && idCarona) void loadProfile();
+    return () => controller.abort();
   }, [id, idCarona]);
 
   if (loading) return <View className="flex-1 bg-vintage-grape-200 items-center justify-center"><ActivityIndicator color="#7b4d91" /></View>;
@@ -70,7 +78,7 @@ export default function UserProfile() {
     <View className="bg-velvet-orchid-900 pt-12 pb-10 px-6 rounded-b-[48px] items-center">
       <TouchableOpacity onPress={() => router.back()} className="absolute left-6 top-12 p-2"><ArrowLeft size={24} color="white" /></TouchableOpacity>
       <View className="w-28 h-28 rounded-full border-4 border-white bg-platinum overflow-hidden items-center justify-center">
-        {profile.foto && !imageError ? <Image source={{ uri: profile.foto }} onError={() => setImageError(true)} className="w-full h-full" /> : <User size={48} color="#7b4d91" />}
+        <UserAvatar fotoUrl={String(profile.id) === id ? profilePhotoPath(id, idCarona) : null} identity={id} fallback={<User size={48} color="#7b4d91" />} />
       </View>
       <Text className="text-white font-black text-2xl mt-4 text-center">{profile.nome}</Text>
       <Text className="text-purple-x11-100 font-bold text-sm mt-1">{profile.genero?.replaceAll("_", " ")}</Text>

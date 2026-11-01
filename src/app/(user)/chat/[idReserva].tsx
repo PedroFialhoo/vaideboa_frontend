@@ -1,12 +1,15 @@
+import UserAvatar from "@/components/user-avatar";
+import { useFocusEffect } from "expo-router";
+import { subscribeToSession } from "@/src/services/storage";
 import "@/global.css";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { ArrowLeft, Send, Wifi } from "lucide-react-native";
 import { ActivityIndicator, FlatList, Image, KeyboardAvoidingView, Platform, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { Input, InputField } from "@/components/ui/input";
 import { useChat } from "@/src/hooks/use-chat";
-import { horarioMensagem, Mensagem } from "@/src/services/chat";
+import { buscarParticipante, erroChat, ParticipanteChat, horarioMensagem, Mensagem } from "@/src/services/chat";
 
 export default function Chat() {
   const params = useLocalSearchParams<{ idReserva: string; idCarona: string; nome?: string }>();
@@ -16,7 +19,30 @@ export default function Chat() {
   const list = useRef<FlatList<Mensagem>>(null);
   const nearEnd = useRef(true);
   const previousNewest = useRef<number | undefined>(undefined);
-  const name = params.nome || "Participante";
+  const [participant, setParticipant] = useState<{ reservation: string; data: ParticipanteChat } | null>(null);
+  const [participantError, setParticipantError] = useState("");
+  useFocusEffect(useCallback(() => {
+    let controller = new AbortController();
+    let active = true;
+    const load = async () => {
+      controller.abort();
+      controller = new AbortController();
+      const signal = controller.signal;
+      setParticipant(null);
+      setParticipantError("");
+      try {
+        const data = await buscarParticipante(Number(params.idReserva), signal);
+        if (active && !signal.aborted) setParticipant({ reservation: params.idReserva, data });
+      } catch (error) {
+        if (active && !signal.aborted) setParticipantError(erroChat(error));
+      }
+    };
+    void load();
+    const unsubscribe = subscribeToSession(() => { void load(); });
+    return () => { active = false; controller.abort(); unsubscribe(); };
+  }, [params.idReserva]));
+  const counterpart = participant?.reservation === params.idReserva ? participant.data : null;
+  const name = counterpart?.nome || params.nome || "Participante";
   const initial = name.trim().charAt(0).toUpperCase() || "C";
   const connected = chat.status === "Conectado";
 
@@ -45,11 +71,12 @@ export default function Chat() {
             >
               <ArrowLeft size={21} color="white" />
             </TouchableOpacity>
-            <View className="w-10 h-10 rounded-xl bg-purple-x11-500 items-center justify-center border border-purple-x11-300 mr-3">
-              <Text className="text-white font-black text-lg">{initial}</Text>
+            <View className="w-10 h-10 rounded-xl overflow-hidden bg-purple-x11-500 items-center justify-center border border-purple-x11-300 mr-3">
+              <UserAvatar fotoUrl={counterpart?.fotoUrl} identity={counterpart?.idUsuario} fallback={<Text className="text-white font-black text-lg">{initial}</Text>} />
             </View>
             <View className="flex-1">
-              <Text numberOfLines={1} className="text-white text-base font-black">{params.nome || "Conversa da reserva"}</Text>
+              <Text numberOfLines={1} className="text-white text-base font-black">{name}</Text>
+              {!!counterpart?.papel && <Text className="text-purple-x11-100 text-xs">{counterpart.papel === "MOTORISTA" ? "Motorista" : "Passageiro"}</Text>}
               <View className="flex-row items-center mt-0.5">
                 <View className={`w-2 h-2 rounded-full mr-1.5 ${connected ? "bg-green-400" : "bg-purple-x11-200"}`} />
                 <Text className="text-purple-x11-100 text-xs font-semibold">{chat.status}</Text>
@@ -63,6 +90,8 @@ export default function Chat() {
             </View>
           )}
         </View>
+
+        {!!participantError && <Text accessibilityRole="alert" className="text-red-700 text-center mx-4 mt-3">{participantError}</Text>}
 
         {!!chat.error && (
           <View className="mx-4 mt-4 bg-red-50 border border-red-200 rounded-2xl p-4">

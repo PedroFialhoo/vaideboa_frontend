@@ -41,6 +41,7 @@ export default function ForgetPassword() {
   };
 
   const handleAlterarSenha = () => {
+    if (loading) return;
     setMessageError("");
 
     if (!codigo) {
@@ -57,22 +58,39 @@ export default function ForgetPassword() {
 
     api.post("/recuperarSenha/validarCodigo", { email, codigo })
       .then(response => {
-        const tokenReset = response.data;
+        const tokenReset: unknown = response.data?.dados;
+        if (typeof tokenReset !== "string" || !tokenReset) {
+          throw new Error("Não foi possível validar o código de recuperação. Solicite um novo código.");
+        }
         return api.post("/recuperarSenha/alterarSenha", {
           senha: novaSenha,
           confirmarSenha,
           tokenReset,
         });
       })
-      .then(() => {
-        return api.post("/authenticate", { username: email, password: novaSenha });
-      })
-      .then(async response => {
-        await setToken(response.data);
-        router.replace("/home");
+      .then(async () => {
+        try {
+          const response = await api.post("/authenticate", { username: email, password: novaSenha });
+          await setToken(response.data);
+          router.replace("/home");
+        } catch {
+          Alert.alert(
+            "Senha alterada",
+            "Sua senha foi alterada, mas não foi possível entrar automaticamente. Faça login com a nova senha.",
+            [{ text: "Ir para login", onPress: () => router.replace("/login") }],
+          );
+        }
       })
       .catch(error => {
-        setMessageError(error.response?.data || "Erro ao alterar senha. Tente novamente.");
+        const data: unknown = error.response?.data;
+        const message = typeof data === "string"
+          ? data
+          : data && typeof data === "object" && "message" in data && typeof data.message === "string"
+            ? data.message
+            : error instanceof Error && data === undefined
+              ? error.message
+              : "Erro ao alterar senha. Tente novamente.";
+        setMessageError(message || "Erro ao alterar senha. Tente novamente.");
       })
       .finally(() => setLoading(false));
   };

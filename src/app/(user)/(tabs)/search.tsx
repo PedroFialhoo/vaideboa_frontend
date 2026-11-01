@@ -1,3 +1,5 @@
+import { profilePhotoPath } from "@/src/services/avatar";
+import UserAvatar from "@/components/user-avatar";
 import Destination from "@/components/offer/destination";
 import Origin from "@/components/offer/origin";
 import SearchForm from "@/components/search/search-form";
@@ -9,10 +11,26 @@ import { CalendarDays, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Circle
 import { useEffect, useRef, useState } from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 
+type SearchRide = {
+  idCarona?: number;
+  idRota: number;
+  idMotorista: number;
+  nomeMotorista: string;
+  fotoUrl: string | null;
+  data: string;
+  hora: string;
+  vagasDisponiveis?: number;
+  origemTexto?: string;
+  saidaTexto?: string;
+  destinoTexto?: string;
+  paradas?: Array<{ textoPonto?: string }>;
+  avaliacaoMotorista?: { numViagensMotorista?: number; notaMotorista?: number | null; rankingMotorista?: string | null };
+};
+
 export default function Search() {
   const [destination, setDestination] = useState<{ latitude: number; longitude: number; address?: string } | null>(null);
   const [origin, setOrigin] = useState<{ latitude: number; longitude: number; address?: string } | null>(null);
-  const [rides, setRides] = useState<any[]>([]);
+  const [rides, setRides] = useState<SearchRide[]>([]);
   const [loading, setLoading] = useState(false);
   const [messageError, setMessageError] = useState("");
 
@@ -77,7 +95,7 @@ export default function Search() {
         destinoLon: destination.longitude,
       };
 
-      api.post("/reserva/buscar", payload, {
+      api.post<SearchRide[]>("/reserva/buscar", payload, {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then((response) => {
@@ -219,8 +237,8 @@ export default function Search() {
                 {/* HEADER: MOTORISTA + RATING */}
                 <View className="flex-row items-center justify-between mb-4">
                   <View className="flex-row items-center flex-1 pr-3">
-                    <View className="bg-purple-x11-100 w-12 h-12 rounded-2xl items-center justify-center mr-3">
-                      <User size={24} color="#7b4d91" />
+                    <View className="bg-purple-x11-100 w-12 h-12 rounded-2xl overflow-hidden items-center justify-center mr-3">
+                      <UserAvatar fotoUrl={profilePhotoPath(ride.idMotorista, ride.idCarona)} identity={ride.idMotorista} fallback={<User size={24} color="#7b4d91" />} />
                     </View>
                     <View className="flex-1">
                       <Text numberOfLines={1} className="text-velvet-orchid-900 font-black text-lg">

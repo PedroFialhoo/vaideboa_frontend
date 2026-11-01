@@ -1,3 +1,7 @@
+import { profilePhotoPath } from "@/src/services/avatar";
+import UserAvatar from "@/components/user-avatar";
+import PassengerMapMarker from "@/components/travels/passenger-map-marker";
+import { passengerMapPoints } from "@/src/services/passenger-map-points";
 import "@/global.css";
 import CancelRideAction from "@/components/travels/cancel-ride-action";
 import ChatButton from "@/components/chat/chat-button";
@@ -19,7 +23,7 @@ import {
   ShieldCheck,
   CircleDot
 } from "lucide-react-native";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -30,7 +34,6 @@ import {
   Share,
   Text,
   TouchableOpacity,
-  Image,
   View,
 } from "react-native";
 import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from "react-native-maps";
@@ -50,7 +53,8 @@ type Ride = {
   lonSaida: number;
   nome: string;
   idMotorista: number;
-  fotoMotorista?: string;
+  fotoUrl: string | null;
+  fotoMotorista?: string | null;
   qntAssentos: number;
   realizado: boolean;
   statusCarona: "EM_ESPERA" | "EM_ANDAMENTO" | "CONCLUIDA" | "CANCELADA" | null;
@@ -66,11 +70,16 @@ type Ride = {
 };
 
 type Pedido = {
+  latSaida: number;
+  lonSaida: number;
+  latDestino: number;
+  lonDestino: number;
   idReserva?: number;
   idPedidoCarona: number;
   nome: string;
   idUser: number;
-  foto?: string;
+  fotoUrl: string | null;
+  foto?: string | null;
   statusPedido: string;
   statusReserva?: string | null;
   saidaTexto: string;
@@ -97,11 +106,16 @@ type Coord = {
 export default function SearchDetails() {
   const { id, saidaLat, saidaLng, destinoLat, destinoLng } = useLocalSearchParams();
   const router = useRouter();
+  const currentCarona = useRef(id);
+  currentCarona.current = id;
+  const [pedidosCarona, setPedidosCarona] = useState<typeof id>();
   const [ride, setRide] = useState<Ride | null>(null);
   const [coords, setCoords] = useState<Coord[]>([]);
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [loadingPedidos, setLoadingPedidos] = useState(false);
   const mapRef = useRef<MapView>(null);
+  const [mapReady, setMapReady] = useState(false);
+  const fittedRideRef = useRef<typeof id | undefined>(undefined);
   const scrollRef = useRef<ScrollViewInstance>(null);
   const [messageError, setMessageError] = useState("");
   const [carregandoVinculo, setCarregandoVinculo] = useState(true);
@@ -115,6 +129,8 @@ export default function SearchDetails() {
   const [erroCompartilhamento, setErroCompartilhamento] = useState("");
   const [iniciandoCarona, setIniciandoCarona] = useState(false);
   const [cancelandoReserva, setCancelandoReserva] = useState(false);
+  const passengerPoints = useMemo(() => papel === "MOTORISTA" && pedidosCarona === id
+    ? passengerMapPoints(pedidos, "details") : [], [papel, pedidosCarona, id, pedidos]);
 
 
   const temReserva = papel === "PASSAGEIRO" && minhaCaronaData?.idReserva != null;
@@ -137,6 +153,7 @@ export default function SearchDetails() {
         api.get(`/carona/buscar/${id}`, { headers }),
         api.get("/carona/minhas", { headers }),
       ]);
+      if (currentCarona.current !== id) return;
       const minhaCarona: MinhaCarona | undefined = minhasResponse.data.find((carona: MinhaCarona) => carona.id === Number(id));
       setRide(rideResponse.data);
       setMinhaCaronaData(minhaCarona ?? null);
@@ -161,7 +178,17 @@ export default function SearchDetails() {
     setLoadingPedidos(true);
     try {
       const response = await api.get(`/pedido/buscarPedidos/${id}`, { headers: { Authorization: `Bearer ${token}` } });
+      if (currentCarona.current !== id) return;
       setPedidos(response.data);
+      setPedidosCarona(id);
+    } catch (error: any) {
+      if (currentCarona.current !== id) return;
+      if (error.response?.status === 400 && error.response?.data === "Carona não possui nenhum pedido") {
+        setPedidos([]);
+        setPedidosCarona(id);
+      } else {
+        throw error;
+      }
     } finally {
       setLoadingPedidos(false);
     }
@@ -176,15 +203,17 @@ export default function SearchDetails() {
       .then((response) => setCoords(response.data))
       .catch((error) => console.log(error));
     });
-  }, [ride]);
+  }, [ride?.idRota]);
 
   useEffect(() => {
-    if (coords.length === 0) return;
-    mapRef.current?.fitToCoordinates(coords, {
+    if (!mapReady || coords.length === 0 || carregandoVinculo || fittedRideRef.current === id) return;
+    if (papel === "MOTORISTA" && pedidosCarona !== id) return;
+    fittedRideRef.current = id;
+    mapRef.current?.fitToCoordinates([...coords, ...passengerPoints.map((point) => point.coordinate)], {
       edgePadding: { top: 50, right: 50, bottom: 50, left: 50 },
       animated: true,
     });
-  }, [coords]);
+  }, [coords, mapReady, carregandoVinculo, id, papel, pedidosCarona, passengerPoints]);
 
   const requestRide = () => {
     setMessageError("");
@@ -478,6 +507,7 @@ export default function SearchDetails() {
         <View className="h-80 w-full">
           <MapView
             ref={mapRef}
+            onMapReady={() => setMapReady(true)}
             style={{ flex: 1 }}
             customMapStyle={darkMapStyle}
             initialRegion={{
@@ -508,6 +538,7 @@ export default function SearchDetails() {
                 </View>
               </Marker>
             ))}
+            {passengerPoints.map((point) => <PassengerMapMarker key={point.key} point={point} />)}
             {coords.length > 0 && (
               <Polyline coordinates={coords} strokeWidth={4} strokeColor="#dd99ff" />
             )}
@@ -521,7 +552,7 @@ export default function SearchDetails() {
           <View className="flex-row items-center justify-between mb-8">
               <TouchableOpacity onPress={() => router.push({ pathname: "/user-profile/[id]", params: { id: String(ride.idMotorista), idCarona: String(id) } } as any)} className="flex-row items-center flex-1">
                <View className="bg-purple-x11-100 w-14 h-14 rounded-2xl mr-4 overflow-hidden items-center justify-center">
-                 {ride.fotoMotorista ? <Image source={{ uri: ride.fotoMotorista }} className="w-full h-full" /> : <User size={28} color="#7b4d91" />}
+                 <UserAvatar fotoUrl={String(ride.idCarona) === String(id) ? profilePhotoPath(ride.idMotorista, id) : null} identity={ride.idMotorista} fallback={<User size={28} color="#7b4d91" />} />
                </View>
               <View className="flex-1">
                 <Text numberOfLines={1} className="text-velvet-orchid-900 font-black text-xl">{ride.nome}</Text>
@@ -856,7 +887,7 @@ export default function SearchDetails() {
                         {/* USUÁRIO */}
                         <TouchableOpacity onPress={() => router.push({ pathname: "/user-profile/[id]", params: { id: String(pedido.idUser), idCarona: String(id) } } as any)} className="flex-row flex-1 pr-3">
                           <View className="bg-purple-x11-100 w-14 h-14 rounded-full items-center justify-center mr-4 overflow-hidden">
-                            {pedido.foto ? <Image source={{ uri: pedido.foto }} className="w-full h-full" /> : <User size={24} color="#7b4d91" />}
+                            <UserAvatar fotoUrl={pedidosCarona === id ? profilePhotoPath(pedido.idUser, id) : null} identity={pedido.idUser} fallback={<User size={24} color="#7b4d91" />} />
                           </View>
                           <View className="flex-1">
                             <Text

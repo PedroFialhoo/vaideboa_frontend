@@ -1,15 +1,16 @@
 import "@/global.css";
 import { api } from "@/src/services/api";
 import { getToken } from "@/src/services/storage";
-import { ChevronRight, Cigarette, Music, PawPrint, Save, Speech } from "lucide-react-native";
+import { ChevronRight, Cigarette, Music, PawPrint, Save, Speech, MapPin } from "lucide-react-native";
 import { useState } from "react";
-import { Text, TouchableOpacity, View } from "react-native";
+import { Text, TextInput, TouchableOpacity, View } from "react-native";
 
 type PreferencesType = {
   conversa: string;
   musica: string;
   cigarro: string;
   pet: string;
+  raioDeslocamentoKm: string;
 };
 
 type Props = {
@@ -79,6 +80,15 @@ export default function Preferences({ preferences, setPreferences }: Props) {
 
   const updatePreferences = () => {
     setMessage("")
+    const valor = preferences.raioDeslocamentoKm.trim().replace(",", ".");
+    const raioKm = Number(valor);
+    const raioMetros = Math.round(raioKm * 1000);
+    if (!/^\d+(?:\.\d+)?$/.test(valor) || !Number.isFinite(raioKm) || raioKm < 0.001
+        || !Number.isSafeInteger(raioMetros) || raioMetros <= 0) {
+      setMessage("Informe um raio válido em km, maior que zero (mínimo de 0,001 km).");
+      setGoodMessage(false);
+      return;
+    }
     console.log("Preferencias: ", preferences)
     getToken().then(token => {
       api.put("user/preferencias",
@@ -87,6 +97,7 @@ export default function Preferences({ preferences, setPreferences }: Props) {
           musica: preferences.musica,
           cigarro: preferences.cigarro,
           animais: preferences.pet,
+          raioDeslocamentoMetros: raioMetros,
         },
         {
           headers: {
@@ -101,7 +112,7 @@ export default function Preferences({ preferences, setPreferences }: Props) {
       })
       .catch(err => {
         console.log("Erro: ", err.response?.data)
-        setMessage(err.response?.data)
+        setMessage(typeof err.response?.data === "string" ? err.response.data : "Não foi possível salvar as preferências. Tente novamente.")
         setGoodMessage(false)
       })
     })
@@ -188,6 +199,45 @@ export default function Preferences({ preferences, setPreferences }: Props) {
             { label: "Pequenos", value: "TALVEZ" },
             { label: "Não", value: "NUNCA" }
           ])}
+        </View>
+        {/* RAIO DE DESLOCAMENTO */}
+        <View className="border-t border-platinum/50">
+          <TouchableOpacity onPress={() => { toggleItem("raio"); setMessage(""); }} className="flex-row items-center py-4">
+            <View className="bg-purple-x11-100 p-2.5 rounded-2xl mr-4">
+              <MapPin size={24} color="#7b4d91" />
+            </View>
+            <View className="flex-1">
+              <Text className="font-bold text-velvet-orchid-900 text-[15px]">Raio de deslocamento</Text>
+              <Text className="text-gray-600 text-[13px]">Distância máxima até o trajeto da carona</Text>
+            </View>
+            <ChevronRight size={18} color="#7b4d91" style={{ transform: [{ rotate: openItem === "raio" ? "90deg" : "0deg" }] }} />
+          </TouchableOpacity>
+          {openItem === "raio" && (
+            <View className="pb-2">
+              <Text className="text-velvet-orchid-900 font-semibold mb-2">Informe a distância em quilômetros</Text>
+              <View className="flex-row items-center border border-platinum rounded-xl px-4 mb-2">
+                <TextInput
+                  accessibilityLabel="Raio de deslocamento em quilômetros"
+                  keyboardType="decimal-pad"
+                  value={preferences.raioDeslocamentoKm}
+                  onChangeText={(value) => { handleChange("raioDeslocamentoKm", value); setMessage(""); }}
+                  placeholder="Ex.: 0,5, 1 ou 50"
+                  className="flex-1 py-3 text-velvet-orchid-900"
+                />
+                <Text className="text-velvet-orchid-900 font-bold ml-2">km</Text>
+              </View>
+              <Text className="text-gray-600 text-xs mb-4">0,5 km = 500 metros · 50 = 50 km. O raio considera a distância em linha reta até o trajeto.</Text>
+              <TouchableOpacity onPress={updatePreferences} className="bg-velvet-orchid-700 rounded-xl p-3 flex-row items-center justify-center mb-2">
+                <Save size={18} color="white" className="mr-2" />
+                <Text className="text-white font-bold">Salvar Alterações</Text>
+              </TouchableOpacity>
+              {message.length > 0 && (
+                <View className={`mb-2 p-3 rounded-2xl border ${goodMessage ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
+                  <Text accessibilityLiveRegion="polite" className={`text-center font-bold text-xs ${goodMessage ? 'text-green-700' : 'text-red-700'}`}>{message}</Text>
+                </View>
+              )}
+            </View>
+          )}
         </View>
       </View>
     </View>

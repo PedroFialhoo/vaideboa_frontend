@@ -1,14 +1,18 @@
 import "@/global.css";
-import { Camera } from "lucide-react-native";
+import { Camera, User } from "lucide-react-native";
 import { useCallback, useEffect, useState } from "react";
-import { Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import Preferences from "@/components/account/preferences"
 import Score from "@/components/account/score"
 import { getToken } from "@/src/services/storage"
 import { api } from "@/src/services/api"
 import { useFocusEffect } from "expo-router/react-navigation";
 
+import { colors } from "@/src/styles/colors";
+import { useProfilePhoto } from "@/src/hooks/useProfilePhoto";
+
 export default function Account() {
+  const { photoUri, busy, message, pickPhoto, onImageError } = useProfilePhoto();
   const [name, setName] = useState<string | null>(null);
   const [ranking, setRanking] = useState<string | null>(null);
   const [numViagensMotorista, setNumViagensMotorista] = useState<number | null>(null);
@@ -22,6 +26,7 @@ export default function Account() {
     musica: "",
     cigarro: "",
     pet: "",
+    raioDeslocamentoKm: "2",
   });
 
   function getUser(){
@@ -45,6 +50,7 @@ export default function Account() {
           musica: pref.musica?.toUpperCase(),
           cigarro: pref.cigarro?.toUpperCase(),
           pet: pref.animais?.toUpperCase(),
+          raioDeslocamentoKm: String((pref.raioDeslocamentoMetros ?? 2000) / 1000).replace(".", ","),
         })
         console.log(response.data)
         console.log(preferences)
@@ -66,16 +72,19 @@ export default function Account() {
       <View className="bg-velvet-orchid-900 pt-12 pb-12 items-center rounded-b-[100px] shadow-xl">
         <View className="relative">
           <View className="w-32 h-32 rounded-full border-4 border-white overflow-hidden bg-platinum">
-            <Image 
-              source={{ uri: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200" }} 
-              className="w-full h-full"
-            />
+            {photoUri ? (
+              <Image key={photoUri} source={{ uri: photoUri }} onError={onImageError} className="w-full h-full" />
+            ) : (
+              <View className="flex-1 items-center justify-center"><User size={64} color={colors["velvet-orchid"][600]} /></View>
+            )}
           </View>
 
-          <TouchableOpacity className="absolute bottom-0 right-0 bg-purple-x11-600 p-2 rounded-full border-2 border-white shadow-md">
-            <Camera size={20} color="white" />
+          <TouchableOpacity onPress={pickPhoto} disabled={busy} accessibilityRole="button" accessibilityLabel="Alterar foto de perfil" accessibilityState={{ disabled: busy, busy }} className="absolute bottom-0 right-0 bg-purple-x11-600 p-2 rounded-full border-2 border-white shadow-md">
+            {busy ? <ActivityIndicator size="small" color="white" /> : <Camera size={20} color="white" />}
           </TouchableOpacity>
         </View>
+
+        {message && <Text accessibilityLiveRegion="polite" className="text-white text-center mt-3 px-6">{message}</Text>}
 
         <Text className="text-white font-black text-2xl mt-4 max-w-[80%] text-center">
           {name}

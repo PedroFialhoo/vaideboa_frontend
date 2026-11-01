@@ -1,3 +1,4 @@
+import UserAvatar from "@/components/user-avatar";
 import "@/global.css";
 import { api } from "@/src/services/api";
 import { getToken } from "@/src/services/storage";
@@ -21,6 +22,8 @@ type AvaliacaoData = {
   idReserva: number;
   idCarona: number;
   nomeAvaliado: string;
+  idAvaliado: number;
+  fotoUrl: string | null;
   data: string;
   hora: string;
   saidaTexto: string;
@@ -48,22 +51,28 @@ export default function Review() {
   useEffect(() => {
     if (!id) return;
 
+    const controller = new AbortController();
+    setAvaliacao(null);
+    setLoading(true);
     getToken().then((token) => {
       if (!token) return;
 
       api
-        .get(`/avaliacao/${id}`, {
+        .get<AvaliacaoData>(`/avaliacao/${id}`, {
+          signal: controller.signal,
           headers: { Authorization: `Bearer ${token}` },
         })
         .then((response) => {
+          if (controller.signal.aborted) return;
           console.log("Avaliação:", response.data);
           setAvaliacao(response.data);
           if (response.data.nota) setNota(response.data.nota);
           if (response.data.comentario) setComentario(response.data.comentario);
         })
         .catch((error) => console.log(error))
-        .finally(() => setLoading(false));
+        .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     });
+    return () => controller.abort();
   }, [id]);
 
   const handleSubmit = () => {
@@ -158,8 +167,8 @@ export default function Review() {
           <View className="bg-white rounded-[32px] p-6 shadow-lg border border-purple-x11-50">
             {/* QUEM ESTÁ SENDO AVALIADO */}
             <View className="flex-row items-center mb-8">
-              <View className="bg-purple-x11-100 w-16 h-16 rounded-full items-center justify-center mr-4">
-                <User size={28} color="#7b4d91" />
+              <View className="bg-purple-x11-100 w-16 h-16 rounded-full overflow-hidden items-center justify-center mr-4">
+                <UserAvatar fotoUrl={String(avaliacao.id) === id ? `/fotos/avaliacao/${avaliacao.id}` : null} identity={avaliacao.idAvaliado} fallback={<User size={28} color="#7b4d91" />} />
               </View>
               <View className="flex-1">
                 <Text
