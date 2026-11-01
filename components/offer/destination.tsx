@@ -1,4 +1,4 @@
-import { View, Text, Pressable, StyleSheet, KeyboardAvoidingView, Platform } from "react-native";
+import { View, Text, Pressable, StyleSheet, KeyboardAvoidingView, Platform, Keyboard } from "react-native";
 import MapView, { Marker, Polyline } from "react-native-maps";
 import { useLocation } from "@/src/hooks/use-location";
 import { reverseGeocodeSafely } from "@/src/services/location";
@@ -9,6 +9,8 @@ import "@/global.css";
 import { Spinner } from "@/components/ui/spinner";
 import { api } from "@/src/services/api";
 import { getToken } from "@/src/services/storage";
+import type { PlaceShortcut } from "@/src/services/saved-places";
+import SavedPlaceShortcuts from "@/components/search/saved-place-shortcuts";
 import RouteInfoBadge, {
   RouteInfo,
   extrairInfoRota,
@@ -30,17 +32,20 @@ export default function Destination({
   destination,
   setDestination,
   next,
-  showRouteInfo = false
+  showRouteInfo = false,
+  savedPlaces,
 }: {
   origin: DestinationType | null;
   destination: DestinationType | null;
   setDestination: (value: DestinationType | null) => void;
   next: () => void;
   showRouteInfo?: boolean;
+  savedPlaces?: PlaceShortcut[];
 }) {
   const { location, locationError } = useLocation(true);
   const mapRef = useRef<MapView>(null);
   const [search, setSearch] = useState("");
+  const [searchFocused, setSearchFocused] = useState(false);
   const GOOGLE_MAPS_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
   const [coords, setCoords] = useState<Coord[]>([]);
   const [rotaInfo, setRotaInfo] = useState<RouteInfo | null>(null);
@@ -133,6 +138,8 @@ export default function Destination({
           textInputProps={{
             value: search,
             onChangeText: setSearch,
+            onFocus: () => setSearchFocused(true),
+            onBlur: () => setSearchFocused(false),
             placeholderTextColor: "#7b4d91",
           }}
           placeholder="Para onde vamos?"
@@ -142,6 +149,7 @@ export default function Destination({
           keyboardShouldPersistTaps="handled"
           onPress={(data, details = null) => {
             if (!details) return;
+            setSearch(data.description);
 
             const coords = {
               latitude: details.geometry.location.lat,
@@ -197,6 +205,14 @@ export default function Destination({
             </Pressable>
           )}
         />
+        {searchFocused && !search.trim() && savedPlaces && <SavedPlaceShortcuts places={savedPlaces} onSelect={(place) => {
+          const { lat, lng } = place.geometry.location;
+          setSearch(place.description);
+          setSearchFocused(false);
+          Keyboard.dismiss();
+          setDestination({ latitude: lat, longitude: lng, address: place.description });
+          animateTo(lat, lng);
+        }} />}
       </View>
 
       {/* MAPA */}

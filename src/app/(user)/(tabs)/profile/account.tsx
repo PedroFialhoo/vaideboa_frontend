@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import Preferences from "@/components/account/preferences"
 import Score from "@/components/account/score"
+import SavedPlaces from "@/components/account/saved-places";
 import { getToken } from "@/src/services/storage"
 import { api } from "@/src/services/api"
 import { useFocusEffect } from "expo-router/react-navigation";
@@ -103,6 +104,8 @@ export default function Account() {
         mediaPassageiro={mediaPassageiro}
         numAvaliacoesPassageiro={numAvaliacoesPassageiro}
       />
+
+      <SavedPlaces />
 
       <Preferences preferences={preferences} setPreferences={setPreferences} />
 

@@ -8,7 +8,9 @@ import { api } from "@/src/services/api";
 import { getToken } from "@/src/services/storage";
 import { useRouter } from "expo-router";
 import { CalendarDays, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, CircleDot, Clock, MapPin, ShieldCheck, User } from "lucide-react-native";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useFocusEffect } from "expo-router/react-navigation";
+import { buscarLocais, locaisParaAtalhos, PlaceShortcut } from "@/src/services/saved-places";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 
 type SearchRide = {
@@ -33,6 +35,19 @@ export default function Search() {
   const [rides, setRides] = useState<SearchRide[]>([]);
   const [loading, setLoading] = useState(false);
   const [messageError, setMessageError] = useState("");
+  const [savedPlaces, setSavedPlaces] = useState<PlaceShortcut[]>([]);
+
+  useFocusEffect(useCallback(() => {
+    let active = true;
+    setSavedPlaces([]);
+    buscarLocais().then((data) => {
+      if (active) setSavedPlaces(locaisParaAtalhos(data));
+    }).catch(() => {
+      // A busca por texto continua disponível se os locais não puderem ser carregados.
+      if (active) setSavedPlaces([]);
+    });
+    return () => { active = false; };
+  }, []));
 
   const originRef = useRef<any>(null);
   const destinationRef = useRef<any>(null);
@@ -153,8 +168,8 @@ export default function Search() {
       
       <View className="flex-1">
         
-        {step === 1 && <Origin origin={origin} setOrigin={setOrigin} next={handleNext} />}
-        {step === 2 && <Destination origin={origin} destination={destination} setDestination={setDestination} next={handleNext} />}   
+        {step === 1 && <Origin origin={origin} setOrigin={setOrigin} next={handleNext} savedPlaces={savedPlaces} />}
+        {step === 2 && <Destination origin={origin} destination={destination} setDestination={setDestination} next={handleNext} savedPlaces={savedPlaces} />}
         {step === 3 && (
           <View className="flex-1">
             <View className="px-4 pt-4">

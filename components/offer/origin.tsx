@@ -1,4 +1,4 @@
-import { View, Text, Pressable, StyleSheet, KeyboardAvoidingView, Platform } from "react-native";
+import { View, Text, Pressable, StyleSheet, KeyboardAvoidingView, Platform, Keyboard } from "react-native";
 import MapView, { Marker } from "react-native-maps";
 import { useLocation } from "@/src/hooks/use-location";
 import { reverseGeocodeSafely } from "@/src/services/location";
@@ -7,6 +7,8 @@ import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplet
 import { MapPin, Navigation, Search, Map as MapIcon, X } from "lucide-react-native";
 import "@/global.css";
 import { Spinner } from "@/components/ui/spinner";
+import type { PlaceShortcut } from "@/src/services/saved-places";
+import SavedPlaceShortcuts from "@/components/search/saved-place-shortcuts";
 
 type OriginType = {
   latitude: number;
@@ -18,14 +20,17 @@ export default function Origin({
   origin,
   setOrigin,
   next,
+  savedPlaces,
 }: {
   origin: OriginType | null;
   setOrigin: (value: OriginType | null) => void;
   next: () => void;
+  savedPlaces?: PlaceShortcut[];
 }) {
   const { location, locationError } = useLocation(true);
   const mapRef = useRef<MapView>(null);
   const [search, setSearch] = useState("");
+  const [searchFocused, setSearchFocused] = useState(false);
   const GOOGLE_MAPS_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
 
 
@@ -81,6 +86,8 @@ export default function Origin({
           textInputProps={{
             value: search,
             onChangeText: setSearch,
+            onFocus: () => setSearchFocused(true),
+            onBlur: () => setSearchFocused(false),
             placeholderTextColor: "#7b4d91",
           }}
           placeholder="De onde vamos sair?"
@@ -90,6 +97,7 @@ export default function Origin({
           keyboardShouldPersistTaps="handled"
           onPress={(data, details = null) => {
             if (!details) return;
+            setSearch(data.description);
 
             const coords = {
               latitude: details.geometry.location.lat,
@@ -145,6 +153,14 @@ export default function Origin({
             </Pressable>
           )}
         />
+        {searchFocused && !search.trim() && savedPlaces && <SavedPlaceShortcuts places={savedPlaces} onSelect={(place) => {
+          const { lat, lng } = place.geometry.location;
+          setSearch(place.description);
+          setSearchFocused(false);
+          Keyboard.dismiss();
+          setOrigin({ latitude: lat, longitude: lng, address: place.description });
+          animateTo(lat, lng);
+        }} />}
       </View>
 
       {/* MAPA */}
