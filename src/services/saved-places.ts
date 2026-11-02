@@ -7,7 +7,8 @@ export type PlaceCoordinates = { latitude: number; longitude: number };
 export type Local = PlaceCoordinates & { id: number; descricao: string };
 export type LocaisUsuario = { casa: Local | null; faculdade: Local | null };
 export type PlaceShortcut = {
-  description: string;
+  type: PlaceType;
+  label: string;
   geometry: { location: { lat: number; lng: number } };
 };
 
@@ -16,7 +17,8 @@ export function locaisParaAtalhos(locais: LocaisUsuario): PlaceShortcut[] {
   for (const tipo of ["casa", "faculdade"] as const) {
     const local = locais[tipo];
     if (local) shortcuts.push({
-      description: `${tipo === "casa" ? "Casa" : "Faculdade"} · ${local.descricao}`,
+      type: tipo,
+      label: `${tipo === "casa" ? "Casa" : "Faculdade"} · ${local.descricao}`,
       geometry: { location: { lat: local.latitude, lng: local.longitude } },
     });
   }

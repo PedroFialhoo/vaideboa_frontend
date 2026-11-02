@@ -49,3 +49,8 @@ export async function reverseGeocodeSafely(coords: { latitude: number; longitude
     return [];
   }
 }
+
+export function formatReverseGeocodedAddress(address?: { street?: string | null; name?: string | null }) {
+  const parts = [address?.street, address?.name].filter((part): part is string => Boolean(part?.trim()));
+  return parts.join(", ") || null;
+}

@@ -10,12 +10,12 @@ export default function SavedPlaceShortcuts({ places, onSelect }: {
   if (!places.length) return null;
   return <View className="mt-2 rounded-2xl bg-white overflow-hidden">
     {places.map((place) => {
-      const Icon = place.description.startsWith("Casa ·") ? House : GraduationCap;
-      return <Pressable key={place.description} accessibilityRole="button" accessibilityLabel={place.description}
-        onPressIn={() => onSelect(place)} onPress={() => onSelect(place)}
+      const Icon = place.type === "casa" ? House : GraduationCap;
+      return <Pressable key={place.type} accessibilityRole="button" accessibilityLabel={place.label}
+        onPress={() => onSelect(place)}
         className="flex-row items-center gap-3 px-4 py-4 border-b border-platinum-100">
         <Icon size={22} color={colors["velvet-orchid"][600]} />
-        <Text numberOfLines={2} className="flex-1 text-velvet-orchid-900 font-bold">{place.description}</Text>
+        <Text numberOfLines={2} className="flex-1 text-velvet-orchid-900 font-bold">{place.label}</Text>
       </Pressable>;
     })}
   </View>;

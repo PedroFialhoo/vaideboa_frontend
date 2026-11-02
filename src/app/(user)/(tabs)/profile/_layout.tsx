@@ -1,5 +1,9 @@
 import { TopTabs } from 'expo-router/js-top-tabs';
 
+export const unstable_settings = {
+  initialRouteName: "account",
+};
+
 export default function ProfileLayout() {
   return (
     <TopTabs

@@ -1,7 +1,7 @@
 import { View, Text, Pressable, StyleSheet, KeyboardAvoidingView, Platform, Keyboard } from "react-native";
 import MapView, { Marker, Polyline } from "react-native-maps";
 import { useLocation } from "@/src/hooks/use-location";
-import { reverseGeocodeSafely } from "@/src/services/location";
+import { formatReverseGeocodedAddress, reverseGeocodeSafely } from "@/src/services/location";
 import { useEffect, useRef, useState } from "react";
 import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplete";
 import { MapPin, Navigation, Search, Map as MapIcon, X } from "lucide-react-native";
@@ -92,11 +92,7 @@ export default function Destination({
 
     const reverse = await reverseGeocodeSafely(coords);
 
-    let address = "Local no mapa";
-
-    if (reverse.length > 0) {
-      address = `${reverse[0].street ?? ""}, ${reverse[0].name ?? ""}`;
-    }
+    const address = formatReverseGeocodedAddress(reverse[0]) ?? "Local no mapa";
 
     setDestination({
       latitude: coords.latitude,
@@ -205,13 +201,16 @@ export default function Destination({
             </Pressable>
           )}
         />
-        {searchFocused && !search.trim() && savedPlaces && <SavedPlaceShortcuts places={savedPlaces} onSelect={(place) => {
+        {searchFocused && !search.trim() && savedPlaces && <SavedPlaceShortcuts places={savedPlaces} onSelect={async (place) => {
           const { lat, lng } = place.geometry.location;
-          setSearch(place.description);
+          setSearch(place.label);
           setSearchFocused(false);
           Keyboard.dismiss();
-          setDestination({ latitude: lat, longitude: lng, address: place.description });
+          setDestination({ latitude: lat, longitude: lng, address: "Local salvo" });
           animateTo(lat, lng);
+          const reverse = await reverseGeocodeSafely({ latitude: lat, longitude: lng });
+          const address = formatReverseGeocodedAddress(reverse[0]);
+          if (address) setDestination({ latitude: lat, longitude: lng, address });
         }} />}
       </View>
 
